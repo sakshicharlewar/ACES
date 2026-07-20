@@ -115,12 +115,15 @@ export function Committee() {
     const track = trackRef.current;
     if (!track) return;
 
-    // Wait for layout, then read the real scrollWidth
-    const init = () => {
+    // Always reset to position 0 on mount — ensures marquee starts from President card
+    posRef.current        = 0;
+    prevPosRef.current    = 0;
+    lastGroupRef.current  = -1;
+    track.style.transform = "translateX(0px)";
+
+    requestAnimationFrame(() => {
       halfWidthRef.current = track.scrollWidth / 2;
-    };
-    // Use rAF so DOM has painted before we measure
-    requestAnimationFrame(init);
+    });
 
     const tick = () => {
       if (!pausedRef.current && !hoveredRef.current) {

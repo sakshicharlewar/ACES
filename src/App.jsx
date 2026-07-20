@@ -24,6 +24,7 @@ import { FacultyProfilePage } from "./pages/FacultyProfilePage";
 import { EventDetailsPage } from "./pages/EventDetailsPage";
 import { LaboratoriesPage } from "./pages/LaboratoriesPage";
 import { CommitteeProfilePage } from "./pages/CommitteeProfilePage";
+import { FloatingEventsButton } from "./components/ui/FloatingEventsButton";
 
 /* ── Scroll Progress Bar (homepage only) ── */
 function ScrollBar() {
@@ -79,18 +80,21 @@ function HomePage() {
 function AppRoutes() {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/department" element={<DepartmentPage />} />
-        <Route path="/hod" element={<HodPage />} />
-        <Route path="/faculty" element={<FacultyListPage />} />
-        <Route path="/faculty/:id" element={<FacultyProfilePage />} />
-        <Route path="/committee/:id" element={<CommitteeProfilePage />} />
-        <Route path="/events/reimagine" element={<EventDetailsPage />} />
-        <Route path="/laboratories" element={<LaboratoriesPage />} />
-      </Routes>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/department" element={<DepartmentPage />} />
+          <Route path="/hod" element={<HodPage />} />
+          <Route path="/faculty" element={<FacultyListPage />} />
+          <Route path="/faculty/:id" element={<FacultyProfilePage />} />
+          <Route path="/committee/:id" element={<CommitteeProfilePage />} />
+          <Route path="/events/reimagine" element={<EventDetailsPage />} />
+          <Route path="/laboratories" element={<LaboratoriesPage />} />
+        </Routes>
+      </AnimatePresence>
+      <FloatingEventsButton />
+    </>
   );
 }
 
