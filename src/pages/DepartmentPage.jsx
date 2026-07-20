@@ -13,7 +13,7 @@ const cards = [
     title: "Head of Department",
     shortDesc: "Academic leadership driving excellence and innovation.",
     detail: `The Head of Department brings decades of academic and industry experience. Under their leadership, the department has achieved NBA accreditation, introduced cutting-edge curriculum updates, and established strong industry partnerships. The HOD actively mentors students for higher studies, research, and career excellence, fostering a culture of innovation, discipline, and continuous learning.`,
-    image: "/HOD_Sir.jpeg"
+    image: "/HODSIR1.jpeg"
   },
   {
     id: "faculty",

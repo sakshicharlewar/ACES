@@ -198,7 +198,7 @@ export function HodPage() {
                 style={{ width: "100%", height: "500px", borderRadius: "16px", overflow: "hidden" }}
               >
                 <img
-                  src="/HOD_Sir.jpeg"
+                  src="/HODSIR1.jpeg"
                   alt="Dr. Lowlesh Yadav"
                   style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                 />
