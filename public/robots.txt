@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sakshicharlewar.github.io/ACES/sitemap.xml
+Sitemap: https://aces-zbgk.onrender.com/sitemap.xml
