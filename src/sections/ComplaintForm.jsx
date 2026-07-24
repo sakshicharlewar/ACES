@@ -107,7 +107,7 @@ export function ComplaintForm() {
     
     // Attempt automatic email notification (to acescomputer0101@gmail.com) via Python backend
     try {
-      await fetch('https://aces-backend.onrender.com/api/submit-innovation', {
+      await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
