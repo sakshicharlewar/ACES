@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
 
@@ -7,7 +7,14 @@ export function FloatingEventsButton() {
   const location = useLocation();
   const [ripple, setRipple] = useState(false);
   const [ripplePos, setRipplePos] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState(true);
   const btnRef = useRef(null);
+
+  useEffect(() => {
+    const handleToggle = (e) => setIsVisible(e.detail);
+    window.addEventListener('toggleFloatingButton', handleToggle);
+    return () => window.removeEventListener('toggleFloatingButton', handleToggle);
+  }, []);
 
   const handleClick = (e) => {
     // Ripple position
@@ -34,6 +41,8 @@ export function FloatingEventsButton() {
       handleClick({ clientX: 0, clientY: 0 });
     }
   };
+
+  if (!isVisible) return null;
 
   return (
     <>

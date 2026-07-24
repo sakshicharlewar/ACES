@@ -29,11 +29,13 @@ export function ComplaintForm() {
     setActiveModal(true);
     setIsSubmitted(false);
     resetForm();
+    window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: false }));
   };
 
   const closeModal = () => {
     setActiveModal(false);
     resetForm();
+    window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: true }));
   };
 
   const resetForm = () => {
@@ -97,13 +99,40 @@ export function ComplaintForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     
-    // Simulate API call
+    // Attempt automatic email notification (to acescomputer0101@gmail.com)
+    try {
+      await fetch('/api/submit-innovation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: 'acescomputer0101@gmail.com',
+          subject: '🚀 New Innovation Box Submission',
+          details: {
+            Name: formData.fullName,
+            Email: formData.email,
+            Department: formData.department,
+            Year: formData.year,
+            IdeaTitle: formData.subject,
+            Category: formData.category,
+            ProblemStatement: "Not provided directly, included in description.",
+            ProposedSolution: formData.description,
+            ExpectedImpact: formData.expectedOutcome || "None provided",
+            AdditionalNotes: formData.mobile ? `Mobile: ${formData.mobile}` : "None",
+            SubmissionTime: new Date().toISOString()
+          }
+        })
+      });
+    } catch (error) {
+      console.error("Email notification failed:", error);
+    }
+
+    // Simulate API call for database save (fallback success)
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
