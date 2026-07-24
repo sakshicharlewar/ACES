@@ -14,7 +14,7 @@ load_dotenv()
 SMTP_SERVER   = os.getenv("SMTP_SERVER",  "smtp.gmail.com")
 SMTP_PORT     = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER     = os.getenv("SMTP_USERNAME")
-SMTP_PASS     = os.getenv("SMTP_PASSWORD")
+SMTP_PASS     = os.getenv("SMTP_PASSWORD", "").replace(" ", "")  # strip spaces (Render formats app passwords with spaces)
 RECIPIENT     = "acescomputer0101@gmail.com"
 
 # ─── App ───────────────────────────────────────────────────────────────────────
