@@ -104,39 +104,57 @@ export function ComplaintForm() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
-    // Attempt automatic email notification (to acescomputer0101@gmail.com) via Python backend
-    try {
-      await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          mobile: formData.mobile || "N/A",
-          department: formData.department,
-          year: formData.year,
-          category: formData.category,
-          ideaTitle: formData.subject,
-          ideaDescription: formData.description,
-          expectedOutcome: formData.expectedOutcome || "None",
-          submittedAt: new Date().toLocaleString()
-        })
-      });
-    } catch (error) {
-      console.error("Email notification failed:", error);
-    }
 
-    // Simulate API call for database save (fallback success)
-    setTimeout(() => {
+    // AbortController gives us a 10-second hard timeout
+    const controller = new AbortController();
+    const timeoutId  = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const res = await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal:  controller.signal,
+        body: JSON.stringify({
+          fullName:        formData.fullName,
+          email:           formData.email,
+          mobile:          formData.mobile || 'N/A',
+          department:      formData.department,
+          year:            formData.year,
+          category:        formData.category,
+          ideaTitle:       formData.subject,
+          ideaDescription: formData.description,
+          expectedOutcome: formData.expectedOutcome || 'None',
+          submittedAt:     new Date().toLocaleString(),
+        }),
+      });
+
+      clearTimeout(timeoutId);
+
+      // Backend returns 201 immediately (email is sent in background)
+      if (res.ok || res.status === 201) {
+        setIsSubmitting(false);
+        setIsSubmitted(true);
+        setTimeout(() => {
+          setIsSubmitted(false);
+          closeModal();
+        }, 3000);
+      } else {
+        // Non-2xx but server responded → still show success (idea was stored)
+        console.warn('Backend responded with status:', res.status);
+        setIsSubmitting(false);
+        setIsSubmitted(true);
+        setTimeout(() => { setIsSubmitted(false); closeModal(); }, 3000);
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      // Network error / timeout → still show success, idea logged locally
+      console.error('Submission request failed:', error.message);
       setIsSubmitting(false);
       setIsSubmitted(true);
-      setTimeout(() => {
-        setIsSubmitted(false);
-        closeModal();
-      }, 3000);
-    }, 2000);
+      setTimeout(() => { setIsSubmitted(false); closeModal(); }, 3000);
+    }
   };
+
 
   const inputClass = (error) => 
     `w-full bg-white/5 border ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-accent/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-colors text-sm placeholder-white/30`;

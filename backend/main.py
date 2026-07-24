@@ -1,49 +1,58 @@
 import os
 import smtplib
+import threading
 from email.message import EmailMessage
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+# ─── Load env once at startup, not per request ────────────────────────────────
 load_dotenv()
 
-app = FastAPI()
+SMTP_SERVER   = os.getenv("SMTP_SERVER",  "smtp.gmail.com")
+SMTP_PORT     = int(os.getenv("SMTP_PORT", 587))
+SMTP_USER     = os.getenv("SMTP_USERNAME")
+SMTP_PASS     = os.getenv("SMTP_PASSWORD")
+RECIPIENT     = "acescomputer0101@gmail.com"
 
-# Allow requests from the local React frontend
+# ─── App ───────────────────────────────────────────────────────────────────────
+app = FastAPI(title="ACES Backend", version="1.0.0")
+
+# ─── CORS (single middleware, no redundant options) ────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ─── Schema ────────────────────────────────────────────────────────────────────
 class InnovationSubmission(BaseModel):
-    fullName: str
-    email: str
-    mobile: str = ""
-    department: str
-    year: str
-    category: str
-    ideaTitle: str
+    fullName:        str
+    email:           str
+    mobile:          str = "N/A"
+    department:      str
+    year:            str
+    category:        str
+    ideaTitle:       str
     ideaDescription: str
-    expectedOutcome: str = ""
-    submittedAt: str
+    expectedOutcome: str = "None"
+    submittedAt:     str
 
-@app.post("/api/submit-innovation")
-async def submit_innovation(data: InnovationSubmission):
+# ─── Background email task (runs in thread pool, NEVER blocks the response) ───
+def send_email_background(data: InnovationSubmission):
+    """
+    Runs in a background thread.
+    Any exception here is logged but NEVER reaches the client.
+    """
     try:
-        # SMTP Configuration
-        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", 587))
-        smtp_user = os.getenv("SMTP_USERNAME")
-        smtp_pass = os.getenv("SMTP_PASSWORD")
+        if not SMTP_USER or not SMTP_PASS:
+            print("[Email] ⚠️  SMTP credentials missing – skipping send.")
+            return
 
-        # The recipient
-        recipient_email = "acescomputer0101@gmail.com"
-
-        # Construct Email Body matching the exact requested format
         body = f"""A new Innovation Box submission has been received.
 
 ----------------------------------------
@@ -80,24 +89,42 @@ Submitted At:
 
         msg = EmailMessage()
         msg.set_content(body)
-        msg['Subject'] = "🚀 New Innovation Box Submission"
-        msg['From'] = smtp_user
-        msg['To'] = recipient_email
+        msg["Subject"] = "🚀 New Innovation Box Submission"
+        msg["From"]    = SMTP_USER
+        msg["To"]      = RECIPIENT
 
-        if not smtp_user or not smtp_pass:
-            print("Warning: SMTP credentials not set. Email not actually sent.")
-            return {"status": "success", "message": "Simulated email send (no credentials)"}
-
-        # Send the email
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        # Use a short timeout so a hung SMTP server never blocks the thread
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15) as server:
             server.starttls()
-            server.login(smtp_user, smtp_pass)
+            server.login(SMTP_USER, SMTP_PASS)
             server.send_message(msg)
-            
-        print(f"Successfully sent email to {recipient_email}")
-        
-    except Exception as e:
-        # "If the email fails to send... Log the email error. Still return a successful response."
-        print(f"Error sending email: {e}")
-        
-    return {"status": "success", "message": "Submission processed"}
+
+        print(f"[Email] ✅ Sent successfully to {RECIPIENT}")
+
+    except Exception as exc:
+        # Log only – do NOT re-raise, the client already got 201
+        print(f"[Email] ❌ Failed to send: {exc}")
+
+
+# ─── POST /api/submit-innovation ──────────────────────────────────────────────
+@app.post("/api/submit-innovation", status_code=status.HTTP_201_CREATED)
+async def submit_innovation(data: InnovationSubmission, background_tasks: BackgroundTasks):
+    """
+    1. Validate payload  (Pydantic handles this automatically → 422 if invalid)
+    2. Queue email in background thread  (non-blocking)
+    3. Return 201 immediately – client never waits for email delivery
+    """
+    # Queue the slow email task in the background
+    background_tasks.add_task(send_email_background, data)
+
+    # Respond immediately – no await on email
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={"success": True, "message": "Idea submitted successfully"}
+    )
+
+
+# ─── Keep-alive endpoint (reduces Render cold-start effect) ───────────────────
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
