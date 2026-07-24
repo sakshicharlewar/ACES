@@ -105,27 +105,22 @@ export function ComplaintForm() {
 
     setIsSubmitting(true);
     
-    // Attempt automatic email notification (to acescomputer0101@gmail.com)
+    // Attempt automatic email notification (to acescomputer0101@gmail.com) via Python backend
     try {
-      await fetch('/api/submit-innovation', {
+      await fetch('http://localhost:8000/api/submit-innovation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: 'acescomputer0101@gmail.com',
-          subject: '🚀 New Innovation Box Submission',
-          details: {
-            Name: formData.fullName,
-            Email: formData.email,
-            Department: formData.department,
-            Year: formData.year,
-            IdeaTitle: formData.subject,
-            Category: formData.category,
-            ProblemStatement: "Not provided directly, included in description.",
-            ProposedSolution: formData.description,
-            ExpectedImpact: formData.expectedOutcome || "None provided",
-            AdditionalNotes: formData.mobile ? `Mobile: ${formData.mobile}` : "None",
-            SubmissionTime: new Date().toISOString()
-          }
+          fullName: formData.fullName,
+          email: formData.email,
+          mobile: formData.mobile || "N/A",
+          department: formData.department,
+          year: formData.year,
+          category: formData.category,
+          ideaTitle: formData.subject,
+          ideaDescription: formData.description,
+          expectedOutcome: formData.expectedOutcome || "None",
+          submittedAt: new Date().toLocaleString()
         })
       });
     } catch (error) {
