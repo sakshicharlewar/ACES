@@ -110,22 +110,26 @@ export function ComplaintForm() {
     const timeoutId  = setTimeout(() => controller.abort(), 60000);
 
     try {
+      const submitData = new FormData();
+      submitData.append('Full Name', formData.fullName);
+      submitData.append('Email', formData.email);
+      submitData.append('Mobile', formData.mobile || '');
+      submitData.append('Department', formData.department);
+      submitData.append('Year', formData.year);
+      submitData.append('Idea Category', formData.category);
+      submitData.append('Idea Title', formData.subject);
+      submitData.append('Idea Description', formData.description);
+      submitData.append('Expected Outcome', formData.expectedOutcome || '');
+      submitData.append('Submitted Date & Time', new Date().toLocaleString());
+      
+      if (formData.attachment) {
+        submitData.append('attachment', formData.attachment);
+      }
+
       const res = await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
         signal:  controller.signal,
-        body: JSON.stringify({
-          fullName:        formData.fullName,
-          email:           formData.email,
-          mobile:          formData.mobile || 'N/A',
-          department:      formData.department,
-          year:            formData.year,
-          category:        formData.category,
-          ideaTitle:       formData.subject,
-          ideaDescription: formData.description,
-          expectedOutcome: formData.expectedOutcome || 'None',
-          submittedAt:     new Date().toLocaleString(),
-        }),
+        body: submitData,
       });
 
       clearTimeout(timeoutId);

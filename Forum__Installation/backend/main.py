@@ -6,11 +6,12 @@ import requests
 import sqlite3
 import uuid
 import asyncio
+import json
+import base64
 from datetime import datetime
-from fastapi import FastAPI, BackgroundTasks, status
+from fastapi import FastAPI, BackgroundTasks, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # ─── Logging ───────────────────────────────────────────────────────────────────
@@ -31,7 +32,6 @@ MAX_RETRIES    = 5
 DB_PATH        = "emails.db"
 
 # ─── Global HTTP Session ───────────────────────────────────────────────────────
-# Reuse connection for performance
 http_session = requests.Session()
 
 # ─── Database Setup ────────────────────────────────────────────────────────────
@@ -44,30 +44,35 @@ def init_db():
                     id TEXT PRIMARY KEY,
                     subject TEXT,
                     html_body TEXT,
-                    status TEXT, -- pending, sent, failed
+                    attachments TEXT DEFAULT '[]',
+                    status TEXT,
                     retry_count INTEGER,
                     created_at TEXT,
                     last_attempt TEXT,
                     error_message TEXT
                 )
             ''')
+            try:
+                cursor.execute("ALTER TABLE emails ADD COLUMN attachments TEXT DEFAULT '[]'")
+            except sqlite3.OperationalError:
+                pass
             conn.commit()
             logger.info("[DB] SQLite database initialized.")
     except Exception as e:
         logger.error(f"[DB] Failed to initialize database: {e}")
         logger.error(traceback.format_exc())
 
-def add_email_to_queue(email_id: str, subject: str, html_body: str):
+def add_email_to_queue(email_id: str, subject: str, html_body: str, attachments_json: str):
     try:
         now = datetime.now().isoformat()
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO emails (id, subject, html_body, status, retry_count, created_at, last_attempt, error_message)
-                VALUES (?, ?, ?, 'pending', 0, ?, '', '')
-            ''', (email_id, subject, html_body, now))
+                INSERT INTO emails (id, subject, html_body, attachments, status, retry_count, created_at, last_attempt, error_message)
+                VALUES (?, ?, ?, ?, 'pending', 0, ?, '', '')
+            ''', (email_id, subject, html_body, attachments_json, now))
             conn.commit()
-            logger.info(f"[DB] Email {email_id} added to queue as pending.")
+            logger.info(f"[DB] Email {email_id} added to queue.")
     except Exception as e:
         logger.error(f"[DB] Failed to add email to queue: {e}")
 
@@ -89,9 +94,8 @@ def get_pending_emails():
     try:
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
-            # Retry failed emails indefinitely via the 5-min poller (up to 100 total absolute attempts to prevent infinite loop of totally broken emails)
             cursor.execute('''
-                SELECT id, subject, html_body, retry_count FROM emails 
+                SELECT id, subject, html_body, attachments, retry_count FROM emails 
                 WHERE status IN ('pending', 'failed') AND retry_count < 100
             ''')
             return cursor.fetchall()
@@ -109,7 +113,7 @@ def get_db_stats():
         return {}
 
 # ─── App ───────────────────────────────────────────────────────────────────────
-app = FastAPI(title="ACES Backend", version="4.1.0")
+app = FastAPI(title="ACES Backend", version="4.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -119,92 +123,90 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Helper: build HTML email body ─────────────────────────────────────────────
-def build_email_html(data) -> str:
-    return f"""
-<!DOCTYPE html>
-<html>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f3f4f6;">
-<div style="max-width:600px;margin:30px auto;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+# ─── Helper: build HTML email body dynamically ─────────────────────────────────
+def build_dynamic_email_html(fields_dict, file_summaries, ip_address, user_agent) -> str:
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f3f4f6;">
+    <div style="max-width:600px;margin:30px auto;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
 
-  <!-- Header -->
-  <div style="background:#1e3a8a;padding:28px 24px;text-align:center;">
-    <h1 style="color:#fff;margin:0;font-size:22px;">New Innovation Box Submission</h1>
-    <p style="color:#93c5fd;margin:6px 0 0;font-size:13px;">ACES - Suryodaya College of Engineering and Technology</p>
-  </div>
+      <!-- Header -->
+      <div style="background:#1e3a8a;padding:28px 24px;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:22px;">New Innovation Box Submission</h1>
+        <p style="color:#93c5fd;margin:6px 0 0;font-size:13px;">ACES - Suryodaya College of Engineering and Technology</p>
+      </div>
 
-  <!-- Idea Details -->
-  <div style="background:#fff;padding:24px;">
-    <h2 style="color:#1e3a8a;font-size:16px;border-bottom:2px solid #dbeafe;padding-bottom:8px;">Idea Details</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;">
-      <tr style="background:#f8fafc;">
-        <td style="padding:10px 12px;color:#6b7280;width:38%;font-weight:600;">Category</td>
-        <td style="padding:10px 12px;">{data.category}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Idea Title</td>
-        <td style="padding:10px 12px;font-weight:bold;color:#1e3a8a;">{data.ideaTitle}</td>
-      </tr>
-      <tr style="background:#f8fafc;">
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Description</td>
-        <td style="padding:10px 12px;">{data.ideaDescription}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Expected Outcome</td>
-        <td style="padding:10px 12px;">{data.expectedOutcome}</td>
-      </tr>
-    </table>
+      <!-- Submission Details -->
+      <div style="background:#fff;padding:24px;">
+        <h2 style="color:#1e3a8a;font-size:16px;border-bottom:2px solid #dbeafe;padding-bottom:8px;">Submission Details</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+    """
+    
+    for i, (key, value) in enumerate(fields_dict.items()):
+        bg_color = "#f8fafc" if i % 2 == 0 else "#ffffff"
+        display_val = str(value).strip()
+        if not display_val:
+            display_val = "<em>Not Provided</em>"
+        else:
+            display_val = display_val.replace('\\n', '<br>')
+            
+        html += f"""
+          <tr style="background:{bg_color};">
+            <td style="padding:10px 12px;color:#6b7280;width:38%;font-weight:600;vertical-align:top;">{key}</td>
+            <td style="padding:10px 12px;vertical-align:top;">{display_val}</td>
+          </tr>
+        """
+        
+    html += """
+        </table>
+        
+        <!-- Attachments Summary -->
+        <h2 style="color:#1e3a8a;font-size:16px;border-bottom:2px solid #dbeafe;padding-bottom:8px;margin-top:24px;">Attachments</h2>
+    """
+    
+    if not file_summaries:
+        html += '<p style="color:#6b7280;font-size:14px;padding-left:12px;"><em>No Attachment Uploaded</em></p>'
+    else:
+        html += '<table style="width:100%;border-collapse:collapse;font-size:14px;">'
+        for i, file_info in enumerate(file_summaries):
+            bg_color = "#f8fafc" if i % 2 == 0 else "#ffffff"
+            html += f"""
+            <tr style="background:{bg_color};">
+              <td style="padding:10px 12px;color:#6b7280;width:38%;font-weight:600;">{file_info['name']}</td>
+              <td style="padding:10px 12px;color:#374151;">{file_info['size']} • {file_info['type']}</td>
+            </tr>
+            """
+        html += '</table>'
 
-    <!-- Submitter Details -->
-    <h2 style="color:#1e3a8a;font-size:16px;border-bottom:2px solid #dbeafe;padding-bottom:8px;margin-top:24px;">Submitter Details</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;">
-      <tr style="background:#f8fafc;">
-        <td style="padding:10px 12px;color:#6b7280;width:38%;font-weight:600;">Full Name</td>
-        <td style="padding:10px 12px;">{data.fullName}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Email</td>
-        <td style="padding:10px 12px;">{data.email}</td>
-      </tr>
-      <tr style="background:#f8fafc;">
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Mobile</td>
-        <td style="padding:10px 12px;">{data.mobile}</td>
-      </tr>
-      <tr>
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Department</td>
-        <td style="padding:10px 12px;">{data.department}</td>
-      </tr>
-      <tr style="background:#f8fafc;">
-        <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Year</td>
-        <td style="padding:10px 12px;">{data.year}</td>
-      </tr>
-    </table>
+    html += f"""
+        <h2 style="color:#1e3a8a;font-size:16px;border-bottom:2px solid #dbeafe;padding-bottom:8px;margin-top:24px;">System Information</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr style="background:#f8fafc;">
+            <td style="padding:10px 12px;color:#6b7280;width:38%;font-weight:600;">IP Address</td>
+            <td style="padding:10px 12px;">{ip_address or 'Unknown'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;color:#6b7280;font-weight:600;">Browser / Device</td>
+            <td style="padding:10px 12px;color:#9ca3af;font-size:12px;">{user_agent or 'Unknown'}</td>
+          </tr>
+        </table>
+      </div>
 
-    <!-- Timestamp -->
-    <div style="margin-top:24px;padding:14px;background:#eff6ff;border-radius:8px;border-left:4px solid #2563eb;">
-      <strong style="color:#1e40af;">Submitted At:</strong>
-      <span style="color:#374151;margin-left:8px;">{data.submittedAt}</span>
+      <!-- Footer -->
+      <div style="background:#e5e7eb;padding:14px;text-align:center;font-size:12px;color:#6b7280;">
+        Automated notification from ACES Innovation Box | acescomputer0101@gmail.com
+      </div>
     </div>
-  </div>
-
-  <!-- Footer -->
-  <div style="background:#e5e7eb;padding:14px;text-align:center;font-size:12px;color:#6b7280;">
-    Automated notification from ACES Innovation Box | acescomputer0101@gmail.com
-  </div>
-</div>
-</body>
-</html>
-"""
+    </body>
+    </html>
+    """
+    return html
 
 # ─── Core email sender with retry + exponential backoff ────────────────────────
-def send_email_with_retry(email_id: str, subject: str, html_body: str, attempt: int = 1) -> bool:
-    """
-    Sends email via Resend HTTP API reusing a global session.
-    Retries up to MAX_RETRIES times with exponential backoff for transient errors.
-    Uses email_id as Idempotency-Key.
-    """
+def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
     if not RESEND_API_KEY:
-        logger.error(f"[Email|{email_id}] RESEND_API_KEY is not set. Cannot send.")
+        logger.error(f"[Email|{email_id}] RESEND_API_KEY is not set.")
         update_email_status(email_id, "failed", "RESEND_API_KEY not set")
         return False
 
@@ -222,191 +224,160 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attempt: 
         "subject": subject,
         "html":    html_body
     }
+    
+    attachments_list = json.loads(attachments_json)
+    if attachments_list:
+        payload["attachments"] = attachments_list
 
     try:
-        resp = http_session.post(RESEND_URL, headers=headers, json=payload, timeout=15)
+        resp = http_session.post(RESEND_URL, headers=headers, json=payload, timeout=20)
         
         logger.info(f"[Email|{email_id}] HTTP Status: {resp.status_code}")
         
         if resp.status_code in (200, 201):
-            resend_id = resp.json().get("id", "unknown")
-            logger.info(f"[Email|{email_id}] SUCCESS — Resend ID: {resend_id}")
             update_email_status(email_id, "sent")
             return True
 
         error_text = resp.text
         logger.error(f"[Email|{email_id}] FAILED — {resp.status_code}: {error_text}")
 
-        # Retry only on specific transient errors
-        if resp.status_code in (429, 500, 502, 503, 504):
-            if attempt < MAX_RETRIES:
-                wait = 2 ** attempt
-                logger.info(f"[Email|{email_id}] Transient error. Retrying in {wait}s...")
-                time.sleep(wait)
-                return send_email_with_retry(email_id, subject, html_body, attempt + 1)
+        if resp.status_code in (429, 500, 502, 503, 504) and attempt < MAX_RETRIES:
+            wait = 2 ** attempt
+            time.sleep(wait)
+            return send_email_with_retry(email_id, subject, html_body, attachments_json, attempt + 1)
         else:
-            # Client errors (400, 401, 403) should fail fast without retries
-            logger.error(f"[Email|{email_id}] Client error. Failing fast.")
             update_email_status(email_id, "failed", f"HTTP {resp.status_code}: {error_text}")
             return False
 
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-        logger.error(f"[Email|{email_id}] Network error on attempt {attempt}: {e}")
-        error_text = str(e)
+        logger.error(f"[Email|{email_id}] Network error: {e}")
         if attempt < MAX_RETRIES:
             wait = 2 ** attempt
-            logger.info(f"[Email|{email_id}] Network error. Retrying in {wait}s...")
             time.sleep(wait)
-            return send_email_with_retry(email_id, subject, html_body, attempt + 1)
+            return send_email_with_retry(email_id, subject, html_body, attachments_json, attempt + 1)
+        update_email_status(email_id, "failed", str(e))
+        return False
     except Exception as e:
         logger.error(f"[Email|{email_id}] Unexpected error: {e}")
-        error_text = str(e)
-
-    # All synchronous immediate retries exhausted
-    logger.error(f"[Email|{email_id}] All {MAX_RETRIES} attempts failed. Will be retried by 5-min poller.")
-    update_email_status(email_id, "failed", error_text)
-    return False
+        update_email_status(email_id, "failed", str(e))
+        return False
 
 
 # ─── Background queue poller ───────────────────────────────────────────────────
 async def process_email_queue():
-    """
-    Runs continuously in the background. Every 5 minutes, checks the DB for
-    pending or failed emails and attempts to send them.
-    """
     logger.info("[Poller] Starting background queue poller (runs every 5 mins)")
     while True:
         try:
             pending_emails = get_pending_emails()
             if pending_emails:
-                logger.info(f"[Poller] Found {len(pending_emails)} pending/failed emails to process.")
                 for row in pending_emails:
-                    email_id, subject, html_body, _ = row
-                    logger.info(f"[Poller] Processing email {email_id}...")
-                    # We run this synchronously in the async loop for simplicity, 
-                    # but could use asyncio.to_thread if we had many emails.
-                    send_email_with_retry(email_id, subject, html_body)
+                    email_id, subject, html_body, attachments_json, _ = row
+                    send_email_with_retry(email_id, subject, html_body, attachments_json)
         except Exception as e:
             logger.error(f"[Poller] Error in processing queue: {e}")
-            logger.error(traceback.format_exc())
-            
-        await asyncio.sleep(300) # Sleep for 5 minutes
+        await asyncio.sleep(300)
 
 
-# ─── Schema ────────────────────────────────────────────────────────────────────
-class InnovationSubmission(BaseModel):
-    fullName:        str
-    email:           str
-    mobile:          str = "N/A"
-    department:      str
-    year:            str
-    category:        str
-    ideaTitle:       str
-    ideaDescription: str
-    expectedOutcome: str = "None"
-    submittedAt:     str = ""
-
+# ─── Form Data Helper ──────────────────────────────────────────────────────────
+def format_file_size(size_bytes):
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.2f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.2f} MB"
 
 # ─── POST /api/submit-innovation ───────────────────────────────────────────────
 @app.post("/api/submit-innovation", status_code=status.HTTP_201_CREATED)
-async def submit_innovation(data: InnovationSubmission, background_tasks: BackgroundTasks):
+async def submit_innovation(request: Request, background_tasks: BackgroundTasks):
     logger.info("=" * 55)
-    logger.info(f"[API] New submission received")
+    logger.info("[API] New submission received (dynamic parsing)")
     
-    # Generate idempotency key
     email_id = uuid.uuid4().hex
     
-    logger.info(f"[API] Name     : {data.fullName}")
-    logger.info(f"[API] Email    : {data.email}")
-    logger.info(f"[API] Idea     : {data.ideaTitle}")
-    logger.info(f"[API] UUID     : {email_id}")
+    try:
+        form = await request.form()
+    except Exception as e:
+        # Fallback if somehow it's application/json (legacy)
+        logger.warning(f"[API] Failed to parse as form, trying JSON: {e}")
+        form = await request.json()
     
-    # Save the idea (in-memory simulation)
-    logger.info("[API] Submission saved successfully (in-memory)")
-
-    # Prepare email payload
-    submitted_at = data.submittedAt or datetime.now().strftime("%d/%m/%Y, %I:%M:%S %p")
-    data.submittedAt = submitted_at
-    subject = "New Innovation Box Submission - ACES"
-    html_body = build_email_html(data)
-
-    # 1. Add to persistent SQLite queue
-    add_email_to_queue(email_id, subject, html_body)
-
-    # 2. Fire and forget the first attempt in FastAPI's background tasks
-    # This prevents the user from waiting, and if it fails, the 5-min poller catches it.
-    background_tasks.add_task(send_email_with_retry, email_id, subject, html_body)
+    fields_dict = {}
+    file_summaries = []
+    resend_attachments = []
     
-    logger.info("[API] Email queued in database and background task started")
+    if hasattr(form, "multi_items"):
+        iterator = form.multi_items()
+    else:
+        iterator = form.items()
+
+    for key, value in iterator:
+        if hasattr(value, 'filename') and value.filename:
+            file_bytes = await value.read()
+            file_size = len(file_bytes)
+            
+            file_summaries.append({
+                "name": value.filename,
+                "type": value.content_type,
+                "size": format_file_size(file_size)
+            })
+            
+            b64_content = base64.b64encode(file_bytes).decode('utf-8')
+            resend_attachments.append({
+                "filename": value.filename,
+                "content": b64_content
+            })
+        else:
+            fields_dict[key] = value
+            
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("User-Agent")
+    
+    idea_title_val = fields_dict.get('Idea Title') or fields_dict.get('ideaTitle') or 'Submission'
+    subject = f"New Innovation Box Submission: {idea_title_val}"
+    
+    html_body = build_dynamic_email_html(fields_dict, file_summaries, ip_address, user_agent)
+    attachments_json = json.dumps(resend_attachments)
+    
+    add_email_to_queue(email_id, subject, html_body, attachments_json)
+    background_tasks.add_task(send_email_with_retry, email_id, subject, html_body, attachments_json)
+    
+    logger.info("[API] Submission fully processed and queued.")
     logger.info("=" * 55)
 
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
-        content={
-            "success": True,
-            "message": "Idea submitted successfully. Notification email queued."
-        }
+        content={"success": True, "message": "Idea submitted successfully."}
     )
 
 
-# ─── GET /test-email — verify setup independently ──────────────────────────────
+# ─── GET /test-email ───────────────────────────────────────────────────────────
 @app.get("/test-email")
 async def test_email(background_tasks: BackgroundTasks):
-    """
-    Test endpoint to verify Resend API and email delivery via persistent queue.
-    """
-    logger.info("[TestEmail] Manual test triggered")
     email_id = uuid.uuid4().hex
-
-    html = f"""
-    <div style="font-family:Arial;padding:24px;background:#f0fdf4;border-radius:8px;border:2px solid #16a34a;">
-      <h2 style="color:#15803d;">Test Email - ACES Backend</h2>
-      <p>This is a test email from the ACES Innovation Box backend with persistent queuing.</p>
-      <p><strong>UUID:</strong> {email_id}</p>
-      <p><strong>Sent At:</strong> {datetime.now().strftime("%d/%m/%Y, %I:%M:%S %p")}</p>
-    </div>
-    """
-
-    add_email_to_queue(email_id, "ACES Backend - Queue Test Email", html)
-    background_tasks.add_task(send_email_with_retry, email_id, "ACES Backend - Queue Test Email", html)
-
-    return {"status": "success", "message": f"Test email queued with ID {email_id}"}
+    html = f"<h2>Test</h2><p>UUID: {email_id}</p>"
+    add_email_to_queue(email_id, "ACES Backend - Dynamic Test", html, "[]")
+    background_tasks.add_task(send_email_with_retry, email_id, "ACES Backend - Dynamic Test", html, "[]")
+    return {"status": "success", "message": f"Queued {email_id}"}
 
 
 # ─── GET /health ───────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
     return {
-        "status":           "ok",
-        "version":          "4.1.0",
-        "resend_key_set":   bool(RESEND_API_KEY),
-        "sender":           SENDER_EMAIL,
-        "recipient":        RECIPIENT,
-        "queue_stats":      get_db_stats()
+        "status": "ok",
+        "version": "4.2.0",
+        "resend_key_set": bool(RESEND_API_KEY),
+        "queue_stats": get_db_stats()
     }
-
 
 @app.get("/")
 async def root():
-    return {"message": "ACES Backend v4.1 is running with persistent email queue"}
+    return {"message": "ACES Backend v4.2"}
 
 
-# ─── Startup validation and background loop ────────────────────────────────────
+# ─── Startup ───────────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_validation():
-    logger.info("=" * 55)
-    logger.info("  ACES Backend v4.1 — Startup")
-    logger.info("=" * 55)
-    
-    # Initialize SQLite Database
     init_db()
-
-    if not RESEND_API_KEY:
-        logger.error("  CRITICAL: RESEND_API_KEY is missing!")
-    else:
-        logger.info("  Resend configuration OK.")
-        
-    # Start the background poller
     asyncio.create_task(process_email_queue())
-
-    logger.info("=" * 55)
