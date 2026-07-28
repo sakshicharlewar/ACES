@@ -25,6 +25,7 @@ class InnovationRead(InnovationCreate):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 
 # ─── Upcoming Events ──────────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ class EventRead(EventCreate):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 
 # ─── Event Registrations ──────────────────────────────────────────────────────
@@ -72,6 +74,7 @@ class RegistrationRead(RegistrationCreate):
 
     class Config:
         from_attributes = True
+        orm_mode = True
 
 
 # ─── Contact Messages ─────────────────────────────────────────────────────────
@@ -87,3 +90,4 @@ class ContactRead(ContactCreate):
 
     class Config:
         from_attributes = True
+        orm_mode = True
