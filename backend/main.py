@@ -295,30 +295,47 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     user_agent = request.headers.get("User-Agent")
 
     # ── Save to PostgreSQL ──
+    db_saved = False
     if SessionLocal is not None:
         db = SessionLocal()
         try:
-            crud.create_innovation(
+            saved_record = crud.create_innovation(
                 db,
-                full_name=fields_dict.get("Full Name", ""),
-                email=fields_dict.get("Email", ""),
-                mobile=fields_dict.get("Mobile") or None,
-                department=fields_dict.get("Department", ""),
-                year=fields_dict.get("Year", ""),
-                category=fields_dict.get("Idea Category", ""),
-                idea_title=fields_dict.get("Idea Title", ""),
-                idea_description=fields_dict.get("Idea Description", ""),
-                expected_outcome=fields_dict.get("Expected Outcome") or None,
+                full_name=fields_dict.get("Full Name", fields_dict.get("fullName", "")),
+                email=fields_dict.get("Email", fields_dict.get("email", "")),
+                mobile=fields_dict.get("Mobile", fields_dict.get("mobile")) or None,
+                department=fields_dict.get("Department", fields_dict.get("department", "")),
+                year=fields_dict.get("Year", fields_dict.get("year", "")),
+                category=fields_dict.get("Idea Category", fields_dict.get("category", "")),
+                idea_title=fields_dict.get("Idea Title", fields_dict.get("ideaTitle", "")),
+                idea_description=fields_dict.get("Idea Description", fields_dict.get("ideaDescription", "")),
+                expected_outcome=fields_dict.get("Expected Outcome", fields_dict.get("expectedOutcome")) or None,
                 attachment_name=attachment_name,
                 attachment_type=attachment_type,
                 attachment_url=None,
             )
+            if saved_record:
+                db_saved = True
         except Exception as e:
             logger.error(f"[API] PostgreSQL save failed: {e}")
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"success": False, "message": "Failed to save submission to database."}
+            )
         finally:
             db.close()
     else:
-        logger.warning("[API] PostgreSQL unavailable — submission NOT persisted to DB.")
+        logger.error("[API] PostgreSQL database unavailable.")
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"success": False, "message": "Database service unavailable."}
+        )
+
+    if not db_saved:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "message": "Failed to save submission to database."}
+        )
 
     # ── Build & queue email ──
     idea_title_val = fields_dict.get('Idea Title') or fields_dict.get('ideaTitle') or 'Submission'
@@ -335,7 +352,7 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
 
     background_tasks.add_task(send_email_with_retry, email_id, subject, html_body, attachments_json)
 
-    logger.info("[API] Submission saved and email queued.")
+    logger.info("[API] Submission saved to PostgreSQL and email queued.")
     logger.info("=" * 55)
 
     return JSONResponse(
@@ -438,6 +455,7 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/api/submissions")
+@app.get("/api/innovation-box/submissions")
 async def list_submissions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     if db is None:
         return JSONResponse(status_code=503, content={"error": "Database unavailable"})
