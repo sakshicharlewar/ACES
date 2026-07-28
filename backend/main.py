@@ -313,6 +313,9 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
                 attachment_name=attachment_name,
                 attachment_type=attachment_type,
                 attachment_url=None,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                form_data=json.dumps(fields_dict),
             )
             if saved_record:
                 db_saved = True

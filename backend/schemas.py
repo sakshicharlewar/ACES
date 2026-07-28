@@ -17,6 +17,9 @@ class InnovationCreate(BaseModel):
     attachment_name: Optional[str] = None
     attachment_type: Optional[str] = None
     attachment_url: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    form_data: Optional[str] = None
     submitted_at: Optional[datetime] = None
 
 class InnovationRead(InnovationCreate):

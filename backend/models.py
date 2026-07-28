@@ -22,6 +22,9 @@ class InnovationSubmission(Base):
     attachment_name = Column(String(500), nullable=True)
     attachment_type = Column(String(100), nullable=True)
     attachment_url  = Column(Text, nullable=True)
+    ip_address      = Column(String(100), nullable=True)
+    user_agent      = Column(Text, nullable=True)
+    form_data       = Column(Text, nullable=True)
     submitted_at    = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
