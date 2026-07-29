@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock } from "lucide-react";
 import * as XLSX from 'xlsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -58,6 +58,26 @@ export default function AdminEventRegistrations() {
       if (res.ok) setRegistrations(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  const handleToggleStatus = async (eventId, openNow) => {
+    if (!window.confirm(`${openNow ? 'Open' : 'Close'} registration for this event?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/api/events/${eventId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        body: JSON.stringify({ is_registration_open: openNow }),
+      });
+      if (res.ok) {
+        fetchEvents();
+        if (selectedEventId) fetchRegistrations(selectedEventId);
+      } else {
+        alert("Failed to update registration status.");
+      }
+    } catch (e) { console.error(e); alert("Network error."); }
   };
 
   const handleDelete = async (regId) => {
@@ -175,6 +195,53 @@ export default function AdminEventRegistrations() {
           </button>
         </div>
       </div>
+
+      {/* Event Status Dashboard */}
+      {selectedEvent && (
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex gap-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-700">{selectedEvent.registered_teams_count ?? registrations.length}</p>
+                <p className="text-xs text-blue-600">Total Registered</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-700">
+                  {Math.max(0, (selectedEvent.max_teams ?? 30) - (selectedEvent.registered_teams_count ?? registrations.length))}
+                </p>
+                <p className="text-xs text-green-600">Seats Remaining</p>
+              </div>
+              <div className="text-center">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
+                  selectedEvent.is_registration_open
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {selectedEvent.is_registration_open ? '🟢 Open' : '🔴 Closed'}
+                </span>
+                <p className="text-xs text-gray-500 mt-1">Registration Status</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {selectedEvent.is_registration_open ? (
+                <button
+                  onClick={() => handleToggleStatus(selectedEvent.id, false)}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Lock size={14} /> Close Registration
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleToggleStatus(selectedEvent.id, true)}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Unlock size={14} /> Open Registration
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Row */}
       {registrations.length > 0 && (
