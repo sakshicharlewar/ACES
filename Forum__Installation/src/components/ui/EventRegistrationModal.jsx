@@ -130,6 +130,10 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setError('Transaction ID must contain only letters and numbers.');
       return false;
     }
+    if (!formData.paymentScreenshot) {
+      setError('Please upload the payment screenshot.');
+      return false;
+    }
     if (!formData.paymentConfirmed) {
       setError('Please confirm that you have completed the payment.');
       return false;
@@ -208,7 +212,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const years = ['Second Year', 'Third Year'];
   const progressWidth = step === 1 ? '33%' : step === 2 ? '66%' : '100%';
 
-  const canSubmit = formData.transactionId.trim().length >= 12 && formData.paymentConfirmed;
+  const canSubmit = formData.transactionId.trim().length >= 12 && formData.paymentConfirmed && !!formData.paymentScreenshot;
 
   return (
     <AnimatePresence>
@@ -419,36 +423,30 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </div>
 
                 {/* QR Card */}
-                <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-5">
-                  <p className="text-sm text-gray-400 mb-4 font-medium">Scan to Pay</p>
-                  <div className="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.25)]">
-                    <QRCodeSVG
-                      value={UPI_STRING}
-                      size={180}
-                      level="H"
-                      bgColor="#ffffff"
-                      fgColor="#000000"
+                <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-5 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                  <p className="text-sm text-gray-300 mb-4 font-medium text-center">Scan the QR Code using any UPI application.</p>
+                  
+                  <div className="bg-white p-2 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-transform hover:scale-105 duration-300">
+                    <img 
+                      src="/ACESSScanner.jpeg" 
+                      alt="Payment QR Code" 
+                      className="w-48 h-48 object-contain rounded-xl"
                     />
                   </div>
-                  <p className="text-sm text-gray-300 mt-4 font-medium">Scan using any UPI App</p>
-                  <p className="text-xs text-gray-500 mt-1">Google Pay • PhonePe • Paytm • BHIM</p>
-                </div>
-
-                {/* UPI ID */}
-                <div className="mb-5">
-                  <label className="block text-sm text-gray-400 mb-2">UPI ID</label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-sm">
-                      {UPI_ID}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={copyUPI}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${copied ? 'bg-green-500/20 border-green-500/40 text-green-400' : 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'}`}
-                    >
-                      <Copy size={15} />
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
+                  
+                  <p className="text-xs text-gray-400 mt-4 text-center">Accepted Apps</p>
+                  <p className="text-sm text-gray-200 mt-1 font-medium text-center">PhonePe • Google Pay • Paytm • BHIM • Any UPI App</p>
+                  
+                  <div className="w-full mt-5 pt-5 border-t border-white/10">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-2">Payment Instructions</p>
+                    <ol className="text-sm text-gray-300 space-y-1.5 pl-4 list-decimal marker:text-blue-500 font-medium">
+                      <li>Scan the QR Code.</li>
+                      <li>Pay ₹40.</li>
+                      <li>Copy the UPI Transaction ID.</li>
+                      <li>Paste the Transaction ID below.</li>
+                      <li>Submit the registration.</li>
+                    </ol>
                   </div>
                 </div>
 
@@ -462,16 +460,18 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     name="transactionId"
                     value={formData.transactionId}
                     onChange={handleChange}
-                    placeholder="Enter your UPI Transaction ID"
+                    placeholder="Example: T2407291845123456789"
+                    minLength={12}
+                    maxLength={40}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-mono"
                   />
-                  <p className="text-xs text-gray-500 mt-1.5">Min. 12 characters • Letters and numbers only</p>
+                  <p className="text-xs text-gray-500 mt-1.5">Min. 12 characters • Max. 40 characters • Letters and numbers only</p>
                 </div>
 
                 {/* Screenshot Upload */}
                 <div className="mb-5">
                   <label className="block text-sm text-gray-300 mb-2">
-                    Upload Payment Screenshot <span className="text-gray-500">(Optional)</span>
+                    Upload Payment Screenshot <span className="text-red-400">*</span>
                   </label>
                   <div
                     onClick={() => fileRef.current?.click()}
