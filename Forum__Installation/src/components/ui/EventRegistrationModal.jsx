@@ -318,6 +318,43 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
             <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()}>
 
+              {/* ── EVENT INFO CARD (always visible at top of Step 1) ── */}
+              {step === 1 && (
+                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden">
+                  {/* Blue glow border */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/30 via-blue-600/10 to-purple-500/20 blur-sm" />
+                  <div className="relative rounded-2xl border border-blue-500/40 bg-white/[0.03] backdrop-blur-md p-5">
+                    {/* Top accent line */}
+                    <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-blue-500 via-blue-400 to-purple-500" />
+
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-base">📌</span>
+                      <h4 className="text-white font-semibold text-sm tracking-wide uppercase">Event Details</h4>
+                    </div>
+
+                    <p className="text-gray-200 text-sm leading-relaxed mb-3">
+                      <span className="text-white font-semibold">Bug Hunt: Debug the Web</span> challenges teams to identify and fix
+                      real HTML, CSS, and JavaScript issues in a web application.
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-medium">
+                        👥 Team of 2
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-500/25 text-yellow-300 text-xs font-medium">
+                        💳 Registration Fee: ₹40
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/25 text-purple-300 text-xs font-medium">
+                        🏆 Maximum 30 Teams
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 text-green-300 text-xs font-medium">
+                        ⚡ Accuracy &amp; Speed
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* ── STEP 1: LEADER ── */}
               <div className={step === 1 ? 'block pt-4' : 'hidden'}>
                 <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
