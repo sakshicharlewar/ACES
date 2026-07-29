@@ -11,6 +11,16 @@ const UPI_STRING = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am
 
 export default function EventRegistrationModal({ isOpen, onClose, eventDetails, onSuccess }) {
   const [step, setStep] = useState(1);
+
+  const handleUPIPayment = (e) => {
+    e.preventDefault();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = UPI_STRING;
+    } else {
+      alert("UPI deep links only work on mobile devices. Please scan the QR code using your phone's UPI app (GPay, PhonePe, Paytm, etc.).");
+    }
+  };
   const [formData, setFormData] = useState({
     teamName: '',
     leaderName: '',
@@ -459,7 +469,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                       {/* Primary CTA: Deep Link */}
                       <a
-                        href={UPI_STRING}
+                        href="#"
+                        onClick={handleUPIPayment}
                         className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold text-lg transition-all shadow-[0_0_40px_rgba(59,130,246,0.45)] hover:shadow-[0_0_56px_rgba(59,130,246,0.6)] mb-6"
                       >
                         <CreditCard size={22} /> Pay ₹40 Now
@@ -476,7 +487,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                       {/* Fallback QR linked to deep link */}
                       <a
-                        href={UPI_STRING}
+                        href="#"
+                        onClick={handleUPIPayment}
                         className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
                       >
                         <img
