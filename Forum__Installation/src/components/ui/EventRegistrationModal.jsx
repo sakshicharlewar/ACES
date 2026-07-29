@@ -136,7 +136,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     return <RegistrationSuccess data={successData} onClose={onClose} />;
   }
 
-  const branches = ["Computer Engineering", "IT", "EnTC", "Mechanical", "Civil"];
+  const branches = ["Computer Engineering"];
   const years = ["Second Year", "Third Year"];
 
   return (
