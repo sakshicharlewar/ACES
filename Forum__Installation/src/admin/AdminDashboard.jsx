@@ -128,7 +128,7 @@ export function AdminDashboard() {
           <div className="bg-[#0d1426] border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-semibold text-sm">Recent Registrations</h2>
-              <Link to="/admin/registrations" className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1 transition-colors">
+              <Link to="/admin/event-registrations" className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1 transition-colors">
                 View all <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
@@ -142,14 +142,13 @@ export function AdminDashboard() {
                 ))
               ) : stats?.recent_registrations?.length ? (
                 stats.recent_registrations.map(r => (
-                  <Link
+                  <div
                     key={r.id}
-                    to={`/admin/registrations/${r.id}`}
                     className="block px-6 py-4 hover:bg-white/3 transition-colors group"
                   >
                     <p className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">{r.full_name}</p>
                     <p className="text-white/40 text-xs mt-0.5">{r.email} · Event #{r.event_id} · {fmt(r.created_at)}</p>
-                  </Link>
+                  </div>
                 ))
               ) : (
                 <p className="px-6 py-8 text-white/30 text-sm text-center">No registrations yet.</p>

@@ -1578,20 +1578,20 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
 
     from datetime import date
     from sqlalchemy import func as sqlfunc
-    from models import InnovationSubmission, EventRegistration
+    from models import InnovationSubmission, TeamRegistration
 
     db = SessionLocal()
     try:
         today = date.today()
 
         total_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
-        total_registrations = db.query(sqlfunc.count(EventRegistration.id)).scalar() or 0
+        total_registrations = db.query(sqlfunc.count(TeamRegistration.id)).scalar() or 0
 
         today_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
             sqlfunc.date(InnovationSubmission.submitted_at) == today
         ).scalar() or 0
-        today_registrations = db.query(sqlfunc.count(EventRegistration.id)).filter(
-            sqlfunc.date(EventRegistration.created_at) == today
+        today_registrations = db.query(sqlfunc.count(TeamRegistration.id)).filter(
+            sqlfunc.date(TeamRegistration.created_at) == today
         ).scalar() or 0
 
         # Recent 5 submissions
@@ -1600,8 +1600,8 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
         ).limit(5).all()
 
         # Recent 5 registrations
-        recent_regs = db.query(EventRegistration).order_by(
-            EventRegistration.created_at.desc()
+        recent_regs = db.query(TeamRegistration).order_by(
+            TeamRegistration.created_at.desc()
         ).limit(5).all()
 
         return {
@@ -1622,8 +1622,8 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
             "recent_registrations": [
                 {
                     "id"         : r.id,
-                    "full_name"  : r.full_name,
-                    "email"      : r.email,
+                    "full_name"  : r.team_name,
+                    "email"      : r.leader_email,
                     "event_id"   : r.event_id,
                     "created_at" : r.created_at.isoformat() if r.created_at else None,
                 }
