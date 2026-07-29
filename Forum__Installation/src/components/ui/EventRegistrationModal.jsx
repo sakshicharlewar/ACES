@@ -15,7 +15,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     member2Name: '',
     member2Email: '',
     member2Phone: '',
-    member2Year: 'Second Year'
+    member2Year: 'Second Year',
+    agreedToRules: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,7 +25,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
     setError(null);
   };
 
@@ -53,8 +55,20 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setError("Phone number must be exactly 10 digits.");
       return false;
     }
-    if (formData.member2Email === formData.leaderEmail) {
-      setError("Member email cannot be same as leader email.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.member2Email)) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
+    if (formData.leaderEmail === formData.member2Email) {
+      setError("Leader and member cannot have the same email.");
+      return false;
+    }
+    if (formData.leaderPhone === formData.member2Phone) {
+      setError("Leader and member cannot have the same phone number.");
+      return false;
+    }
+    if (!formData.agreedToRules) {
+      setError("You must agree to the event rules to register.");
       return false;
     }
     return true;
@@ -143,10 +157,10 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           className="relative w-full max-w-2xl bg-[#0B0B0B] border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto"
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-white/10">
             <div>
-              <h2 className="text-xl font-bold text-white">{eventDetails?.title || 'Event Registration'}</h2>
-              <p className="text-sm text-gray-400">Team Registration (2 Members)</p>
+              <h2 className="text-xl font-bold text-white">Bug Hunt Registration</h2>
+              <p className="text-sm text-gray-400 mt-1">Team Registration (2 Members) • {eventDetails.title}</p>
             </div>
             <button
               onClick={onClose}
@@ -222,7 +236,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-300 mb-2">College Email *</label>
+                    <label className="block text-sm text-gray-300 mb-2">Leader Email *</label>
                     <input
                       type="email"
                       name="leaderEmail"
@@ -295,7 +309,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-300 mb-2">College Email *</label>
+                    <label className="block text-sm text-gray-300 mb-2">Member Email *</label>
                     <input
                       type="email"
                       name="member2Email"
@@ -317,6 +331,24 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       {years.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
+                  
+                  <div className="pt-4 border-t border-white/10 mt-4">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div className="relative flex items-center">
+                        <input
+                          type="checkbox"
+                          name="agreedToRules"
+                          checked={formData.agreedToRules}
+                          onChange={handleChange}
+                          className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded cursor-pointer checked:bg-blue-500 checked:border-blue-500 transition-colors"
+                        />
+                        <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                      </div>
+                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                        ☑ I agree to all event rules. <span className="text-red-400">*</span>
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -324,39 +356,47 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-white/10 bg-[#0B0B0B]">
             {step === 2 && (
-              <button
-                type="button"
-                onClick={prevStep}
-                disabled={loading}
-                className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 transition-colors font-medium disabled:opacity-50"
-              >
-                Back
-              </button>
+              <div className="flex justify-between items-center mb-4 px-2">
+                <span className="text-sm text-gray-400">Registered Teams</span>
+                <span className="text-sm font-bold text-blue-400">{eventDetails.registered_teams_count} / {eventDetails.max_teams}</span>
+              </div>
             )}
-            
-            {step === 1 ? (
-              <button
-                type="button"
-                onClick={nextStep}
-                className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(59,130,246,0.3)]"
-              >
-                Continue
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <><Loader2 className="animate-spin" size={18} /> Submitting...</>
-                ) : (
-                  <><CheckCircle size={18} /> Complete Registration</>
-                )}
-              </button>
-            )}
+            <div className="flex justify-end gap-3">
+              {step === 2 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  disabled={loading}
+                  className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 transition-colors font-medium disabled:opacity-50"
+                >
+                  Back
+                </button>
+              )}
+              
+              {step === 1 ? (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                >
+                  Continue
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !formData.agreedToRules}
+                  className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <><Loader2 className="animate-spin" size={18} /> Submitting...</>
+                  ) : (
+                    <><CheckCircle size={18} /> Register Team</>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
