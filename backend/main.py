@@ -361,6 +361,29 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  Async wrapper — runs sync send_email_with_retry in thread pool
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def send_email_async(email_id: str, subject: str, html_body: str, attachments_json: str):
+    """Async wrapper that runs the sync email sender in a thread pool.
+    This guarantees the email runs even after the HTTP response is returned."""
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(
+            None,  # default ThreadPoolExecutor
+            send_email_with_retry,
+            email_id, subject, html_body, attachments_json
+        )
+        if result:
+            logger.info(f"[AsyncEmail|{email_id}] ✅ Email delivery confirmed.")
+        else:
+            logger.error(f"[AsyncEmail|{email_id}] ❌ Email delivery failed — check logs above.")
+    except Exception as e:
+        logger.error(f"[AsyncEmail|{email_id}] ❌ Unexpected async error: {e}")
+        logger.error(traceback.format_exc())
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  Master Email Sender — Gmail SMTP Primary → Resend API Fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -442,7 +465,7 @@ async def process_email_queue():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/submit-innovation", status_code=status.HTTP_201_CREATED)
-async def submit_innovation(request: Request, background_tasks: BackgroundTasks):
+async def submit_innovation(request: Request, background_tasks: BackgroundTasks):  # noqa
     logger.info("=" * 60)
     logger.info("[API] ▶ New innovation submission received")
 
@@ -542,9 +565,10 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     finally:
         db2.close()
 
-    # ── Fire email in background (immediate, non-blocking) ────────────────────
-    logger.info("[API] Step 4: Scheduling background email delivery...")
-    background_tasks.add_task(send_email_with_retry, email_id, subject, html_body, attachments_json)
+    # ── Fire email via asyncio.create_task (guaranteed to run after response) ──
+    logger.info("[API] Step 4: Firing email via asyncio.create_task (thread pool)...")
+    asyncio.create_task(send_email_async(email_id, subject, html_body, attachments_json))
+    logger.info(f"[API] ✅ Email task created — ID: {email_id}")
 
     logger.info("[API] ✅ Submission complete. Returning success to client.")
     logger.info("=" * 60)
@@ -686,7 +710,7 @@ async def test_email(background_tasks: BackgroundTasks):
         finally:
             db.close()
 
-    background_tasks.add_task(send_email_with_retry, email_id, "ACES Test Email", html, "[]")
+    asyncio.create_task(send_email_async(email_id, "ACES Test Email", html, "[]"))
     return {
         "status": "success",
         "message": f"Test email queued — ID: {email_id}. Check Render logs for delivery status.",
