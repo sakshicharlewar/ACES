@@ -96,9 +96,36 @@ export async function fetchSubmission(id) {
 }
 
 export async function deleteSubmission(id) {
-  const res = await apiFetch(`/admin/api/submissions/${id}`, { method: "DELETE" });
+  const res = await apiFetch(`/admin/api/innovation/${id}`, { method: "DELETE" });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Delete failed");
+  if (!res.ok) throw new Error(data.error || "Delete failed");
+  return data;
+}
+
+export async function approveSubmission(id) {
+  const res = await apiFetch(`/admin/api/innovation/${id}/approve`, { method: "PATCH" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Approval failed");
+  return data;
+}
+
+export async function rejectSubmission(id, reason) {
+  const res = await apiFetch(`/admin/api/innovation/${id}/reject`, { 
+    method: "PATCH",
+    body: JSON.stringify({ rejection_reason: reason })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Rejection failed");
+  return data;
+}
+
+export async function resendSubmissionNotification(id, type) {
+  const res = await apiFetch(`/admin/api/innovation/${id}/resend`, { 
+    method: "POST",
+    body: JSON.stringify({ type })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Resend failed");
   return data;
 }
 

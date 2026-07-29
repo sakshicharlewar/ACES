@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "./AdminLayout";
-import { fetchSubmissions, deleteSubmission, exportSubmissionsCSV } from "./adminApi";
+import { fetchSubmissions, deleteSubmission, exportSubmissionsCSV, approveSubmission, rejectSubmission, resendSubmissionNotification } from "./adminApi";
 import {
   Search, Filter, Download, Trash2, Eye,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, X,
+  ChevronLeft, ChevronRight, Loader2, AlertCircle, X, CheckCircle, XCircle, Send
 } from "lucide-react";
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 
@@ -28,6 +28,8 @@ export function AdminSubmissions() {
   const [delLoading, setDelLoading] = useState(false);
   const [previewModal, setPreviewModal] = useState(null);
   const [exporting,  setExporting]  = useState(false);
+  const [rejectionModal, setRejectionModal] = useState(null); // { id }
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const load = useCallback(async (pg = page) => {
     setLoading(true);
@@ -64,6 +66,40 @@ export function AdminSubmissions() {
     try { await exportSubmissionsCSV(); }
     catch (e) { alert(e.message); }
     finally { setExporting(false); }
+  }
+
+  async function handleApprove(id) {
+    if (!window.confirm("Approve this submission?")) return;
+    try {
+      await approveSubmission(id);
+      load(page);
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  async function submitRejection() {
+    if (!rejectionModal) return;
+    const id = rejectionModal.id;
+    try {
+      await rejectSubmission(id, rejectionReason);
+      setRejectionModal(null);
+      setRejectionReason("");
+      load(page);
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  async function handleResend(id, type) {
+    if (!window.confirm(`Resend ${type.toUpperCase()} notification?`)) return;
+    try {
+      await resendSubmissionNotification(id, type);
+      alert(`${type.toUpperCase()} resent successfully!`);
+      load(page);
+    } catch (e) {
+      alert(e.message);
+    }
   }
 
   return (
@@ -191,6 +227,14 @@ export function AdminSubmissions() {
                         }`}>
                           {s.status || "Pending"}
                         </span>
+                        <div className="flex flex-col gap-1 mt-2">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded w-max ${s.email_sent ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/40'}`}>
+                            Email: {s.email_sent ? '✅' : '❌'}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded w-max ${s.sms_sent ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/40'}`}>
+                            SMS: {s.sms_sent ? '✅' : '❌'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         {s.attachment_url ? (
@@ -225,17 +269,50 @@ export function AdminSubmissions() {
                       <td className="px-5 py-4 text-white/50 whitespace-nowrap">{fmt(s.submitted_at)}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
+                          {s.status !== "Pending" && s.status !== "pending" && (
+                            <button
+                              onClick={() => handleResend(s.id, "email")}
+                              title="Resend Email"
+                              className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors"
+                            >
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          
+                          {s.status !== "Approved" && (
+                            <button
+                              onClick={() => handleApprove(s.id)}
+                              title="Approve Submission"
+                              className="p-1.5 bg-green-500/20 hover:bg-green-500/40 text-green-400 rounded-lg transition-colors"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          
+                          {s.status !== "Rejected" && (
+                            <button
+                              onClick={() => setRejectionModal({ id: s.id })}
+                              title="Reject Submission"
+                              className="p-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg transition-colors"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
                           <Link
                             to={`/admin/submissions/${s.id}`}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg text-xs font-medium transition-colors"
+                            title="View Details"
+                            className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors"
                           >
-                            <Eye className="w-3.5 h-3.5" /> View
+                            <Eye className="w-3.5 h-3.5" />
                           </Link>
+                          
                           <button
                             onClick={() => setDelId(s.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg text-xs font-medium transition-colors"
+                            title="Delete Submission"
+                            className="p-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg transition-colors"
                           >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -312,8 +389,39 @@ export function AdminSubmissions() {
         isOpen={!!previewModal}
         onClose={() => setPreviewModal(null)}
         imageUrl={previewModal}
-        altText="Innovation Box Attachment"
+        altText="Attachment Preview"
       />
+
+      {/* Rejection Modal */}
+      {rejectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#0d1426] rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-white/10 p-6">
+            <h3 className="text-lg font-bold text-white mb-2">Reject Submission</h3>
+            <p className="text-sm text-white/60 mb-4">Please provide a reason for rejecting this idea. This will be sent to the student.</p>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-red-500 resize-none h-24 mb-4"
+              placeholder="e.g. Idea is not feasible, incomplete details, etc."
+            />
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { setRejectionModal(null); setRejectionReason(""); }}
+                className="px-4 py-2 text-sm font-medium text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRejection}
+                disabled={!rejectionReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-lg shadow-red-600/20"
+              >
+                Reject Submission
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

@@ -31,8 +31,19 @@ class InnovationSubmission(Base):
     user_agent      = Column(Text, nullable=True)
     form_data       = Column(Text, nullable=True)
     idea_id         = Column(String(50), unique=True, index=True, nullable=True)
-    status          = Column(String(50), default="Pending Review", index=True)
+    status          = Column(String(50), default="Pending", index=True)
     admin_remarks   = Column(Text, nullable=True)
+    
+    # Admin Approval Workflow
+    approval_date   = Column(DateTime(timezone=True), nullable=True)
+    approved_by     = Column(String(255), nullable=True)
+    rejection_reason= Column(Text, nullable=True)
+    
+    # Notification Status
+    email_sent      = Column(Boolean, default=False)
+    sms_sent        = Column(Boolean, default=False)
+    notification_timestamp = Column(DateTime(timezone=True), nullable=True)
+
     submission_date = Column(DateTime(timezone=True), server_default=func.now())
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
     submitted_at    = Column(DateTime(timezone=True), server_default=func.now())
@@ -124,6 +135,11 @@ class TeamRegistration(Base):
     approval_date   = Column(DateTime(timezone=True), nullable=True)
     approved_by     = Column(String(255), nullable=True)
     rejection_reason= Column(Text, nullable=True)
+    
+    # Notification Status
+    email_sent      = Column(Boolean, default=False)
+    sms_sent        = Column(Boolean, default=False)
+    notification_timestamp = Column(DateTime(timezone=True), nullable=True)
     
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock } from "lucide-react";
+import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock, Send } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 
@@ -83,6 +83,47 @@ export default function AdminEventRegistrations() {
     } catch (e) { console.error(e); alert("Network error."); }
   };
 
+  const handleApproveRegistration = async (id) => {
+    if (!window.confirm("Approve this registration?")) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/api/team-registrations/${id}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("adminToken")}`
+        }
+      });
+      if (res.ok) fetchRegistrations(selectedEventId);
+      else alert("Failed to approve registration.");
+    } catch (e) {
+      console.error(e);
+      alert("Error approving registration.");
+    }
+  };
+
+  const handleResend = async (id, type) => {
+    if (!window.confirm(`Resend ${type.toUpperCase()} notification?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/api/team-registrations/${id}/resend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("adminToken")}`
+        },
+        body: JSON.stringify({ type })
+      });
+      if (res.ok) {
+        alert(`${type.toUpperCase()} resent successfully!`);
+        fetchRegistrations(selectedEventId);
+      } else {
+        const data = await res.json();
+        alert(`Failed to resend ${type}: ${data.error || "Unknown error"}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(`Error resending ${type}.`);
+    }
+  };
+
   const handleDelete = async (regId) => {
     if (!window.confirm("Delete this registration?")) return;
     try {
@@ -94,21 +135,6 @@ export default function AdminEventRegistrations() {
     } catch (e) { console.error(e); }
   };
 
-  const handleApproveRegistration = async (regId) => {
-    setRegistrations(prev =>
-      prev.map(r => r.id === regId ? { ...r, approval_status: "approved" } : r)
-    );
-    try {
-      const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}/approve`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
-      });
-      if (!res.ok) fetchRegistrations(selectedEventId);
-    } catch (e) {
-      console.error(e);
-      fetchRegistrations(selectedEventId);
-    }
-  };
 
   const submitRejection = async () => {
     if (!rejectionModal) return;
@@ -320,7 +346,14 @@ export default function AdminEventRegistrations() {
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {statusBadge(reg.approval_status)}
-                    <div className="text-xs text-gray-400 mt-1">Fee: {reg.registration_fee || "₹40"}</div>
+                    <div className="flex flex-col gap-1 mt-2">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded w-max ${reg.email_sent ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        Email: {reg.email_sent ? '✅ Sent' : '❌ Pending'}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded w-max ${reg.sms_sent ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        SMS: {reg.sms_sent ? '✅ Sent' : '❌ Pending'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-xs font-mono text-gray-700 max-w-[120px] truncate">
                     {reg.transaction_id || <span className="text-gray-400">—</span>}
@@ -360,6 +393,19 @@ export default function AdminEventRegistrations() {
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {/* Resend Actions if handled */}
+                      {reg.approval_status !== "pending" && (
+                        <>
+                          <button
+                            onClick={() => handleResend(reg.id, "email")}
+                            title="Resend Email"
+                            className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+                          >
+                            <Send size={15} />
+                          </button>
+                        </>
+                      )}
+                      
                       {/* Approve */}
                       {reg.approval_status !== "approved" && (
                         <button

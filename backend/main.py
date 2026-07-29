@@ -25,6 +25,7 @@ import uuid
 import asyncio
 import json
 import base64
+from utils.sms import send_sms
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -993,22 +994,31 @@ async def approve_team_registration(reg_id: int, request: Request, background_ta
     <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
       <h2 style="color:#1e3a8a;">🎉 Registration Approved!</h2>
       <p>Dear <b>{reg.leader_name}</b>,</p>
-      <p>Congratulations! Your registration for <b>{event.title}</b> has been approved.</p>
+      <p>Congratulations!</p>
+      <p>Your registration has been approved.</p>
       <p><b>Registration ID:</b> {reg.registration_id}</p>
-      <p><b>Team Name:</b> {reg.team_name}</p>
-      <p><b>Event Date:</b> {event.event_date.strftime('%d %B %Y') if event.event_date else 'TBA'}</p>
-      <p><b>Venue:</b> {event.venue or 'TBA'}</p>
-      <p><b>Reporting Time:</b> {event.event_time or 'TBA'}</p>
-      <p><b>Payment Status:</b> Verified</p>
-      <hr>
-      <p>We look forward to seeing your team.</p>
+      <p><b>Event:</b> {event.title}</p>
+      <p><b>Status:</b> Approved</p>
+      <p>Please report to the venue on the scheduled date and time.</p>
+      <br>
       <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
     </div>
     """
-    crud.add_email_to_queue(db, leader_email_id, f"ACES Event Registration Approved – {event.title}", leader_html, "[]")
-    background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Event Registration Approved – {event.title}", leader_html, "[]", 1, reg.leader_email)
+    crud.add_email_to_queue(db, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]")
+    background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]", 1, reg.leader_email)
     
-    logger.info(f"[Admin] Registration #{reg_id} approved")
+    reg.email_sent = True
+    
+    # Send SMS if leader phone exists
+    if reg.leader_phone:
+        sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been APPROVED.\n\nPlease check your email for complete event details.\n\nThank you."
+        if send_sms(reg.leader_phone, sms_msg):
+            reg.sms_sent = True
+
+    reg.notification_timestamp = dt.utcnow()
+    db.commit()
+    
+    logger.info(f"[Admin] Registration #{reg_id} approved. Email/SMS dispatched.")
     return {"success": True, "approval_status": "approved"}
 
 @app.patch("/admin/api/team-registrations/{reg_id}/reject")
@@ -1058,6 +1068,17 @@ async def reject_team_registration(reg_id: int, request: Request, background_tas
     crud.add_email_to_queue(db, leader_email_id, f"ACES Event Registration Update", leader_html, "[]")
     background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Event Registration Update", leader_html, "[]", 1, reg.leader_email)
     
+    reg.email_sent = True
+    
+    # Send SMS if leader phone exists
+    if reg.leader_phone:
+        sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been REJECTED.\nReason: {reason}.\nPlease check email for details."
+        if send_sms(reg.leader_phone, sms_msg):
+            reg.sms_sent = True
+
+    reg.notification_timestamp = dt.utcnow()
+    db.commit()
+    
     logger.info(f"[Admin] Registration #{reg_id} rejected. Reason: {reason}")
     return {"success": True, "approval_status": "rejected"}
 
@@ -1075,8 +1096,303 @@ async def list_submissions(skip: int = 0, limit: int = 100, db: Session = Depend
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  API ROUTES — Innovation Box Admin
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.patch("/admin/api/innovation/{idea_id}/approve")
+async def approve_innovation(idea_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: approve an innovation box submission and send confirmation email/sms."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    submission = db.query(InnovationSubmission).filter(InnovationSubmission.id == idea_id).first()
+    if not submission:
+        return JSONResponse(status_code=404, content={"error": "Submission not found."})
+    
+    from datetime import datetime as dt
+    submission.status = "Approved"
+    submission.approval_date = dt.utcnow()
+    submission.approved_by = "admin"
+    db.commit()
+    
+    # Send Approval Email
+    email_id_uuid = uuid.uuid4().hex
+    html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#1e3a8a;">🎉 Innovation Box Submission Approved!</h2>
+      <p>Dear <b>{submission.full_name}</b>,</p>
+      <p>Congratulations!</p>
+      <p>Your innovation idea has been reviewed and approved.</p>
+      <p><b>Idea ID:</b> {submission.idea_id}</p>
+      <p><b>Title:</b> {submission.idea_title}</p>
+      <p><b>Status:</b> Approved</p>
+      <p>Thank you for contributing your innovative idea to ACES.</p>
+      <br>
+      <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+    </div>
+    """
+    crud.add_email_to_queue(db, email_id_uuid, "ACES Innovation Box Submission Approved", html, "[]")
+    background_tasks.add_task(send_email_with_retry, email_id_uuid, "ACES Innovation Box Submission Approved", html, "[]", 1, submission.email)
+    
+    submission.email_sent = True
+    
+    # Send SMS if mobile exists
+    if submission.mobile:
+        sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been APPROVED.\n\nPlease check your email for further details.\n\nThank you."
+        if send_sms(submission.mobile, sms_msg):
+            submission.sms_sent = True
+
+    submission.notification_timestamp = dt.utcnow()
+    db.commit()
+    
+    logger.info(f"[Admin] Innovation #{idea_id} approved. Email/SMS dispatched.")
+    return {"success": True, "status": "Approved"}
+
+
+@app.patch("/admin/api/innovation/{idea_id}/reject")
+async def reject_innovation(idea_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: reject an innovation box submission and send rejection email/sms."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    body = await request.json()
+    reason = body.get("rejection_reason", "No reason provided.")
+    
+    submission = db.query(InnovationSubmission).filter(InnovationSubmission.id == idea_id).first()
+    if not submission:
+        return JSONResponse(status_code=404, content={"error": "Submission not found."})
+    
+    from datetime import datetime as dt
+    submission.status = "Rejected"
+    submission.approval_date = dt.utcnow()
+    submission.approved_by = "admin"
+    submission.rejection_reason = reason
+    db.commit()
+    
+    # Send Rejection Email
+    email_id_uuid = uuid.uuid4().hex
+    html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#dc2626;">Innovation Box Update</h2>
+      <p>Dear <b>{submission.full_name}</b>,</p>
+      <p>We regret to inform you that your innovation idea submission could not be approved.</p>
+      <p><b>Reason:</b></p>
+      <blockquote style="border-left: 4px solid #dc2626; padding-left: 10px; color: #4b5563;">{reason}</blockquote>
+      <hr>
+      <p>If you believe this is an error, please contact the coordinator.</p>
+      <p>Regards,<br>ACES</p>
+    </div>
+    """
+    crud.add_email_to_queue(db, email_id_uuid, "ACES Innovation Box Update", html, "[]")
+    background_tasks.add_task(send_email_with_retry, email_id_uuid, "ACES Innovation Box Update", html, "[]", 1, submission.email)
+    
+    submission.email_sent = True
+    
+    # Send SMS if mobile exists
+    if submission.mobile:
+        sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been REJECTED.\nReason: {reason}.\nPlease check email for details."
+        if send_sms(submission.mobile, sms_msg):
+            submission.sms_sent = True
+
+    submission.notification_timestamp = dt.utcnow()
+    db.commit()
+    
+    logger.info(f"[Admin] Innovation #{idea_id} rejected. Reason: {reason}")
+    return {"success": True, "status": "Rejected"}
+
+@app.delete("/admin/api/innovation/{idea_id}")
+async def delete_innovation(idea_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin: completely delete an innovation box submission."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+
+    submission = db.query(InnovationSubmission).filter(InnovationSubmission.id == idea_id).first()
+    if not submission:
+        return JSONResponse(status_code=404, content={"error": "Submission not found."})
+        
+    db.delete(submission)
+    db.commit()
+    logger.info(f"[Admin] Innovation #{idea_id} deleted.")
+    return {"success": True}
+
+@app.post("/admin/api/innovation/{idea_id}/resend")
+async def resend_innovation_notification(idea_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: resend email or sms for innovation box submission."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    body = await request.json()
+    notify_type = body.get("type") # "email" or "sms"
+    
+    submission = db.query(InnovationSubmission).filter(InnovationSubmission.id == idea_id).first()
+    if not submission:
+        return JSONResponse(status_code=404, content={"error": "Submission not found."})
+        
+    if notify_type == "sms":
+        if not submission.mobile:
+            return JSONResponse(status_code=400, content={"error": "No mobile number available."})
+        sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been {submission.status.upper()}.\nPlease check your email for details."
+        if submission.status == "Rejected" and submission.rejection_reason:
+            sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been REJECTED.\nReason: {submission.rejection_reason}.\nPlease check email for details."
+        if send_sms(submission.mobile, sms_msg):
+            submission.sms_sent = True
+            db.commit()
+            return {"success": True, "message": "SMS resent successfully."}
+        return JSONResponse(status_code=500, content={"error": "Failed to send SMS."})
+        
+    elif notify_type == "email":
+        email_id_uuid = uuid.uuid4().hex
+        if submission.status == "Approved":
+            html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+              <h2 style="color:#1e3a8a;">🎉 Innovation Box Submission Approved!</h2>
+              <p>Dear <b>{submission.full_name}</b>,</p>
+              <p>Congratulations!</p>
+              <p>Your innovation idea has been reviewed and approved.</p>
+              <p><b>Idea ID:</b> {submission.idea_id}</p>
+              <p><b>Title:</b> {submission.idea_title}</p>
+              <p><b>Status:</b> Approved</p>
+              <p>Thank you for contributing your innovative idea to ACES.</p>
+              <br>
+              <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+            </div>
+            """
+            crud.add_email_to_queue(db, email_id_uuid, "ACES Innovation Box Submission Approved", html, "[]")
+            background_tasks.add_task(send_email_with_retry, email_id_uuid, "ACES Innovation Box Submission Approved", html, "[]", 1, submission.email)
+        else:
+            reason = submission.rejection_reason or "No reason provided."
+            html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+              <h2 style="color:#dc2626;">Innovation Box Update</h2>
+              <p>Dear <b>{submission.full_name}</b>,</p>
+              <p>We regret to inform you that your innovation idea submission could not be approved.</p>
+              <p><b>Reason:</b></p>
+              <blockquote style="border-left: 4px solid #dc2626; padding-left: 10px; color: #4b5563;">{reason}</blockquote>
+              <hr>
+              <p>If you believe this is an error, please contact the coordinator.</p>
+              <p>Regards,<br>ACES</p>
+            </div>
+            """
+            crud.add_email_to_queue(db, email_id_uuid, "ACES Innovation Box Update", html, "[]")
+            background_tasks.add_task(send_email_with_retry, email_id_uuid, "ACES Innovation Box Update", html, "[]", 1, submission.email)
+        
+        submission.email_sent = True
+        db.commit()
+        return {"success": True, "message": "Email resent successfully."}
+        
+    return JSONResponse(status_code=400, content={"error": "Invalid notification type."})
+
+
+@app.post("/admin/api/team-registrations/{reg_id}/resend")
+async def resend_registration_notification(reg_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: resend email or sms for team registration."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    body = await request.json()
+    notify_type = body.get("type") # "email" or "sms"
+    
+    reg = db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+    if not reg:
+        return JSONResponse(status_code=404, content={"error": "Registration not found."})
+        
+    event = crud.get_event(db, reg.event_id)
+        
+    if notify_type == "sms":
+        if not reg.leader_phone:
+            return JSONResponse(status_code=400, content={"error": "No mobile number available."})
+        sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been {reg.approval_status.upper()}.\nPlease check your email for complete event details.\nThank you."
+        if reg.approval_status == "rejected" and reg.rejection_reason:
+            sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been REJECTED.\nReason: {reg.rejection_reason}.\nPlease check email for details."
+        
+        if send_sms(reg.leader_phone, sms_msg):
+            reg.sms_sent = True
+            db.commit()
+            return {"success": True, "message": "SMS resent successfully."}
+        return JSONResponse(status_code=500, content={"error": "Failed to send SMS."})
+        
+    elif notify_type == "email":
+        leader_email_id = uuid.uuid4().hex
+        if reg.approval_status == "approved":
+            leader_html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+              <h2 style="color:#1e3a8a;">🎉 Registration Approved!</h2>
+              <p>Dear <b>{reg.leader_name}</b>,</p>
+              <p>Congratulations!</p>
+              <p>Your registration has been approved.</p>
+              <p><b>Registration ID:</b> {reg.registration_id}</p>
+              <p><b>Event:</b> {event.title}</p>
+              <p><b>Status:</b> Approved</p>
+              <p>Please report to the venue on the scheduled date and time.</p>
+              <br>
+              <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+            </div>
+            """
+            crud.add_email_to_queue(db, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]")
+            background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]", 1, reg.leader_email)
+        else:
+            reason = reg.rejection_reason or "No reason provided."
+            leader_html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+              <h2 style="color:#dc2626;">Registration Update</h2>
+              <p>Dear <b>{reg.leader_name}</b>,</p>
+              <p>We regret to inform you that your registration for <b>{event.title}</b> could not be approved.</p>
+              <p><b>Reason:</b></p>
+              <blockquote style="border-left: 4px solid #dc2626; padding-left: 10px; color: #4b5563;">{reason}</blockquote>
+              <hr>
+              <p>If you believe this is an error, please contact the event coordinator.</p>
+              <p>Regards,<br>ACES</p>
+            </div>
+            """
+            crud.add_email_to_queue(db, leader_email_id, f"ACES Event Registration Update", leader_html, "[]")
+            background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Event Registration Update", leader_html, "[]", 1, reg.leader_email)
+        
+        reg.email_sent = True
+        db.commit()
+        return {"success": True, "message": "Email resent successfully."}
+        
+    return JSONResponse(status_code=400, content={"error": "Invalid notification type."})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  Utility & Diagnostic Routes
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @app.get("/test-email")
 async def test_email(background_tasks: BackgroundTasks):
