@@ -1,7 +1,13 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 #  ACES Backend v6.0 — Production-Ready Email + PostgreSQL
-#  Gmail SMTP (Primary) → Resend HTTP API (Fallback)
+#  Gmail SMTP (PRIMARY) → Resend HTTP API (FALLBACK)
 #  Full logging, 3-attempt retry, no silent failures
+#
+#  ROOT CAUSE FIX (2026-07-29):
+#  Resend with onboarding@resend.dev can ONLY deliver to the Resend account
+#  owner's email. It CANNOT deliver to acescomputer0101@gmail.com unless that
+#  Gmail is the Resend account email. Gmail SMTP with an App Password has no
+#  such restriction and delivers directly to Gmail Primary Inbox.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 import os
@@ -9,6 +15,12 @@ import time
 import logging
 import traceback
 import requests as http_requests
+import csv
+import io
+import secrets
+from jose import JWTError, jwt
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 import uuid
 import asyncio
 import json
@@ -64,6 +76,13 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
 # Fixed recipient — all submissions go here
 RECIPIENT   = "acescomputer0101@gmail.com"
 MAX_RETRIES = 3
+
+# Admin credentials (from env vars)
+ADMIN_USERNAME  = os.getenv("ADMIN_USERNAME", "aces0101").strip()
+ADMIN_PASSWORD  = os.getenv("ADMIN_PASSWORD", "aces@2026").strip()
+ADMIN_JWT_SECRET = os.getenv("ADMIN_JWT_SECRET", "aces_fallback_secret_change_in_prod").strip()
+ADMIN_JWT_ALGO   = "HS256"
+ADMIN_JWT_EXPIRE_HOURS = 8
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -364,54 +383,74 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Master Email Sender — Resend API Primary → Gmail SMTP Fallback
+#  Master Email Sender — Gmail SMTP PRIMARY → Resend API FALLBACK
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
     """
     Master email delivery function.
-    1. Try Resend HTTP API first (Primary)
-    2. If Resend fails, fall back to Gmail SMTP
-    3. Log every step, every success, every failure — no silent errors
-    4. Update email queue status in PostgreSQL
+    ORDER (FIXED 2026-07-29):
+    1. Gmail SMTP PRIMARY  — No domain restriction, delivers to any Gmail inbox
+    2. Resend API FALLBACK — Only works if sender domain is verified in Resend
+
+    WHY: Resend with onboarding@resend.dev can ONLY send to the Resend account
+    owner's email. Gmail SMTP App Password has no such restriction.
     """
     logger.info("EMAIL FUNCTION CALLED")
     logger.info("=" * 60)
     logger.info(f"[Email|{email_id}] ▶ Email Delivery Started")
-    logger.info(f"[Email|{email_id}]   To      : {RECIPIENT}")
-    logger.info(f"[Email|{email_id}]   Subject : {subject}")
-    logger.info(f"[Email|{email_id}]   Resend  : {'YES' if RESEND_API_KEY else 'NO'}")
-    logger.info(f"[Email|{email_id}]   SMTP set: {'YES' if SMTP_USERNAME and SMTP_PASSWORD else 'NO'}")
+    logger.info(f"[Email|{email_id}]   To        : {RECIPIENT}")
+    logger.info(f"[Email|{email_id}]   Subject   : {subject}")
+    logger.info(f"[Email|{email_id}]   SMTP set  : {'YES (' + SMTP_USERNAME + ')' if SMTP_USERNAME and SMTP_PASSWORD else 'NO ← THIS IS THE PROBLEM'}")
+    logger.info(f"[Email|{email_id}]   Resend set: {'YES' if RESEND_API_KEY else 'NO'}")
     logger.info("=" * 60)
 
-    # ── Step 1: Resend HTTP API (Primary) ───────────────────────────────────
-    logger.info(f"[Email|{email_id}] Step 1: Trying Resend HTTP API (Primary)...")
-    resend_ok = send_via_resend_api(email_id, subject, html_body, attachments_json, attempt=1)
-    if resend_ok:
-        _update_email_status_standalone(email_id, "sent")
-        logger.info(f"[Email|{email_id}] ✅ DELIVERED via Resend API")
-        logger.info("=" * 60)
-        return True
-
-    logger.warning(f"[Email|{email_id}] Resend API failed. Falling back to Gmail SMTP...")
-
-    # ── Step 2: Gmail SMTP (Fallback) ─────────────────────────────────────────
+    # ── Step 1: Gmail SMTP (PRIMARY — most reliable for Gmail recipient) ────
     if SMTP_USERNAME and SMTP_PASSWORD:
-        logger.info(f"[Email|{email_id}] Step 2: Trying Gmail SMTP (Fallback)...")
+        logger.info(f"[Email|{email_id}] Step 1: Trying Gmail SMTP (PRIMARY)...")
         smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json)
         if smtp_ok:
             _update_email_status_standalone(email_id, "sent")
-            logger.info(f"[Email|{email_id}] ✅ DELIVERED via Gmail SMTP")
+            logger.info(f"[Email|{email_id}] ✅ DELIVERED via Gmail SMTP (PRIMARY)")
+            logger.info("EMAIL SENT")
+            logger.info("=" * 60)
+            return True
+        logger.warning(f"[Email|{email_id}] Gmail SMTP failed. Trying Resend API as fallback...")
+    else:
+        logger.error(
+            f"[Email|{email_id}] ⚠ Step 1 SKIPPED: Gmail SMTP credentials NOT configured!\n"
+            f"  → Set SMTP_USERNAME and SMTP_PASSWORD in Render environment variables.\n"
+            f"  → SMTP_USERNAME = acescomputer0101@gmail.com\n"
+            f"  → SMTP_PASSWORD = <16-char Gmail App Password from myaccount.google.com/apppasswords>"
+        )
+
+    # ── Step 2: Resend HTTP API (FALLBACK) ──────────────────────────────────
+    if RESEND_API_KEY:
+        logger.info(f"[Email|{email_id}] Step 2: Trying Resend API (FALLBACK)...")
+        logger.warning(
+            f"[Email|{email_id}] ⚠ NOTE: Resend with 'onboarding@resend.dev' can only deliver "
+            f"to the Resend account owner's email. If that is NOT {RECIPIENT}, this will fail with 422."
+        )
+        resend_ok = send_via_resend_api(email_id, subject, html_body, attachments_json, attempt=1)
+        if resend_ok:
+            _update_email_status_standalone(email_id, "sent")
+            logger.info(f"[Email|{email_id}] ✅ DELIVERED via Resend API (FALLBACK)")
+            logger.info("EMAIL SENT")
             logger.info("=" * 60)
             return True
     else:
-        logger.warning(f"[Email|{email_id}] Step 2 SKIPPED: Gmail SMTP credentials not configured.")
+        logger.warning(f"[Email|{email_id}] Step 2 SKIPPED: RESEND_API_KEY not configured.")
 
     # ── Both methods failed ───────────────────────────────────────────────────
-    error_msg = "Both Resend API and Gmail SMTP failed. Check SMTP_PASSWORD and RESEND_API_KEY."
+    error_msg = (
+        "EMAIL DELIVERY FAILED. "
+        "Fix: Set SMTP_USERNAME=acescomputer0101@gmail.com and SMTP_PASSWORD=<Gmail App Password> "
+        "in Render environment variables. See: https://myaccount.google.com/apppasswords"
+    )
     _update_email_status_standalone(email_id, "failed", error_msg)
     logger.error(f"[Email|{email_id}] ❌ ALL DELIVERY METHODS FAILED")
-    logger.error(f"[Email|{email_id}] Request Payload Saved in Logs: Subject: {subject}, Body length: {len(html_body)}, Attachments length: {len(attachments_json)}")
+    logger.error(f"[Email|{email_id}] {error_msg}")
+    logger.info("EMAIL FAILED")
     logger.info("=" * 60)
     return False
 
@@ -749,6 +788,439 @@ async def health():
 @app.get("/")
 async def root():
     return {"message": "ACES Backend v6.0 — PostgreSQL + Gmail SMTP"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ADMIN PANEL — JWT Auth + Protected Routes
+#  All routes prefixed /admin/api/* — zero overlap with existing routes
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _create_admin_token() -> str:
+    """Create a signed JWT for the admin session."""
+    import time
+    payload = {
+        "sub": "admin",
+        "iat": int(time.time()),
+        "exp": int(time.time()) + ADMIN_JWT_EXPIRE_HOURS * 3600,
+    }
+    return jwt.encode(payload, ADMIN_JWT_SECRET, algorithm=ADMIN_JWT_ALGO)
+
+
+def _verify_admin_token(request: Request) -> dict:
+    """FastAPI dependency — validates the Bearer token on every protected route."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = auth_header[7:]
+    try:
+        payload = jwt.decode(token, ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            raise HTTPException(status_code=401, detail="Invalid token subject")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token expired or invalid — please log in again")
+
+
+# ── Admin Login ───────────────────────────────────────────────────────────────
+
+@app.post("/admin/api/login")
+async def admin_login(request: Request):
+    """Validate admin credentials and return a JWT token."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    username = str(body.get("username", "")).strip()
+    password = str(body.get("password", "")).strip()
+
+    # Constant-time comparison to prevent timing attacks
+    username_ok = secrets.compare_digest(username, ADMIN_USERNAME)
+    password_ok = secrets.compare_digest(password, ADMIN_PASSWORD)
+
+    if not (username_ok and password_ok):
+        logger.warning(f"[Admin] Failed login attempt from {request.client.host if request.client else 'unknown'}")
+        raise HTTPException(status_code=401, detail="Invalid Username or Password")
+
+    token = _create_admin_token()
+    logger.info(f"[Admin] Successful login from {request.client.host if request.client else 'unknown'}")
+    return {"token": token, "expires_in_hours": ADMIN_JWT_EXPIRE_HOURS}
+
+
+# ── Dashboard Stats ──────────────────────────────────────────────────────────
+
+@app.get("/admin/api/stats")
+async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
+    """Return dashboard statistics."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from datetime import date
+    from sqlalchemy import func as sqlfunc
+    from models import InnovationSubmission, EventRegistration
+
+    db = SessionLocal()
+    try:
+        today = date.today()
+
+        total_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
+        total_registrations = db.query(sqlfunc.count(EventRegistration.id)).scalar() or 0
+
+        today_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
+            sqlfunc.date(InnovationSubmission.submitted_at) == today
+        ).scalar() or 0
+        today_registrations = db.query(sqlfunc.count(EventRegistration.id)).filter(
+            sqlfunc.date(EventRegistration.created_at) == today
+        ).scalar() or 0
+
+        # Recent 5 submissions
+        recent_subs = db.query(InnovationSubmission).order_by(
+            InnovationSubmission.submitted_at.desc()
+        ).limit(5).all()
+
+        # Recent 5 registrations
+        recent_regs = db.query(EventRegistration).order_by(
+            EventRegistration.created_at.desc()
+        ).limit(5).all()
+
+        return {
+            "total_submissions"   : total_submissions,
+            "total_registrations" : total_registrations,
+            "today_submissions"   : today_submissions,
+            "today_registrations" : today_registrations,
+            "recent_submissions"  : [
+                {
+                    "id"         : s.id,
+                    "full_name"  : s.full_name,
+                    "idea_title" : s.idea_title,
+                    "department" : s.department,
+                    "submitted_at": s.submitted_at.isoformat() if s.submitted_at else None,
+                }
+                for s in recent_subs
+            ],
+            "recent_registrations": [
+                {
+                    "id"         : r.id,
+                    "full_name"  : r.full_name,
+                    "email"      : r.email,
+                    "event_id"   : r.event_id,
+                    "created_at" : r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in recent_regs
+            ],
+        }
+    finally:
+        db.close()
+
+
+# ── Innovation Box Submissions ────────────────────────────────────────────────
+
+@app.get("/admin/api/submissions")
+async def admin_list_submissions(
+    request: Request,
+    page: int = 1,
+    limit: int = 20,
+    search: str = "",
+    department: str = "",
+    date_from: str = "",
+    date_to: str = "",
+    _=Depends(_verify_admin_token),
+):
+    """List all submissions with search, filter, and pagination."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import InnovationSubmission
+    from sqlalchemy import or_, cast, Date
+
+    db = SessionLocal()
+    try:
+        q = db.query(InnovationSubmission)
+
+        if search:
+            s = f"%{search}%"
+            q = q.filter(or_(
+                InnovationSubmission.full_name.ilike(s),
+                InnovationSubmission.email.ilike(s),
+                InnovationSubmission.mobile.ilike(s),
+                InnovationSubmission.idea_title.ilike(s),
+                InnovationSubmission.department.ilike(s),
+            ))
+
+        if department:
+            q = q.filter(InnovationSubmission.department.ilike(f"%{department}%"))
+
+        if date_from:
+            try:
+                from datetime import datetime as dt
+                q = q.filter(InnovationSubmission.submitted_at >= dt.fromisoformat(date_from))
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                from datetime import datetime as dt
+                q = q.filter(InnovationSubmission.submitted_at <= dt.fromisoformat(date_to + "T23:59:59"))
+            except ValueError:
+                pass
+
+        total = q.count()
+        items = q.order_by(InnovationSubmission.submitted_at.desc()).offset((page - 1) * limit).limit(limit).all()
+
+        return {
+            "total": total,
+            "page" : page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit,
+            "items": [
+                {
+                    "id"              : s.id,
+                    "full_name"       : s.full_name,
+                    "email"           : s.email,
+                    "mobile"          : s.mobile,
+                    "department"      : s.department,
+                    "year"            : s.year,
+                    "category"        : s.category,
+                    "idea_title"      : s.idea_title,
+                    "idea_description": s.idea_description,
+                    "expected_outcome": s.expected_outcome,
+                    "attachment_name" : s.attachment_name,
+                    "attachment_type" : s.attachment_type,
+                    "ip_address"      : s.ip_address,
+                    "submitted_at"    : s.submitted_at.isoformat() if s.submitted_at else None,
+                }
+                for s in items
+            ],
+        }
+    finally:
+        db.close()
+
+
+@app.get("/admin/api/submissions/export")
+async def admin_export_submissions(request: Request, _=Depends(_verify_admin_token)):
+    """Export all submissions as CSV."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import InnovationSubmission
+    db = SessionLocal()
+    try:
+        items = db.query(InnovationSubmission).order_by(InnovationSubmission.submitted_at.desc()).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID", "Full Name", "Email", "Mobile", "Department", "Year",
+                         "Category", "Idea Title", "Idea Description", "Expected Outcome",
+                         "Attachment", "IP Address", "Submitted At"])
+        for s in items:
+            writer.writerow([
+                s.id, s.full_name, s.email, s.mobile or "",
+                s.department, s.year, s.category, s.idea_title,
+                s.idea_description, s.expected_outcome or "",
+                s.attachment_name or "", s.ip_address or "",
+                s.submitted_at.isoformat() if s.submitted_at else "",
+            ])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=submissions.csv"},
+        )
+    finally:
+        db.close()
+
+
+@app.get("/admin/api/submissions/{submission_id}")
+async def admin_get_submission(submission_id: int, request: Request, _=Depends(_verify_admin_token)):
+    """Get a single submission by ID."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import InnovationSubmission
+    db = SessionLocal()
+    try:
+        s = db.query(InnovationSubmission).filter(InnovationSubmission.id == submission_id).first()
+        if not s:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        return {
+            "id"              : s.id,
+            "full_name"       : s.full_name,
+            "email"           : s.email,
+            "mobile"          : s.mobile,
+            "department"      : s.department,
+            "year"            : s.year,
+            "category"        : s.category,
+            "idea_title"      : s.idea_title,
+            "idea_description": s.idea_description,
+            "expected_outcome": s.expected_outcome,
+            "attachment_name" : s.attachment_name,
+            "attachment_type" : s.attachment_type,
+            "attachment_url"  : s.attachment_url,
+            "ip_address"      : s.ip_address,
+            "user_agent"      : s.user_agent,
+            "form_data"       : s.form_data,
+            "submitted_at"    : s.submitted_at.isoformat() if s.submitted_at else None,
+        }
+    finally:
+        db.close()
+
+
+@app.delete("/admin/api/submissions/{submission_id}")
+async def admin_delete_submission(submission_id: int, request: Request, _=Depends(_verify_admin_token)):
+    """Delete a submission by ID."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    db = SessionLocal()
+    try:
+        deleted = crud.delete_innovation(db, submission_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        logger.info(f"[Admin] Submission #{submission_id} deleted")
+        return {"success": True, "message": f"Submission #{submission_id} deleted."}
+    finally:
+        db.close()
+
+
+# ── Event Registrations ───────────────────────────────────────────────────────
+
+@app.get("/admin/api/registrations")
+async def admin_list_registrations(
+    request: Request,
+    page: int = 1,
+    limit: int = 20,
+    search: str = "",
+    event_id: int = 0,
+    _=Depends(_verify_admin_token),
+):
+    """List all registrations with search, filter, and pagination."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import EventRegistration, UpcomingEvent
+    from sqlalchemy import or_
+
+    db = SessionLocal()
+    try:
+        q = db.query(EventRegistration)
+
+        if search:
+            s = f"%{search}%"
+            q = q.filter(or_(
+                EventRegistration.full_name.ilike(s),
+                EventRegistration.email.ilike(s),
+                EventRegistration.mobile.ilike(s),
+                EventRegistration.department.ilike(s),
+            ))
+
+        if event_id:
+            q = q.filter(EventRegistration.event_id == event_id)
+
+        total = q.count()
+        items = q.order_by(EventRegistration.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+
+        # Get event titles
+        event_ids = list({r.event_id for r in items})
+        events_map = {}
+        if event_ids:
+            events = db.query(UpcomingEvent).filter(UpcomingEvent.id.in_(event_ids)).all()
+            events_map = {e.id: e.title for e in events}
+
+        return {
+            "total": total,
+            "page" : page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit,
+            "items": [
+                {
+                    "id"         : r.id,
+                    "event_id"   : r.event_id,
+                    "event_title": events_map.get(r.event_id, f"Event #{r.event_id}"),
+                    "full_name"  : r.full_name,
+                    "email"      : r.email,
+                    "mobile"     : r.mobile,
+                    "department" : r.department,
+                    "year"       : r.year,
+                    "created_at" : r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in items
+            ],
+        }
+    finally:
+        db.close()
+
+
+@app.get("/admin/api/registrations/export")
+async def admin_export_registrations(request: Request, _=Depends(_verify_admin_token)):
+    """Export all registrations as CSV."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import EventRegistration
+    db = SessionLocal()
+    try:
+        items = db.query(EventRegistration).order_by(EventRegistration.created_at.desc()).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID", "Event ID", "Full Name", "Email", "Mobile", "Department", "Year", "Registered At"])
+        for r in items:
+            writer.writerow([
+                r.id, r.event_id, r.full_name, r.email,
+                r.mobile or "", r.department or "", r.year or "",
+                r.created_at.isoformat() if r.created_at else "",
+            ])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=registrations.csv"},
+        )
+    finally:
+        db.close()
+
+
+@app.get("/admin/api/registrations/{registration_id}")
+async def admin_get_registration(registration_id: int, request: Request, _=Depends(_verify_admin_token)):
+    """Get a single registration by ID."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from models import EventRegistration, UpcomingEvent
+    db = SessionLocal()
+    try:
+        r = db.query(EventRegistration).filter(EventRegistration.id == registration_id).first()
+        if not r:
+            raise HTTPException(status_code=404, detail="Registration not found")
+        event = db.query(UpcomingEvent).filter(UpcomingEvent.id == r.event_id).first()
+        return {
+            "id"          : r.id,
+            "event_id"    : r.event_id,
+            "event_title" : event.title if event else f"Event #{r.event_id}",
+            "full_name"   : r.full_name,
+            "email"       : r.email,
+            "mobile"      : r.mobile,
+            "department"  : r.department,
+            "year"        : r.year,
+            "created_at"  : r.created_at.isoformat() if r.created_at else None,
+        }
+    finally:
+        db.close()
+
+
+@app.delete("/admin/api/registrations/{registration_id}")
+async def admin_delete_registration(registration_id: int, request: Request, _=Depends(_verify_admin_token)):
+    """Delete a registration by ID."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    db = SessionLocal()
+    try:
+        deleted = crud.delete_registration(db, registration_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Registration not found")
+        logger.info(f"[Admin] Registration #{registration_id} deleted")
+        return {"success": True, "message": f"Registration #{registration_id} deleted."}
+    finally:
+        db.close()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
