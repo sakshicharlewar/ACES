@@ -149,12 +149,13 @@ def format_file_size(size_bytes):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
-    if not RESEND_API_KEY:
-        logger.error(f"[Email|{email_id}] RESEND_API_KEY is not set.")
-        _update_email_status_standalone(email_id, "failed", "RESEND_API_KEY not set")
-        return False
+    key_prefix = RESEND_API_KEY[:8] + "..." if RESEND_API_KEY else "NOT_SET"
+    logger.info(f"[Email|{email_id}] Attempt {attempt}/{MAX_RETRIES} — Key: {key_prefix} | From: {SENDER_EMAIL} | To: {RECIPIENT} | Subject: {subject}")
 
-    logger.info(f"[Email|{email_id}] Attempt {attempt}/{MAX_RETRIES} — Sending...")
+    if not RESEND_API_KEY:
+        logger.error(f"[Email|{email_id}] CRITICAL: RESEND_API_KEY is missing/empty.")
+        _update_email_status_standalone(email_id, "failed", "RESEND_API_KEY missing/empty")
+        return False
 
     headers = {
         "Authorization": f"Bearer {RESEND_API_KEY}",
@@ -177,34 +178,42 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
         pass
 
     try:
+        logger.info(f"[Email|{email_id}] Sending HTTP POST to {RESEND_URL}...")
         resp = http_session.post(RESEND_URL, headers=headers, json=payload, timeout=15)
+        
         logger.info(f"[Email|{email_id}] HTTP Status: {resp.status_code}")
+        logger.info(f"[Email|{email_id}] Resend Response Body: {resp.text}")
 
         if resp.status_code in (200, 201):
+            logger.info(f"[Email|{email_id}] SUCCESS: Email delivered via Resend API.")
             _update_email_status_standalone(email_id, "sent")
             return True
 
-        error_text = resp.text
-        logger.error(f"[Email|{email_id}] FAILED — {resp.status_code}: {error_text}")
+        error_text = f"HTTP {resp.status_code}: {resp.text}"
+        logger.error(f"[Email|{email_id}] FAILED — {error_text}")
 
         if resp.status_code in (429, 500, 502, 503, 504) and attempt < MAX_RETRIES:
             wait = 2 ** attempt
+            logger.info(f"[Email|{email_id}] Retrying in {wait}s...")
             time.sleep(wait)
             return send_email_with_retry(email_id, subject, html_body, attachments_json, attempt + 1)
         else:
-            _update_email_status_standalone(email_id, "failed", f"HTTP {resp.status_code}: {error_text}")
+            _update_email_status_standalone(email_id, "failed", error_text)
             return False
 
     except (http_requests.exceptions.ConnectionError, http_requests.exceptions.Timeout) as e:
-        logger.error(f"[Email|{email_id}] Network error: {e}")
+        logger.error(f"[Email|{email_id}] Network Exception on attempt {attempt}: {e}")
+        logger.error(traceback.format_exc())
         if attempt < MAX_RETRIES:
             wait = 2 ** attempt
+            logger.info(f"[Email|{email_id}] Retrying network error in {wait}s...")
             time.sleep(wait)
             return send_email_with_retry(email_id, subject, html_body, attachments_json, attempt + 1)
         _update_email_status_standalone(email_id, "failed", str(e))
         return False
     except Exception as e:
-        logger.error(f"[Email|{email_id}] Unexpected error: {e}")
+        logger.error(f"[Email|{email_id}] Unexpected Exception: {e}")
+        logger.error(traceback.format_exc())
         _update_email_status_standalone(email_id, "failed", str(e))
         return False
 
