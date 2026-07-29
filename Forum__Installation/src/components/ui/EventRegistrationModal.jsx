@@ -298,108 +298,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     return 'We are unable to process your registration right now. Please try again in a few moments or contact the event coordinator if the issue continues.';
   };
 
-  const handleSubmit = async (e) => {
-    e?.preventDefault();
-    if (loading) return; // prevent duplicate clicks
-    if (!validateStep3()) return;
-
-    setLoading(true);
-    setError(null);
-
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const eventId = eventDetails?.id || 1;
-    const payload = {
-      event_id: eventId,
-      team_name: formData.teamName,
-      leader_name: formData.leaderName,
-      leader_email: formData.leaderEmail,
-      leader_phone: formData.leaderPhone,
-      leader_year: formData.leaderYear,
-      leader_branch: formData.leaderBranch,
-      member2_name: formData.member2Name,
-      member2_email: formData.member2Email,
-      member2_phone: formData.member2Phone,
-      member2_year: formData.member2Year,
-      transaction_id: formData.transactionId.trim(),
-      payment_screenshot: formData.paymentScreenshot || null,
-      registration_fee: '₹40',
-      payment_status: 'pending',
-    };
-
-    // ── Retry up to 3 times for transient network errors ──
-    const MAX_ATTEMPTS = 3;
-    let lastErr = null;
-    let lastData = null;
-
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15-second timeout
-
-        const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        // Parse JSON safely
-        let data = {};
-        try {
-          data = await response.json();
-        } catch {
-          // Non-JSON response — treat as server error
-          if (!response.ok) {
-            lastErr = new Error('Server error');
-            lastData = null;
-            if (attempt < MAX_ATTEMPTS) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
-            break;
-          }
-        }
-
-        if (!response.ok) {
-          // 4xx errors should NOT retry (they are definitive: duplicate, closed, etc.)
-          if (response.status >= 400 && response.status < 500) {
-            setError(toFriendlyError(null, data));
-            setLoading(false);
-            return;
-          }
-          // 5xx errors: retry
-          lastErr = new Error('Server error');
-          lastData = data;
-          if (attempt < MAX_ATTEMPTS) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
-          break;
-        }
-
-        // ── SUCCESS ──
-        setSuccessData({
-          ...formData,
-          registrationId: data.registration_id,
-          eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
-          transactionId: formData.transactionId.trim(),
-          paymentStatus: 'Paid',
-          registeredAt: new Date().toLocaleString(),
-        });
-        if (onSuccess) onSuccess();
-        setLoading(false);
-        return;
-
-      } catch (err) {
-        lastErr = err;
-        lastData = null;
-        // Don't retry on AbortError (user-triggered) or if it's the last attempt
-        if (err?.name === 'AbortError' || attempt === MAX_ATTEMPTS) break;
-        await new Promise(r => setTimeout(r, 1000 * attempt));
-      }
-    }
-
-    // All attempts failed
-    setError(toFriendlyError(lastErr, lastData));
-    setLoading(false);
-  };
-
-
   if (successData) {
     return <RegistrationSuccess data={successData} onClose={onClose} />;
   }
@@ -407,7 +305,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const years = ['Second Year', 'Third Year'];
   const progressWidth = step === 1 ? '33%' : step === 2 ? '66%' : '100%';
 
-  const canSubmit = formData.transactionId.trim().length >= 12 && formData.paymentConfirmed && !!formData.paymentScreenshot;
 
   return (
     <AnimatePresence>
@@ -473,7 +370,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               </div>
             )}
 
-            <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()}>
+            <form onSubmit={(e) => e.preventDefault()}>
 
               {/* ── STEP 1: LEADER ── */}
               <div className={step === 1 ? 'block pt-4' : 'hidden'}>
