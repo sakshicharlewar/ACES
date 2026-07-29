@@ -46,18 +46,31 @@ export function UpcomingEvents() {
     }
   };
 
+  // ── Floating button visibility helpers ──
+  const hideFloatingButton = () =>
+    window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: false }));
+  const showFloatingButton = () =>
+    window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: true }));
+
   const handleRegisterClick = (event) => {
     const isFull =
       event.max_teams > 0 &&
       event.registered_teams_count >= event.max_teams;
     if (event.is_registration_open && !isFull) {
+      hideFloatingButton();
       setSelectedEvent(event);
       setIsModalOpen(true);
     }
   };
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    showFloatingButton();
+  };
+
   const handleRegistrationSuccess = () => {
     fetchEvents(); // Refresh seat count immediately
+    // Button stays hidden until the success screen is also closed (handled by onClose)
   };
 
   // ── Build display list ──
@@ -234,7 +247,7 @@ export function UpcomingEvents() {
 
       <EventRegistrationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
         eventDetails={selectedEvent}
         onSuccess={handleRegistrationSuccess}
       />
