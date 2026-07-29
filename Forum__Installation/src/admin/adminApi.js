@@ -53,6 +53,22 @@ export function isAdminLoggedIn() {
   return !!getToken();
 }
 
+export async function checkAuth() {
+  const token = getToken();
+  if (!token) return false;
+  
+  try {
+    const res = await fetch(`${BASE_URL}/admin/api/stats`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export async function fetchStats() {

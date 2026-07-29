@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminLogin } from "./adminApi";
+import { adminLogin, checkAuth } from "./adminApi";
 import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export function AdminLogin() {
@@ -10,6 +10,23 @@ export function AdminLogin() {
   const [showPw,   setShowPw]   = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    async function verify() {
+      try {
+        const ok = await checkAuth();
+        if (ok) {
+          navigate("/admin/dashboard", { replace: true });
+        }
+      } catch (e) {
+        // Not authenticated
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+    verify();
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -27,6 +44,14 @@ export function AdminLogin() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
   }
 
   return (
