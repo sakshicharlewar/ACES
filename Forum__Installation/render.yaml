@@ -8,3 +8,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: VITE_API_URL
+        value: https://aces-backkend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
