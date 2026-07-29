@@ -247,29 +247,21 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Year *</label>
-                      <select
-                        name="leaderYear"
-                        value={formData.leaderYear}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                      >
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Branch *</label>
-                      <select
-                        name="leaderBranch"
-                        value={formData.leaderBranch}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                      >
-                        {branches.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-2">Year *</label>
+                    <select
+                      name="leaderYear"
+                      value={formData.leaderYear}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                    >
+                      {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-blue-400 text-lg">🎓</span>
+                    <p className="text-sm text-blue-300 font-medium">Only for Computer Engineering Students</p>
                   </div>
                 </div>
               </div>
