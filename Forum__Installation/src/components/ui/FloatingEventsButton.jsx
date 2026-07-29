@@ -10,14 +10,14 @@ export function FloatingEventsButton() {
   const [isVisible, setIsVisible] = useState(true);
   const btnRef = useRef(null);
 
-  // Hide on all admin pages
-  if (location.pathname.startsWith("/admin")) return null;
-
   useEffect(() => {
     const handleToggle = (e) => setIsVisible(e.detail);
     window.addEventListener('toggleFloatingButton', handleToggle);
     return () => window.removeEventListener('toggleFloatingButton', handleToggle);
   }, []);
+
+  // Hide on all admin pages
+  if (location.pathname.startsWith("/admin")) return null;
 
   const handleClick = (e) => {
     // Ripple position
