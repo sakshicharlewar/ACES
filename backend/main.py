@@ -583,27 +583,27 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     try:
         saved_record = crud.create_innovation(
             db,
-            full_name       = fields_dict.get("Full Name") or fields_dict.get("fullName") or "",
-            email           = fields_dict.get("Email") or fields_dict.get("email") or "",
-            mobile          = fields_dict.get("Mobile") or fields_dict.get("mobile") or None,
-            department      = fields_dict.get("Department") or fields_dict.get("department") or "",
-            year            = fields_dict.get("Year") or fields_dict.get("year") or "",
-            category        = fields_dict.get("Idea Category") or fields_dict.get("category") or "",
-            idea_title      = fields_dict.get("Idea Title") or fields_dict.get("ideaTitle") or "",
-            idea_description= fields_dict.get("Idea Description") or fields_dict.get("ideaDescription") or "",
+            full_name        = fields_dict.get("Full Name") or fields_dict.get("fullName") or "",
+            email            = fields_dict.get("Email") or fields_dict.get("email") or "",
+            mobile           = fields_dict.get("Mobile") or fields_dict.get("mobile") or None,
+            department       = fields_dict.get("Department") or fields_dict.get("department") or "",
+            year             = fields_dict.get("Year") or fields_dict.get("year") or "",
+            category         = fields_dict.get("Idea Category") or fields_dict.get("category") or "",
+            idea_title       = fields_dict.get("Idea Title") or fields_dict.get("ideaTitle") or "",
+            idea_description = fields_dict.get("Idea Description") or fields_dict.get("ideaDescription") or "",
             problem_statement= fields_dict.get("Problem Statement") or fields_dict.get("problemStatement") or None,
             proposed_solution= fields_dict.get("Proposed Solution") or fields_dict.get("proposedSolution") or None,
-            expected_impact = fields_dict.get("Expected Impact") or fields_dict.get("expectedImpact") or None,
-            technology_stack= fields_dict.get("Technology Stack") or fields_dict.get("technologyStack") or None,
-            team_members    = fields_dict.get("Team Members") or fields_dict.get("teamMembers") or None,
-            expected_outcome= fields_dict.get("Expected Outcome") or fields_dict.get("expectedOutcome") or None,
-            submission_date = fields_dict.get("Submission Date") or fields_dict.get("submissionDate") or None,
-            attachment_name = attachment_name,
-            attachment_type = attachment_type,
-            attachment_url  = attachment_data_uri,
-            ip_address      = ip_address,
-            user_agent      = user_agent,
-            form_data       = json.dumps(fields_dict),
+            expected_impact  = fields_dict.get("Expected Impact") or fields_dict.get("expectedImpact") or None,
+            technology_stack = fields_dict.get("Technology Stack") or fields_dict.get("technologyStack") or None,
+            team_members     = fields_dict.get("Team Members") or fields_dict.get("teamMembers") or None,
+            expected_outcome = fields_dict.get("Expected Outcome") or fields_dict.get("expectedOutcome") or None,
+            # submission_date is a DateTime column — let the server_default handle it
+            attachment_name  = attachment_name,
+            attachment_type  = attachment_type,
+            attachment_url   = attachment_data_uri,
+            ip_address       = ip_address,
+            user_agent       = user_agent,
+            form_data        = json.dumps(fields_dict),
         )
         if saved_record:
             db_saved = True
@@ -614,12 +614,20 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
         db.rollback()
         logger.error(f"[API] ❌ PostgreSQL save EXCEPTION: {e}")
         logger.error(traceback.format_exc())
-        return JSONResponse(status_code=500, content={"success": False, "message": "Failed to save submission to database."})
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Failed to save submission: {str(e)}"},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
     finally:
         db.close()
 
     if not db_saved:
-        return JSONResponse(status_code=500, content={"success": False, "message": "Failed to save submission to database."})
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to save submission to database."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
     # Generate Idea ID using the primary key
     idea_id = f"INN-{saved_record.id:04d}"
