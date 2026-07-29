@@ -190,7 +190,7 @@ def create_team_registration(db: Session, registration_id: str, **kwargs) -> Opt
     except Exception as e:
         db.rollback()
         logger.error(f"[CRUD] Failed to save team registration: {e}")
-        return None
+        raise e
 
 def get_team_registration(db: Session, reg_id: int) -> Optional[TeamRegistration]:
     try:

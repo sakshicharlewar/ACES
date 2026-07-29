@@ -129,16 +129,16 @@ class TeamRegistration(Base):
     payment_verified_at    = Column(DateTime(timezone=True), nullable=True)
     payment_verified_by    = Column(String(255), nullable=True)
     
-    # Admin Approval Workflow
-    approval_status = Column(String(50), default="pending", index=True)
-    approval_date   = Column(DateTime(timezone=True), nullable=True)
-    approved_by     = Column(String(255), nullable=True)
-    rejection_reason= Column(Text, nullable=True)
+    # Admin Approval Workflow (Database schema not migrated yet)
+    # approval_status = Column(String(50), default="pending", index=True)
+    # approval_date   = Column(DateTime(timezone=True), nullable=True)
+    # approved_by     = Column(String(255), nullable=True)
+    # rejection_reason= Column(Text, nullable=True)
     
-    # Notification Status
-    email_sent      = Column(Boolean, default=False)
-    sms_sent        = Column(Boolean, default=False)
-    notification_timestamp = Column(DateTime(timezone=True), nullable=True)
+    # Notification Status (Database schema not migrated yet)
+    # email_sent      = Column(Boolean, default=False)
+    # sms_sent        = Column(Boolean, default=False)
+    # notification_timestamp = Column(DateTime(timezone=True), nullable=True)
     
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 

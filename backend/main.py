@@ -853,56 +853,65 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     reg_data["approval_status"] = "pending"
     reg_data["transaction_id"] = data.transaction_id.strip()
 
-    reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
+    try:
+        reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
+        
+        if reg:
+            from datetime import datetime as dt
+            now_str = dt.now().strftime("%d %B %Y, %I:%M %p")
 
-    if reg:
-        from datetime import datetime as dt
-        now_str = dt.now().strftime("%d %B %Y, %I:%M %p")
+            # ── Admin notification email ────────────────────────────────────────────
+            admin_email_id = uuid.uuid4().hex
+            admin_html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+              <h2 style="color:#1e3a8a;">🚨 New Team Registration (Pending Verification)</h2>
+              <p>A new team has registered for <b>{event.title}</b>.</p>
+              <p><b>Team Name:</b> {reg.team_name}</p>
+              <p><b>Registration ID:</b> {reg.registration_id}</p>
+              <p><b>Leader:</b> {reg.leader_name} ({reg.leader_email})</p>
+              <p><b>Transaction ID:</b> {reg.transaction_id}</p>
+              <p><b>Registered At:</b> {now_str}</p>
+              <hr>
+              <p><a href="https://aces-backkend.onrender.com/admin">Click here to review and approve the registration.</a></p>
+            </div>
+            """
+            crud.add_email_to_queue(db, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]")
+            background_tasks.add_task(send_email_with_retry, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
 
-        # ── Admin notification email ────────────────────────────────────────────
-        admin_email_id = uuid.uuid4().hex
-        admin_html = f"""
-        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
-          <h2 style="color:#1e3a8a;">🚨 New Team Registration (Pending Verification)</h2>
-          <p>A new team has registered for <b>{event.title}</b>.</p>
-          <p><b>Team Name:</b> {reg.team_name}</p>
-          <p><b>Registration ID:</b> {reg.registration_id}</p>
-          <p><b>Leader:</b> {reg.leader_name} ({reg.leader_email})</p>
-          <p><b>Transaction ID:</b> {reg.transaction_id}</p>
-          <p><b>Registered At:</b> {now_str}</p>
-          <hr>
-          <p><a href="https://aces-backkend.onrender.com/admin">Click here to review and approve the registration.</a></p>
-        </div>
-        """
-        crud.add_email_to_queue(db, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]")
-        background_tasks.add_task(send_email_with_retry, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
+            # ── Participant "Pending" email ──────────────────────────────────────
+            participant_email_id = uuid.uuid4().hex
+            participant_html = f"""
+            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;background:#f9fafb;border-radius:12px;">
+              <div style="background:#1e3a8a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
+                <h1 style="color:#fff;margin:0;">⏳ Registration Pending</h1>
+              </div>
+              <div style="padding:24px;background:#fff;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
+                <p style="color:#374151;">Hi <b>{reg.leader_name}</b>,</p>
+                <p style="color:#374151;">We have received your registration details for <b>{event.title}</b>.</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Registration ID</td><td style="padding:8px;">{reg.registration_id}</td></tr>
+                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Team Name</td><td style="padding:8px;">{reg.team_name}</td></tr>
+                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Transaction ID</td><td style="padding:8px;">{reg.transaction_id}</td></tr>
+                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Status</td><td style="padding:8px;color:#d97706;font-weight:bold;">⏳ Pending Payment Verification</td></tr>
+                </table>
+                <p style="color:#6b7280;font-size:14px;">Our team is verifying your payment screenshot. You will receive a final confirmation email once approved.</p>
+                <p style="color:#374151;margin-top:16px;">Thanks! 🚀<br><b>ACES – Association of Computer Engineering Students</b></p>
+              </div>
+            </div>
+            """
+            crud.add_email_to_queue(db, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]")
+            background_tasks.add_task(send_email_with_retry, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]", 1, reg.leader_email)
 
-        # ── Participant "Pending" email ──────────────────────────────────────
-        participant_email_id = uuid.uuid4().hex
-        participant_html = f"""
-        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;background:#f9fafb;border-radius:12px;">
-          <div style="background:#1e3a8a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
-            <h1 style="color:#fff;margin:0;">⏳ Registration Pending</h1>
-          </div>
-          <div style="padding:24px;background:#fff;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
-            <p style="color:#374151;">Hi <b>{reg.leader_name}</b>,</p>
-            <p style="color:#374151;">We have received your registration details for <b>{event.title}</b>.</p>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Registration ID</td><td style="padding:8px;">{reg.registration_id}</td></tr>
-              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Team Name</td><td style="padding:8px;">{reg.team_name}</td></tr>
-              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Transaction ID</td><td style="padding:8px;">{reg.transaction_id}</td></tr>
-              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Status</td><td style="padding:8px;color:#d97706;font-weight:bold;">⏳ Pending Payment Verification</td></tr>
-            </table>
-            <p style="color:#6b7280;font-size:14px;">Our team is verifying your payment screenshot. You will receive a final confirmation email once approved.</p>
-            <p style="color:#374151;margin-top:16px;">Thanks! 🚀<br><b>ACES – Association of Computer Engineering Students</b></p>
-          </div>
-        </div>
-        """
-        crud.add_email_to_queue(db, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]")
-        background_tasks.add_task(send_email_with_retry, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]", 1, reg.leader_email)
-
-        return {"success": True, "registration_id": reg.registration_id, "payment_status": reg.payment_status}
-    return JSONResponse(status_code=500, content={"error": "Failed to register. Team name or leader email may already be registered."})
+            return {"success": True, "registration_id": reg.registration_id, "payment_status": reg.payment_status}
+    except Exception as e:
+        logger.error(f"[API] Registration failed: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500, 
+            content={"error": f"Failed to register. {str(e)}"},
+            headers={"Access-Control-Allow-Origin": "*"}
+        )
+    
+    return JSONResponse(status_code=500, content={"error": "Failed to register team (No record created)."})
 
 @app.get("/admin/api/events/{event_id}/team-registrations")
 async def list_team_registrations(event_id: int, db: Session = Depends(get_db)):
