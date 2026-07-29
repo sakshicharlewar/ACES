@@ -32,10 +32,7 @@ class InnovationSubmission(Base):
     form_data       = Column(Text, nullable=True)
     submission_date = Column(DateTime(timezone=True), server_default=func.now())
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
-
-    @property
-    def submitted_at(self):
-        return self.created_at
+    submitted_at    = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         Index("ix_innovation_dept_cat", "department", "category"),
