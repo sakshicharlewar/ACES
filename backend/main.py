@@ -164,7 +164,7 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
     }
 
     payload = {
-        "from": f"ACES Forum <{SENDER_EMAIL}>",
+        "from": SENDER_EMAIL,
         "to": [RECIPIENT],
         "subject": subject,
         "html": html_body
