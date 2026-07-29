@@ -8,6 +8,11 @@ import uuid
 import asyncio
 import json
 import base64
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime
 from fastapi import FastAPI, BackgroundTasks, status, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +41,12 @@ SENDER_EMAIL   = os.getenv("SENDER_EMAIL", "onboarding@resend.dev").strip()
 RECIPIENT      = "acescomputer0101@gmail.com"
 RESEND_URL     = "https://api.resend.com/emails"
 MAX_RETRIES    = 5
+
+# ─── Gmail SMTP Config ────────────────────────────────────────────────────────
+SMTP_SERVER   = os.getenv("SMTP_SERVER", "smtp.gmail.com").strip()
+SMTP_PORT     = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "").strip()
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
 
 # ─── Global HTTP Session ───────────────────────────────────────────────────────
 http_session = http_requests.Session()
@@ -145,16 +156,75 @@ def format_file_size(size_bytes):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Email Sender with Retry (now uses PostgreSQL)
+#  Gmail SMTP Sender (Primary — delivers directly to Gmail Inbox)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments_json: str) -> bool:
+    """Send email via Gmail SMTP. Delivers directly to Gmail Primary Inbox."""
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+        logger.warning(f"[SMTP|{email_id}] Gmail SMTP credentials not set. Skipping SMTP.")
+        return False
+
+    logger.info(f"[SMTP|{email_id}] Attempting Gmail SMTP: {SMTP_USERNAME} → {RECIPIENT}")
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = SMTP_USERNAME
+        msg["To"]      = RECIPIENT
+        msg["Reply-To"] = SMTP_USERNAME
+        msg.attach(MIMEText(html_body, "html"))
+
+        # Attach files if any
+        try:
+            attachments_list = json.loads(attachments_json)
+            for att in attachments_list:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(base64.b64decode(att["content"]))
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={att['filename']}")
+                msg.attach(part)
+        except Exception:
+            pass
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=15) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.sendmail(SMTP_USERNAME, [RECIPIENT], msg.as_string())
+
+        logger.info(f"[SMTP|{email_id}] SUCCESS: Email delivered via Gmail SMTP to {RECIPIENT}.")
+        return True
+
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"[SMTP|{email_id}] Gmail SMTP Auth failed: {e}. Check SMTP_PASSWORD App Password.")
+        return False
+    except Exception as e:
+        logger.error(f"[SMTP|{email_id}] Gmail SMTP error: {e}")
+        logger.error(traceback.format_exc())
+        return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Email Sender with Retry (Gmail SMTP primary → Resend fallback)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
     key_prefix = RESEND_API_KEY[:8] + "..." if RESEND_API_KEY else "NOT_SET"
-    logger.info(f"[Email|{email_id}] Attempt {attempt}/{MAX_RETRIES} — Key: {key_prefix} | From: {SENDER_EMAIL} | To: {RECIPIENT} | Subject: {subject}")
+    logger.info(f"[Email|{email_id}] Attempt {attempt}/{MAX_RETRIES} — Key: {key_prefix} | From: {SMTP_USERNAME or SENDER_EMAIL} | To: {RECIPIENT} | Subject: {subject}")
 
+    # ── Try Gmail SMTP first (Primary — lands in Gmail Primary Inbox) ──
+    if SMTP_USERNAME and SMTP_PASSWORD:
+        smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json)
+        if smtp_ok:
+            _update_email_status_standalone(email_id, "sent")
+            return True
+        logger.warning(f"[Email|{email_id}] Gmail SMTP failed. Falling back to Resend API...")
+
+    # ── Fallback: Resend HTTP API ──
     if not RESEND_API_KEY:
         logger.error(f"[Email|{email_id}] CRITICAL: RESEND_API_KEY is missing/empty.")
-        _update_email_status_standalone(email_id, "failed", "RESEND_API_KEY missing/empty")
+        _update_email_status_standalone(email_id, "failed", "Both SMTP and Resend unavailable")
         return False
 
     headers = {
