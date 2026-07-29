@@ -715,12 +715,18 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     if not event:
         return JSONResponse(status_code=404, content={"error": "Event not found."})
     
-    if not event.is_registration_open:
-        return JSONResponse(status_code=400, content={"error": "Registration is closed for this event."})
-        
     current_teams = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
     if event.max_teams and event.max_teams > 0 and current_teams >= event.max_teams:
-        return JSONResponse(status_code=400, content={"error": "Registration is full. Maximum teams reached."})
+        # Auto-close registration when limit is reached
+        try:
+            event.is_registration_open = False
+            db.commit()
+        except Exception:
+            pass
+        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
+
+    if not event.is_registration_open:
+        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
         
     registration_id = f"BUG-{current_teams + 1:03d}"
     
@@ -778,6 +784,39 @@ async def list_team_registrations(event_id: int, db: Session = Depends(get_db)):
         return JSONResponse(status_code=503, content={"error": "Database unavailable"})
     regs = crud.get_team_registrations(db, event_id)
     return [schemas.TeamRegistrationRead.from_orm(r).dict() for r in regs]
+
+@app.patch("/admin/api/events/{event_id}/status")
+async def toggle_event_status(event_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin: Open or close registration for an event."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except JWTError:
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+    body = await request.json()
+    is_open = body.get("is_registration_open")
+    if is_open is None:
+        return JSONResponse(status_code=400, content={"error": "is_registration_open field required"})
+    event = crud.get_event(db, event_id)
+    if not event:
+        return JSONResponse(status_code=404, content={"error": "Event not found."})
+    event.is_registration_open = bool(is_open)
+    db.commit()
+    db.refresh(event)
+    current_teams = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
+    return {
+        "success": True,
+        "event_id": event_id,
+        "is_registration_open": event.is_registration_open,
+        "registered_teams_count": current_teams,
+        "max_teams": event.max_teams,
+    }
 
 @app.delete("/admin/api/team-registrations/{reg_id}")
 async def delete_team_registration(reg_id: int, db: Session = Depends(get_db)):
@@ -1418,6 +1457,34 @@ async def startup_validation():
 
     # Create other tables (including team_registrations)
     create_tables()
+
+    # ── Auto-seed Bug Hunt event if the upcoming_events table is empty ──
+    try:
+        seed_db = SessionLocal()
+        if seed_db:
+            existing_count = seed_db.query(__import__('models').UpcomingEvent).count()
+            if existing_count == 0:
+                logger.info("[DB] No events found. Seeding Bug Hunt event...")
+                bug_hunt = __import__('models').UpcomingEvent(
+                    title="🐞 Bug Hunt: Debug the Web",
+                    description="Participants receive a website containing HTML, CSS, and JavaScript bugs. They must fix broken layouts, resolve JavaScript errors, improve responsiveness, and optimize performance. Winner = Maximum bugs fixed in the least amount of time.",
+                    date="TBD",
+                    time="TBD",
+                    venue="TBD",
+                    max_registrations=30,
+                    is_registration_open=True,
+                    max_teams=30,
+                    team_size=2,
+                    status="upcoming",
+                )
+                seed_db.add(bug_hunt)
+                seed_db.commit()
+                logger.info(f"[DB] Bug Hunt event seeded successfully with id={bug_hunt.id}")
+            else:
+                logger.info(f"[DB] {existing_count} event(s) already exist. Skipping seed.")
+            seed_db.close()
+    except Exception as e:
+        logger.error(f"[DB] Failed to seed Bug Hunt event: {e}")
 
     # Log configuration status
     logger.info(f"  SMTP configured : {'YES (' + SMTP_USERNAME + ')' if SMTP_USERNAME else 'NO — set SMTP_USERNAME and SMTP_PASSWORD'}")
