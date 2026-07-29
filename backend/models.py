@@ -112,6 +112,9 @@ class TeamRegistration(Base):
     payment_status         = Column(String(50), default="pending", index=True)  # pending / approved / rejected
     transaction_id         = Column(String(255), nullable=True, unique=True, index=True)
     payment_screenshot     = Column(Text, nullable=True)
+    razorpay_order_id      = Column(String(255), nullable=True, unique=True, index=True)
+    razorpay_payment_id    = Column(String(255), nullable=True, unique=True, index=True)
+    razorpay_signature     = Column(String(255), nullable=True)
     payment_time           = Column(DateTime(timezone=True), nullable=True)
     payment_verified_at    = Column(DateTime(timezone=True), nullable=True)
     payment_verified_by    = Column(String(255), nullable=True)

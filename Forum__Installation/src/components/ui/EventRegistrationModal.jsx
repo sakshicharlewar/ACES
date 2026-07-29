@@ -23,11 +23,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     member2Phone: '',
     member2Year: 'Second Year',
     agreedToRules: false,
-    // Payment
-    transactionId: '',
-    paymentScreenshot: null,
-    paymentScreenshotName: '',
-    paymentConfirmed: false,
+  });
+  const [paymentState, setPaymentState] = useState({
+    status: 'idle', // idle | loading | success | failed
+    paymentId: null,
+    orderId: null,
+    signature: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -126,30 +127,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     return true;
   };
 
-  const validateStep3 = () => {
-    if (!formData.transactionId.trim()) {
-      setError('Please enter your UPI Transaction ID.');
-      return false;
-    }
-    if (formData.transactionId.trim().length < 12) {
-      setError('Transaction ID must be at least 12 characters.');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9]+$/.test(formData.transactionId.trim())) {
-      setError('Transaction ID must contain only letters and numbers.');
-      return false;
-    }
-    if (!formData.paymentScreenshot) {
-      setError('Please upload the payment screenshot.');
-      return false;
-    }
-    if (!formData.paymentConfirmed) {
-      setError('Please confirm that you have completed the payment.');
-      return false;
-    }
-    return true;
-  };
-
   const nextStep = () => {
     if (step === 1 && validateStep1()) { setStep(2); setError(null); }
     else if (step === 2 && validateStep2()) { setStep(3); setError(null); }
@@ -158,6 +135,136 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const prevStep = () => {
     setStep(s => s - 1);
     setError(null);
+  };
+
+  // Load Razorpay script dynamically
+  const loadRazorpayScript = () => new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
+  // Launch Razorpay checkout
+  const handleRazorpayPayment = async () => {
+    setError(null);
+    setPaymentState({ status: 'loading', paymentId: null, orderId: null, signature: null });
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setError('Payment gateway failed to load. Please check your connection and try again.');
+        setPaymentState(s => ({ ...s, status: 'idle' }));
+        return;
+      }
+
+      // Create order on backend
+      const orderRes = await fetch(`${apiUrl}/api/payment/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 4000, receipt: `bug-hunt-${Date.now()}` }),
+      });
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok || !orderData.order_id) {
+        setError(orderData.error || 'Failed to create payment order. Please try again.');
+        setPaymentState(s => ({ ...s, status: 'idle' }));
+        return;
+      }
+
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'ACES – Bug Hunt',
+        description: 'Bug Hunt Registration Fee',
+        image: '/aces-logo.png',
+        order_id: orderData.order_id,
+        prefill: {
+          name: formData.leaderName,
+          email: formData.leaderEmail,
+          contact: formData.leaderPhone,
+        },
+        theme: { color: '#3B82F6' },
+        modal: { backdropclose: false, escape: false },
+        handler: async function (response) {
+          // Payment succeeded — now verify + register on backend
+          setPaymentState({ status: 'loading', paymentId: response.razorpay_payment_id, orderId: response.razorpay_order_id, signature: response.razorpay_signature });
+          await finalizeRegistration(response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature);
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        setError(`Payment failed: ${response.error.description || 'Please try again.'}`);
+        setPaymentState({ status: 'failed', paymentId: null, orderId: null, signature: null });
+      });
+      rzp.open();
+      setPaymentState(s => ({ ...s, status: 'idle' }));
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      setPaymentState({ status: 'idle', paymentId: null, orderId: null, signature: null });
+    }
+  };
+
+  // Finalize registration after payment verified
+  const finalizeRegistration = async (paymentId, orderId, signature) => {
+    setLoading(true);
+    setError(null);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const eventId = eventDetails?.id || 1;
+
+    try {
+      const payload = {
+        event_id: eventId,
+        team_name: formData.teamName,
+        leader_name: formData.leaderName,
+        leader_email: formData.leaderEmail,
+        leader_phone: formData.leaderPhone,
+        leader_year: formData.leaderYear,
+        leader_branch: formData.leaderBranch,
+        member2_name: formData.member2Name,
+        member2_email: formData.member2Email,
+        member2_phone: formData.member2Phone,
+        member2_year: formData.member2Year,
+        razorpay_payment_id: paymentId,
+        razorpay_order_id: orderId,
+        razorpay_signature: signature,
+        registration_fee: '\u20b940',
+        payment_status: 'paid',
+      };
+
+      const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSuccessData({
+          ...formData,
+          registrationId: data.registration_id,
+          eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
+          transactionId: paymentId,
+          paymentStatus: 'Paid',
+          registeredAt: new Date().toLocaleString(),
+        });
+        setPaymentState({ status: 'success', paymentId, orderId, signature });
+        if (onSuccess) onSuccess();
+      } else {
+        setError(toFriendlyError(null, data));
+        setPaymentState(s => ({ ...s, status: 'failed' }));
+      }
+    } catch (err) {
+      setError('Registration failed after payment. Please contact the event coordinator with your Payment ID: ' + paymentId);
+      setPaymentState(s => ({ ...s, status: 'failed' }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── Friendly error sanitiser: never expose raw JS/network errors to users ──
@@ -510,58 +617,51 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <div className="text-4xl">💳</div>
                 </div>
 
-                {/* QR Card */}
+                {/* QR Card + Pay Button */}
                 <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-5 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                  <p className="text-sm text-gray-300 mb-4 font-medium text-center">Scan the QR Code using any UPI application.</p>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
 
-                  {/* Premium white QR card — click to open full preview */}
+                  {/* Primary CTA: Pay with Razorpay */}
+                  <motion.button
+                    type="button"
+                    onClick={handleRazorpayPayment}
+                    disabled={paymentState.status === 'loading' || loading}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold text-lg transition-all shadow-[0_0_40px_rgba(59,130,246,0.45)] hover:shadow-[0_0_56px_rgba(59,130,246,0.6)] disabled:opacity-60 disabled:cursor-not-allowed mb-6"
+                  >
+                    {paymentState.status === 'loading' ? (
+                      <><Loader2 className="animate-spin" size={22} /> Processing Payment...</>
+                    ) : (
+                      <><CreditCard size={22} /> Pay ₹40 Now</>
+                    )}
+                  </motion.button>
+
+                  <p className="text-xs text-gray-400 mb-5">Secure payment via Razorpay • PhonePe · Google Pay · Paytm · BHIM · Any UPI App</p>
+
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 w-full mb-5">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">or scan QR</span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+
+                  {/* Fallback QR */}
                   <button
                     type="button"
                     onClick={() => setQrPreviewOpen(true)}
-                    title="Click to view full size"
-                    className="group relative bg-white rounded-2xl p-6 shadow-[0_8px_40px_rgba(59,130,246,0.20),0_2px_12px_rgba(0,0,0,0.30)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0B0B0B]"
+                    className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label="Click to view QR code in full size"
                   >
                     <img
                       src="/ACESSScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
-                      style={{
-                        width: 'clamp(220px, 40vw, 300px)',
-                        height: 'clamp(220px, 40vw, 300px)',
-                        objectFit: 'contain',
-                        imageRendering: 'auto',
-                        display: 'block',
-                      }}
+                      style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block' }}
                     />
-                    {/* Hover overlay hint */}
-                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors duration-200 flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">
-                        🔍 Tap to enlarge
-                      </span>
+                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">🔍 Tap to enlarge</span>
                     </div>
                   </button>
-
-                  {/* Accepted Apps */}
-                  <p className="text-xs text-gray-400 mt-5 uppercase tracking-wider font-semibold text-center">Accepted Apps</p>
-                  <div className="flex flex-wrap justify-center gap-2 mt-2">
-                    {['PhonePe', 'Google Pay', 'Paytm', 'BHIM', 'Any UPI App'].map(app => (
-                      <span key={app} className="px-3 py-1 rounded-full bg-white/8 border border-white/10 text-gray-200 text-xs font-medium">
-                        {app}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="w-full mt-5 pt-5 border-t border-white/10">
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-2">Payment Instructions</p>
-                    <ol className="text-sm text-gray-300 space-y-1.5 pl-4 list-decimal marker:text-blue-500 font-medium">
-                      <li>Tap the QR Code to enlarge, then scan it.</li>
-                      <li>Pay ₹40.</li>
-                      <li>Copy the UPI Transaction ID.</li>
-                      <li>Paste the Transaction ID below.</li>
-                      <li>Submit the registration.</li>
-                    </ol>
-                  </div>
+                  <p className="text-xs text-gray-400 mt-3 text-center">Scan this QR with any UPI app and pay ₹40</p>
                 </div>
 
                 {/* QR Full-Size Preview Modal */}
@@ -569,34 +669,16 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <div
                     className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md"
                     onClick={() => setQrPreviewOpen(false)}
-                    role="dialog"
-                    aria-label="QR Code full size preview"
                   >
-                    <div
-                      className="relative flex flex-col items-center"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {/* Close button */}
-                      <button
-                        onClick={() => setQrPreviewOpen(false)}
-                        className="absolute -top-12 right-0 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
-                        aria-label="Close preview"
-                      >
+                    <div className="relative flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => setQrPreviewOpen(false)} className="absolute -top-12 right-0 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
                         <X size={22} />
                       </button>
-
-                      {/* Premium white card at full size */}
                       <div className="bg-white rounded-3xl p-8 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                         <img
                           src="/ACESSScanner.jpeg"
                           alt="ACES Bug Hunt Payment QR Code — Full Size"
-                          style={{
-                            width: 'min(500px, 85vw)',
-                            height: 'min(500px, 85vw)',
-                            objectFit: 'contain',
-                            imageRendering: 'auto',
-                            display: 'block',
-                          }}
+                          style={{ width: 'min(500px, 85vw)', height: 'min(500px, 85vw)', objectFit: 'contain', display: 'block' }}
                         />
                       </div>
                       <p className="mt-4 text-white/60 text-sm">Tap outside or press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">Esc</kbd> to close</p>
@@ -604,70 +686,23 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   </div>
                 )}
 
-                {/* Transaction ID */}
-                <div className="mb-5">
-                  <label className="block text-sm text-gray-300 mb-2">
-                    UPI Transaction ID <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="transactionId"
-                    value={formData.transactionId}
-                    onChange={handleChange}
-                    placeholder="Example: T2407291845123456789"
-                    minLength={12}
-                    maxLength={40}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-mono"
-                  />
-                  <p className="text-xs text-gray-500 mt-1.5">Min. 12 characters • Max. 40 characters • Letters and numbers only</p>
-                </div>
-
-                {/* Screenshot Upload */}
-                <div className="mb-5">
-                  <label className="block text-sm text-gray-300 mb-2">
-                    Upload Payment Screenshot <span className="text-red-400">*</span>
-                  </label>
-                  <div
-                    onClick={() => fileRef.current?.click()}
-                    className="w-full px-4 py-4 rounded-xl bg-white/5 border border-dashed border-white/20 hover:border-blue-500/50 text-center cursor-pointer transition-all group"
-                  >
-                    {formData.paymentScreenshotName ? (
-                      <div className="flex items-center justify-center gap-2 text-green-400">
-                        <CheckCircle size={16} />
-                        <span className="text-sm font-medium">{formData.paymentScreenshotName}</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 text-gray-500 group-hover:text-gray-400">
-                        <Upload size={20} />
-                        <span className="text-sm">Click to upload (JPG, PNG, PDF • Max 5MB)</span>
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    ref={fileRef} type="file" className="hidden"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleFileChange}
-                  />
-                </div>
-
-                {/* Payment Confirmation Checkbox */}
-                <div className="pt-4 border-t border-white/10">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative flex items-center shrink-0">
-                      <input
-                        type="checkbox"
-                        name="paymentConfirmed"
-                        checked={formData.paymentConfirmed}
-                        onChange={handleChange}
-                        className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded cursor-pointer checked:bg-blue-500 checked:border-blue-500 transition-colors"
-                      />
-                      <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                {/* Payment failed retry */}
+                {paymentState.status === 'failed' && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 mt-2">
+                    <AlertCircle size={18} className="text-red-400 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-400 font-medium">Payment was not completed.</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Please try again or use the QR code above.</p>
                     </div>
-                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                      ☑ I confirm that I have successfully completed the payment of ₹40. <span className="text-red-400">*</span>
-                    </span>
-                  </label>
-                </div>
+                    <button
+                      type="button"
+                      onClick={handleRazorpayPayment}
+                      className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
               </div>
 
             </form>
@@ -681,35 +716,27 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? 0} / {eventDetails?.max_teams ?? 30}</span>
               </div>
             )}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-between items-center gap-3">
               {step > 1 && (
                 <button
-                  type="button" onClick={prevStep} disabled={loading}
+                  type="button" onClick={prevStep} disabled={loading || paymentState.status === 'loading'}
                   className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 transition-colors font-medium disabled:opacity-50"
                 >
                   Back
                 </button>
               )}
-
               {step < 3 ? (
                 <button
                   type="button" onClick={nextStep}
-                  className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                  className="ml-auto px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(59,130,246,0.3)]"
                 >
                   Continue →
                 </button>
               ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading || !canSubmit}
-                  className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <><Loader2 className="animate-spin" size={18} /> Submitting...</>
-                  ) : (
-                    <><CheckCircle size={18} /> Complete Registration</>
-                  )}
-                </button>
+                <p className="ml-auto text-xs text-gray-500 flex items-center gap-1.5">
+                  <CheckCircle size={13} className="text-green-500" />
+                  Payment is handled above — no submit needed.
+                </p>
               )}
             </div>
           </div>

@@ -118,6 +118,9 @@ class TeamRegistrationCreate(BaseModel):
     # Payment
     transaction_id: Optional[str] = None
     payment_screenshot: Optional[str] = None
+    razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    razorpay_signature: Optional[str] = None
     registration_fee: Optional[str] = "₹40"
     payment_status: Optional[str] = "pending"
 
@@ -152,3 +155,15 @@ class ContactRead(ContactCreate):
     class Config:
         from_attributes = True
         orm_mode = True
+
+
+# --- Razorpay Payment Schemas ---
+class RazorpayOrderCreate(BaseModel):
+    amount: int
+    currency: str = 'INR'
+    receipt: Optional[str] = None
+
+class RazorpayPaymentVerify(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
