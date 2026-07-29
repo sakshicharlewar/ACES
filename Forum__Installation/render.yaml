@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: aces-frontend
+    runtime: node
+    rootDir: Forum__Installation
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20
