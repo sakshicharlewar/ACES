@@ -601,7 +601,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             <div className="flex justify-between items-center gap-3">
               {step > 1 && (
                 <button
-                  type="button" onClick={prevStep} disabled={loading || paymentState.status === 'loading'}
+                  type="button" onClick={prevStep} disabled={loading}
                   className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 transition-colors font-medium disabled:opacity-50"
                 >
                   Back
