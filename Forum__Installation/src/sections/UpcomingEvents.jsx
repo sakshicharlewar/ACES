@@ -113,34 +113,32 @@ export function UpcomingEvents() {
                   <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-2 min-h-[40px]">{event.description}</p>
                   
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-blue-400" />
-                      <span>{new Date(event.event_date).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between mb-4">
+                      {isOpen ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                          🔥 Registration Open
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
+                          Registration Full
+                        </span>
+                      )}
                     </div>
-                    {event.event_time && (
-                      <div className="flex items-center gap-2">
-                        <Clock size={14} className="text-blue-400" />
-                        <span>{event.event_time}</span>
-                      </div>
-                    )}
-                    {event.venue && (
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-blue-400" />
-                        <span className="truncate">{event.venue}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 font-medium">Only for 30 teams</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-blue-400" />
-                      <span>Team of {event.team_size}</span>
+                      <span>Team Size: {event.team_size} Members</span>
                     </div>
                   </div>
 
                   {/* Seat Tracker */}
                   <div className="mt-auto pt-4 border-t border-white/10">
                     <div className="flex justify-between items-center mb-2 text-xs font-medium">
-                      <span className="text-gray-400">Registrations</span>
+                      <span className="text-gray-400">Registered Teams</span>
                       <span className={isFull ? "text-red-400" : "text-blue-400"}>
-                        {event.registered_teams_count} / {event.max_teams} Teams
+                        {event.registered_teams_count} / {event.max_teams}
                       </span>
                     </div>
                     <div className="w-full bg-white/5 rounded-full h-1.5 mb-4 overflow-hidden">
@@ -158,10 +156,10 @@ export function UpcomingEvents() {
                       className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center ${
                         isOpen 
                           ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' 
-                          : 'bg-white/5 text-gray-500 cursor-not-allowed'
+                          : 'bg-white/5 text-red-500 cursor-not-allowed border border-red-500/30'
                       }`}
                     >
-                      {isFull ? 'Registration Full' : !event.is_registration_open ? 'Registration Closed' : 'Register Now'}
+                      {isFull ? '🔴 Registration Closed' : 'Register Now'}
                     </button>
                   </div>
                 </div>
