@@ -26,7 +26,7 @@ def create_innovation(db: Session, **kwargs) -> Optional[InnovationSubmission]:
     except Exception as e:
         db.rollback()
         logger.error(f"[CRUD] Failed to save innovation: {e}")
-        return None
+        raise e
 
 def get_innovation(db: Session, submission_id: int) -> Optional[InnovationSubmission]:
     try:
