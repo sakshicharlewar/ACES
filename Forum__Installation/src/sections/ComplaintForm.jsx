@@ -18,11 +18,6 @@ export function ComplaintForm() {
     category: "",
     subject: "",
     description: "",
-    problemStatement: "",
-    proposedSolution: "",
-    expectedImpact: "",
-    technologyStack: "",
-    teamMembers: "",
     expectedOutcome: "",
     attachment: null,
   });
@@ -53,11 +48,6 @@ export function ComplaintForm() {
       category: "",
       subject: "",
       description: "",
-      problemStatement: "",
-      proposedSolution: "",
-      expectedImpact: "",
-      technologyStack: "",
-      teamMembers: "",
       expectedOutcome: "",
       attachment: null,
     });
@@ -129,11 +119,7 @@ export function ComplaintForm() {
       submitData.append('Idea Category', formData.category);
       submitData.append('Idea Title', formData.subject);
       submitData.append('Idea Description', formData.description);
-      submitData.append('Problem Statement', formData.problemStatement || '');
-      submitData.append('Proposed Solution', formData.proposedSolution || '');
-      submitData.append('Expected Impact', formData.expectedImpact || '');
-      submitData.append('Technology Stack', formData.technologyStack || '');
-      submitData.append('Team Members', formData.teamMembers || '');
+
       submitData.append('Expected Outcome', formData.expectedOutcome || '');
       submitData.append('Submitted Date & Time', new Date().toLocaleString());
       
@@ -480,74 +466,6 @@ export function ComplaintForm() {
                           placeholder="Please describe your idea in detail..."
                         />
                         {errors.description && <span className="text-red-500 text-xs">{errors.description}</span>}
-                      </div>
-                      {/* Problem Statement */}
-                      <div className="flex flex-col gap-2">
-                        <label className="font-label text-sm text-text-secondary">Problem Statement (Optional)</label>
-                        <textarea 
-                          name="problemStatement"
-                          value={formData.problemStatement}
-                          onChange={handleChange}
-                          rows={3}
-                          className={`resize-none ${inputClass(false)}`}
-                          placeholder="What specific problem are you trying to solve?"
-                        />
-                      </div>
-
-                      {/* Proposed Solution */}
-                      <div className="flex flex-col gap-2">
-                        <label className="font-label text-sm text-text-secondary">Proposed Solution (Optional)</label>
-                        <textarea 
-                          name="proposedSolution"
-                          value={formData.proposedSolution}
-                          onChange={handleChange}
-                          rows={3}
-                          className={`resize-none ${inputClass(false)}`}
-                          placeholder="How will your idea solve this problem?"
-                        />
-                      </div>
-
-                      {/* Expected Impact */}
-                      <div className="flex flex-col gap-2">
-                        <label className="font-label text-sm text-text-secondary">Expected Impact (Optional)</label>
-                        <textarea 
-                          name="expectedImpact"
-                          value={formData.expectedImpact}
-                          onChange={handleChange}
-                          rows={3}
-                          className={`resize-none ${inputClass(false)}`}
-                          placeholder="What is the expected impact of this solution?"
-                        />
-                      </div>
-
-                      {/* Technology Stack & Team Members */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-2">
-                          <label className="font-label text-sm text-text-secondary">
-                            Technology Stack (Optional)
-                          </label>
-                          <input 
-                            name="technologyStack"
-                            value={formData.technologyStack}
-                            onChange={handleChange}
-                            type="text"
-                            className={inputClass(false)}
-                            placeholder="e.g., React, Python, IoT"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="font-label text-sm text-text-secondary">
-                            Team Members (Optional)
-                          </label>
-                          <input 
-                            name="teamMembers"
-                            value={formData.teamMembers}
-                            onChange={handleChange}
-                            type="text"
-                            className={inputClass(false)}
-                            placeholder="Names of team members"
-                          />
-                        </div>
                       </div>
 
                       {/* Expected Outcome */}

@@ -131,20 +131,7 @@ export function AdminSubmissionDetail() {
               <div className="px-6">
                 <DetailRow icon={Lightbulb} label="Idea Title"       value={sub.idea_title} />
                 <DetailRow icon={FileText}  label="Idea Description" value={sub.idea_description} />
-                <DetailRow icon={FileText}  label="Problem Statement" value={sub.problem_statement} />
-                <DetailRow icon={FileText}  label="Proposed Solution" value={sub.proposed_solution} />
-                <DetailRow icon={FileText}  label="Expected Impact"   value={sub.expected_impact} />
                 <DetailRow icon={FileText}  label="Expected Outcome" value={sub.expected_outcome} />
-              </div>
-            </div>
-
-            <div className="bg-[#0d1426] border border-white/10 rounded-2xl overflow-hidden mt-6">
-              <div className="px-6 py-4 border-b border-white/10">
-                <h2 className="text-white font-semibold text-sm">Team & Technology</h2>
-              </div>
-              <div className="px-6">
-                <DetailRow icon={FileText} label="Technology Stack" value={sub.technology_stack} />
-                <DetailRow icon={User}     label="Team Members"     value={sub.team_members} />
               </div>
             </div>
 
