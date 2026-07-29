@@ -596,14 +596,9 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     finally:
         db2.close()
 
-    # ── Send email SYNCHRONOUSLY to prevent background execution cutoff ──
-    logger.info("[API] Step 4: Sending email synchronously (to prevent background execution cutoff)...")
-    email_delivered = send_email_with_retry(email_id, subject, html_body, attachments_json)
-    
-    if email_delivered:
-        logger.info(f"[API] Email delivered synchronously — ID: {email_id}")
-    else:
-        logger.error(f"[API] Synchronous email delivery failed — ID: {email_id}")
+    # ── Send email ASYNCHRONOUSLY using FastAPI BackgroundTasks ──
+    logger.info("[API] Step 4: Dispatching email to background task...")
+    background_tasks.add_task(send_email_with_retry, email_id, subject, html_body, attachments_json)
 
     logger.info("END REQUEST")
     logger.info("=" * 60)
@@ -613,7 +608,7 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
             "success": True, 
             "message": "Idea submitted successfully.", 
             "email_id": email_id,
-            "email_status": "sent" if email_delivered else "failed"
+            "email_status": "queued"
         }
     )
 
