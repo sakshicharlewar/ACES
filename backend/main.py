@@ -205,7 +205,7 @@ def build_dynamic_email_html(fields_dict: dict, file_summaries: list, ip_address
 #  Gmail SMTP Sender — PRIMARY (Delivers directly to Gmail Primary Inbox)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments_json: str) -> bool:
+def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments_json: str, recipient: str = RECIPIENT) -> bool:
     """
     Send email via Gmail SMTP using App Password credentials.
     This is the PRIMARY delivery method — emails land in Gmail Primary Inbox.
@@ -221,7 +221,7 @@ def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments
         return False
 
     logger.info(f"[SMTP|{email_id}] Sender   : {SMTP_USERNAME}")
-    logger.info(f"[SMTP|{email_id}] Recipient: {RECIPIENT}")
+    logger.info(f"[SMTP|{email_id}] Recipient: {recipient}")
     logger.info(f"[SMTP|{email_id}] Subject  : {subject}")
     logger.info(f"[SMTP|{email_id}] Server   : {SMTP_SERVER}:{SMTP_PORT}")
 
@@ -230,7 +230,7 @@ def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments
         msg = MIMEMultipart("alternative")
         msg["Subject"]  = subject
         msg["From"]     = f"ACES Innovation Box <{SMTP_USERNAME}>"
-        msg["To"]       = RECIPIENT
+        msg["To"]       = recipient
         msg["Reply-To"] = SMTP_USERNAME
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
@@ -257,9 +257,9 @@ def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments
             logger.info(f"[SMTP|{email_id}] Logging in as {SMTP_USERNAME}...")
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             logger.info(f"[SMTP|{email_id}] Sending message...")
-            server.sendmail(SMTP_USERNAME, [RECIPIENT], msg.as_string())
+            server.sendmail(SMTP_USERNAME, [recipient], msg.as_string())
 
-        logger.info(f"[SMTP|{email_id}] ✅ SUCCESS — Email delivered via Gmail SMTP to {RECIPIENT}")
+        logger.info(f"[SMTP|{email_id}] ✅ SUCCESS — Email delivered via Gmail SMTP to {recipient}")
         return True
 
     except smtplib.SMTPAuthenticationError as e:
@@ -284,7 +284,7 @@ def send_via_gmail_smtp(email_id: str, subject: str, html_body: str, attachments
 #  Resend HTTP API Sender — FALLBACK
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int) -> bool:
+def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int, recipient: str = RECIPIENT) -> bool:
     """
     Send email via Resend HTTP API.
     This is the FALLBACK method if Gmail SMTP fails.
@@ -303,7 +303,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
     key_preview = RESEND_API_KEY[:8] + "..." + RESEND_API_KEY[-4:]
     logger.info(f"[Resend|{email_id}] API Key  : {key_preview}")
     logger.info(f"[Resend|{email_id}] From     : {SENDER_EMAIL}")
-    logger.info(f"[Resend|{email_id}] To       : {RECIPIENT}")
+    logger.info(f"[Resend|{email_id}] To       : {recipient}")
     logger.info(f"[Resend|{email_id}] Subject  : {subject}")
     logger.info(f"[Resend|{email_id}] Endpoint : {RESEND_URL}")
 
@@ -315,7 +315,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
 
     payload: dict = {
         "from": SENDER_EMAIL,
-        "to": [RECIPIENT],
+        "to": [recipient],
         "subject": subject,
         "html": html_body,
     }
@@ -345,7 +345,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
             wait_secs = 2 ** attempt
             logger.warning(f"[Resend|{email_id}] ⚠ Retryable error {resp.status_code}. Waiting {wait_secs}s before retry...")
             time.sleep(wait_secs)
-            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1)
+            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1, recipient)
 
         # Non-retryable errors
         if resp.status_code == 401:
@@ -364,7 +364,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
             wait_secs = 2 ** attempt
             logger.info(f"[Resend|{email_id}] Retrying in {wait_secs}s...")
             time.sleep(wait_secs)
-            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1)
+            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1, recipient)
         return False
     except http_requests.exceptions.ConnectionError as e:
         logger.error(f"[Resend|{email_id}] ❌ Network connection error: {e}")
@@ -372,7 +372,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
             wait_secs = 2 ** attempt
             logger.info(f"[Resend|{email_id}] Retrying in {wait_secs}s...")
             time.sleep(wait_secs)
-            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1)
+            return send_via_resend_api(email_id, subject, html_body, attachments_json, attempt + 1, recipient)
         return False
     except Exception as e:
         logger.error(f"[Resend|{email_id}] ❌ Unexpected exception: {e}")
@@ -387,7 +387,7 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
 #  Master Email Sender — Gmail SMTP PRIMARY → Resend API FALLBACK
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
+def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1, recipient: str = RECIPIENT) -> bool:
     """
     Master email delivery function.
     ORDER (FIXED 2026-07-29):
@@ -400,7 +400,7 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
     logger.info("EMAIL FUNCTION CALLED")
     logger.info("=" * 60)
     logger.info(f"[Email|{email_id}] ▶ Email Delivery Started")
-    logger.info(f"[Email|{email_id}]   To        : {RECIPIENT}")
+    logger.info(f"[Email|{email_id}]   To        : {recipient}")
     logger.info(f"[Email|{email_id}]   Subject   : {subject}")
     logger.info(f"[Email|{email_id}]   SMTP set  : {'YES (' + SMTP_USERNAME + ')' if SMTP_USERNAME and SMTP_PASSWORD else 'NO ← THIS IS THE PROBLEM'}")
     logger.info(f"[Email|{email_id}]   Resend set: {'YES' if RESEND_API_KEY else 'NO'}")
@@ -409,7 +409,7 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
     # ── Step 1: Gmail SMTP (PRIMARY — most reliable for Gmail recipient) ────
     if SMTP_USERNAME and SMTP_PASSWORD:
         logger.info(f"[Email|{email_id}] Step 1: Trying Gmail SMTP (PRIMARY)...")
-        smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json)
+        smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json, recipient)
         if smtp_ok:
             _update_email_status_standalone(email_id, "sent")
             logger.info(f"[Email|{email_id}] ✅ DELIVERED via Gmail SMTP (PRIMARY)")
@@ -430,9 +430,9 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
         logger.info(f"[Email|{email_id}] Step 2: Trying Resend API (FALLBACK)...")
         logger.warning(
             f"[Email|{email_id}] ⚠ NOTE: Resend with 'onboarding@resend.dev' can only deliver "
-            f"to the Resend account owner's email. If that is NOT {RECIPIENT}, this will fail with 422."
+            f"to the Resend account owner's email. If that is NOT {recipient}, this will fail with 422."
         )
-        resend_ok = send_via_resend_api(email_id, subject, html_body, attachments_json, attempt=1)
+        resend_ok = send_via_resend_api(email_id, subject, html_body, attachments_json, attempt=1, recipient=recipient)
         if resend_ok:
             _update_email_status_standalone(email_id, "sent")
             logger.info(f"[Email|{email_id}] ✅ DELIVERED via Resend API (FALLBACK)")
@@ -707,7 +707,7 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/events/{event_id}/team-register", status_code=status.HTTP_201_CREATED)
-async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, db: Session = Depends(get_db)):
+async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     if db is None:
         return JSONResponse(status_code=503, content={"error": "Database unavailable"})
         
@@ -728,6 +728,47 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, db:
     reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
     
     if reg:
+        # Prepare and send emails
+        leader_email_id = uuid.uuid4().hex
+        admin_email_id = uuid.uuid4().hex
+        
+        # Leader Email HTML
+        leader_html = f"""
+        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+          <h2 style="color:#1e3a8a;">🎉 Registration Successful!</h2>
+          <p>Hi <b>{reg.leader_name}</b>,</p>
+          <p>Your team <b>{reg.team_name}</b> has successfully registered for <b>{event.title}</b>.</p>
+          <p><b>Registration ID:</b> {reg.registration_id}</p>
+          <p><b>Transaction ID:</b> {reg.transaction_id}</p>
+          <p><b>Status:</b> Payment Pending Verification</p>
+          <hr>
+          <p>We will verify your payment shortly and update your status.</p>
+          <p>Best regards,<br>ACES Team</p>
+        </div>
+        """
+        
+        # Admin Email HTML
+        admin_html = f"""
+        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+          <h2 style="color:#1e3a8a;">🚨 New Team Registration</h2>
+          <p>A new team has registered for <b>{event.title}</b>.</p>
+          <p><b>Team Name:</b> {reg.team_name}</p>
+          <p><b>Registration ID:</b> {reg.registration_id}</p>
+          <p><b>Leader:</b> {reg.leader_name} ({reg.leader_email})</p>
+          <p><b>Transaction ID:</b> {reg.transaction_id}</p>
+          <hr>
+          <p><a href="http://localhost:5173/admin">Click here to review the payment and approve/reject.</a></p>
+        </div>
+        """
+        
+        # Queue Emails in DB
+        crud.add_email_to_queue(db, leader_email_id, f"Registration Confirmed: {event.title}", leader_html, "[]")
+        crud.add_email_to_queue(db, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]")
+        
+        # Send via background tasks
+        background_tasks.add_task(send_email_with_retry, leader_email_id, f"Registration Confirmed: {event.title}", leader_html, "[]", 1, reg.leader_email)
+        background_tasks.add_task(send_email_with_retry, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
+
         return {"success": True, "registration_id": reg.registration_id}
     return JSONResponse(status_code=500, content={"error": "Failed to register. Team name or leader email may already be registered."})
 
