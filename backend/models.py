@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, ForeignKey, Index
+    Column, Integer, String, Text, DateTime, ForeignKey, Index, Boolean
 )
 from sqlalchemy.sql import func
 from database import Base
@@ -52,6 +52,9 @@ class UpcomingEvent(Base):
     image_url         = Column(Text, nullable=True)
     registration_link = Column(Text, nullable=True)
     status            = Column(String(50), default="upcoming", index=True)
+    max_teams         = Column(Integer, nullable=True, default=0)
+    team_size         = Column(Integer, nullable=True, default=1)
+    is_registration_open = Column(Boolean, default=True)
     created_at        = Column(DateTime(timezone=True), server_default=func.now())
     updated_at        = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -76,6 +79,37 @@ class EventRegistration(Base):
     __table_args__ = (
         Index("ix_reg_event_email", "event_id", "email", unique=True),
     )
+
+
+# ─── Team Registrations (for Bug Hunt & Dynamic Events) ───────────────────────
+class TeamRegistration(Base):
+    __tablename__ = "team_registrations"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    registration_id = Column(String(50), unique=True, index=True, nullable=False)
+    event_id        = Column(Integer, ForeignKey("upcoming_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    team_name       = Column(String(255), nullable=False, index=True)
+    
+    # Leader details
+    leader_name     = Column(String(255), nullable=False)
+    leader_email    = Column(String(255), nullable=False, index=True)
+    leader_phone    = Column(String(20), nullable=False)
+    leader_year     = Column(String(50), nullable=False)
+    leader_branch   = Column(String(100), nullable=False)
+    
+    # Member 2 details
+    member2_name    = Column(String(255), nullable=False)
+    member2_email   = Column(String(255), nullable=False)
+    member2_phone   = Column(String(20), nullable=False)
+    member2_year    = Column(String(50), nullable=False)
+    
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_team_event_leader_email", "event_id", "leader_email", unique=True),
+    )
+
 
 
 # ─── Contact Messages ─────────────────────────────────────────────────────────

@@ -47,6 +47,9 @@ class EventCreate(BaseModel):
     image_url: Optional[str] = None
     registration_link: Optional[str] = None
     status: Optional[str] = "upcoming"
+    max_teams: Optional[int] = 0
+    team_size: Optional[int] = 1
+    is_registration_open: Optional[bool] = True
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
@@ -57,15 +60,21 @@ class EventUpdate(BaseModel):
     image_url: Optional[str] = None
     registration_link: Optional[str] = None
     status: Optional[str] = None
+    max_teams: Optional[int] = None
+    team_size: Optional[int] = None
+    is_registration_open: Optional[bool] = None
 
 class EventRead(EventCreate):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    registered_teams_count: Optional[int] = 0
 
     class Config:
         from_attributes = True
         orm_mode = True
+
+
 
 
 # ─── Event Registrations ──────────────────────────────────────────────────────
@@ -79,6 +88,33 @@ class RegistrationCreate(BaseModel):
 
 class RegistrationRead(RegistrationCreate):
     id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        orm_mode = True
+
+# ─── Team Registrations (for Bug Hunt) ────────────────────────────────────────
+class TeamRegistrationCreate(BaseModel):
+    event_id: int
+    team_name: str
+    
+    # Leader
+    leader_name: str
+    leader_email: EmailStr
+    leader_phone: str = Field(..., min_length=10, max_length=10)
+    leader_year: str
+    leader_branch: str
+    
+    # Member 2
+    member2_name: str
+    member2_email: EmailStr
+    member2_phone: str = Field(..., min_length=10, max_length=10)
+    member2_year: str
+
+class TeamRegistrationRead(TeamRegistrationCreate):
+    id: int
+    registration_id: str
     created_at: Optional[datetime] = None
 
     class Config:

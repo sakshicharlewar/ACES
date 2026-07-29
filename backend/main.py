@@ -40,7 +40,7 @@ from sqlalchemy import text
 from dotenv import load_dotenv
 
 from database import get_db, create_tables, SessionLocal, engine
-from models import EmailQueue, InnovationSubmission
+from models import EmailQueue, InnovationSubmission, TeamRegistration
 from sqlalchemy import inspect
 import crud
 import schemas
@@ -708,6 +708,50 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  API ROUTES — Team Registrations (Bug Hunt)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/events/{event_id}/team-register", status_code=status.HTTP_201_CREATED)
+async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, db: Session = Depends(get_db)):
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+        
+    event = crud.get_event(db, event_id)
+    if not event:
+        return JSONResponse(status_code=404, content={"error": "Event not found."})
+    
+    if not event.is_registration_open:
+        return JSONResponse(status_code=400, content={"error": "Registration is closed for this event."})
+        
+    current_teams = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
+    if event.max_teams and event.max_teams > 0 and current_teams >= event.max_teams:
+        return JSONResponse(status_code=400, content={"error": "Registration is full. Maximum teams reached."})
+        
+    registration_id = f"BUG-{current_teams + 1:03d}"
+    
+    reg_data = data.dict()
+    reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
+    
+    if reg:
+        return {"success": True, "registration_id": reg.registration_id}
+    return JSONResponse(status_code=500, content={"error": "Failed to register. Team name or leader email may already be registered."})
+
+@app.get("/admin/api/events/{event_id}/team-registrations")
+async def list_team_registrations(event_id: int, db: Session = Depends(get_db)):
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+    regs = crud.get_team_registrations(db, event_id)
+    return [schemas.TeamRegistrationRead.from_orm(r).dict() for r in regs]
+
+@app.delete("/admin/api/team-registrations/{reg_id}")
+async def delete_team_registration(reg_id: int, db: Session = Depends(get_db)):
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+    if crud.delete_team_registration(db, reg_id):
+        return {"success": True}
+    return JSONResponse(status_code=404, content={"error": "Registration not found."})
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  API ROUTES — Innovation Box Read
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1267,7 +1311,25 @@ async def startup_validation():
                 except Exception as e:
                     logger.error(f"[DB] Failed to add 'created_at' column: {e}")
 
-    # Create other tables
+        # Ensure upcoming_events has the new dynamic configuration columns
+        if inspector.has_table("upcoming_events"):
+            logger.info("[DB] Table 'upcoming_events' exists. Checking columns for dynamic configuration...")
+            columns = [col["name"] for col in inspector.get_columns("upcoming_events")]
+            try:
+                with engine.begin() as conn:
+                    if "max_teams" not in columns:
+                        logger.info("[DB] 'max_teams' column missing. Adding it...")
+                        conn.execute(text("ALTER TABLE upcoming_events ADD COLUMN max_teams INTEGER DEFAULT 0"))
+                    if "team_size" not in columns:
+                        logger.info("[DB] 'team_size' column missing. Adding it...")
+                        conn.execute(text("ALTER TABLE upcoming_events ADD COLUMN team_size INTEGER DEFAULT 1"))
+                    if "is_registration_open" not in columns:
+                        logger.info("[DB] 'is_registration_open' column missing. Adding it...")
+                        conn.execute(text("ALTER TABLE upcoming_events ADD COLUMN is_registration_open BOOLEAN DEFAULT TRUE"))
+            except Exception as e:
+                logger.error(f"[DB] Failed to migrate 'upcoming_events': {e}")
+
+    # Create other tables (including team_registrations)
     create_tables()
 
     # Log configuration status

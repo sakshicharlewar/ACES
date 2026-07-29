@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from models import (
-    InnovationSubmission, UpcomingEvent, EventRegistration,
+    InnovationSubmission, UpcomingEvent, EventRegistration, TeamRegistration,
     ContactMessage, EmailQueue
 )
 
@@ -86,7 +86,10 @@ def get_events(db: Session, skip: int = 0, limit: int = 50, status: Optional[str
         query = db.query(UpcomingEvent)
         if status:
             query = query.filter(UpcomingEvent.status == status)
-        return query.order_by(desc(UpcomingEvent.event_date)).offset(skip).limit(limit).all()
+        events = query.order_by(desc(UpcomingEvent.event_date)).offset(skip).limit(limit).all()
+        for event in events:
+            event.registered_teams_count = db.query(TeamRegistration).filter(TeamRegistration.event_id == event.id).count()
+        return events
     except Exception as e:
         logger.error(f"[CRUD] Failed to list events: {e}")
         return []
@@ -170,7 +173,50 @@ def delete_registration(db: Session, reg_id: int) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Contact Messages
+# ─── Team Registrations ────────────────────────────────────────────────────────
+def create_team_registration(db: Session, registration_id: str, **kwargs) -> Optional[TeamRegistration]:
+    try:
+        reg = TeamRegistration(registration_id=registration_id, **kwargs)
+        db.add(reg)
+        db.commit()
+        db.refresh(reg)
+        logger.info(f"[CRUD] Team Registration #{reg.id} saved for event #{reg.event_id}")
+        return reg
+    except Exception as e:
+        db.rollback()
+        logger.error(f"[CRUD] Failed to save team registration: {e}")
+        return None
+
+def get_team_registration(db: Session, reg_id: int) -> Optional[TeamRegistration]:
+    try:
+        return db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+    except Exception as e:
+        logger.error(f"[CRUD] Failed to get team registration #{reg_id}: {e}")
+        return None
+
+def get_team_registrations(db: Session, event_id: int, skip: int = 0, limit: int = 100) -> List[TeamRegistration]:
+    try:
+        return db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(desc(TeamRegistration.created_at)).offset(skip).limit(limit).all()
+    except Exception as e:
+        logger.error(f"[CRUD] Failed to get team registrations for event #{event_id}: {e}")
+        return []
+
+def delete_team_registration(db: Session, reg_id: int) -> bool:
+    try:
+        reg = db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+        if reg:
+            db.delete(reg)
+            db.commit()
+            logger.info(f"[CRUD] Team Registration #{reg_id} deleted.")
+            return True
+        return False
+    except Exception as e:
+        db.rollback()
+        logger.error(f"[CRUD] Failed to delete team registration #{reg_id}: {e}")
+        return False
+
+
+# ─── Contact Messages ─────────────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def create_contact(db: Session, **kwargs) -> Optional[ContactMessage]:
