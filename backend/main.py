@@ -107,6 +107,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Global exception handler: always return clean JSON, never raw HTML/tracebacks ──
+from fastapi import Request as _Request
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: _Request, exc: StarletteHTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"error": str(exc.detail)})
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: _Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"error": "Invalid request data. Please check your inputs."})
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: _Request, exc: Exception):
+    logger.error(f"[Unhandled] {request.method} {request.url}: {exc}", exc_info=True)
+    return JSONResponse(status_code=500, content={"error": "An internal server error occurred. Please try again."})
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Utility Helpers
