@@ -1703,7 +1703,7 @@ async def admin_list_submissions(
         raise HTTPException(status_code=503, detail="Database unavailable")
 
     from models import InnovationSubmission
-    from sqlalchemy import or_, cast, Date
+    from sqlalchemy import or_
 
     db = SessionLocal()
     try:
@@ -1711,10 +1711,10 @@ async def admin_list_submissions(
 
         if search:
             s = f"%{search}%"
+            # Exclude nullable mobile column to avoid ilike errors on NULL values
             q = q.filter(or_(
                 InnovationSubmission.full_name.ilike(s),
                 InnovationSubmission.email.ilike(s),
-                InnovationSubmission.mobile.ilike(s),
                 InnovationSubmission.idea_title.ilike(s),
                 InnovationSubmission.department.ilike(s),
             ))
@@ -1736,14 +1736,30 @@ async def admin_list_submissions(
             except ValueError:
                 pass
 
-        total = q.count()
-        items = q.order_by(InnovationSubmission.submitted_at.desc()).offset((page - 1) * limit).limit(limit).all()
+        try:
+            total = q.count()
+        except Exception as e:
+            logger.warning(f"[submissions] count failed: {e}")
+            total = 0
+
+        try:
+            items = q.order_by(InnovationSubmission.submitted_at.desc()).offset((page - 1) * limit).limit(limit).all()
+        except Exception as e:
+            logger.warning(f"[submissions] query failed: {e}")
+            items = []
+
+        def _ts(s):
+            for attr in ('submitted_at', 'created_at', 'submission_date'):
+                v = getattr(s, attr, None)
+                if v:
+                    return v.isoformat()
+            return None
 
         return {
             "total": total,
             "page" : page,
             "limit": limit,
-            "pages": (total + limit - 1) // limit,
+            "pages": (total + limit - 1) // limit if total else 0,
             "items": [
                 {
                     "id"              : s.id,
@@ -1755,19 +1771,26 @@ async def admin_list_submissions(
                     "category"        : s.category,
                     "idea_title"      : s.idea_title,
                     "idea_description": s.idea_description,
-                    "expected_outcome": s.expected_outcome,
+                    "expected_outcome": getattr(s, 'expected_outcome', None),
                     "attachment_name" : s.attachment_name,
                     "attachment_type" : s.attachment_type,
                     "attachment_url"  : s.attachment_url,
                     "ip_address"      : s.ip_address,
-                    "idea_id"         : getattr(s, 'idea_id', f"#{s.id}"),
-                    "status"          : getattr(s, 'status', "Pending Review"),
+                    "idea_id"         : getattr(s, 'idea_id', None) or f"#{s.id}",
+                    "status"          : getattr(s, 'status', 'Pending Review') or 'Pending Review',
                     "admin_remarks"   : getattr(s, 'admin_remarks', None),
-                    "submitted_at"    : s.submitted_at.isoformat() if s.submitted_at else None,
+                    "submitted_at"    : _ts(s),
                 }
                 for s in items
             ],
         }
+    except Exception as e:
+        logger.error(f"[admin_list_submissions] Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Submissions query failed: {str(e)}"},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
     finally:
         db.close()
 
