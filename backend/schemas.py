@@ -13,6 +13,11 @@ class InnovationCreate(BaseModel):
     category: str
     idea_title: str
     idea_description: str
+    problem_statement: Optional[str] = None
+    proposed_solution: Optional[str] = None
+    expected_impact: Optional[str] = None
+    technology_stack: Optional[str] = None
+    team_members: Optional[str] = None
     expected_outcome: Optional[str] = None
     attachment_name: Optional[str] = None
     attachment_type: Optional[str] = None
@@ -20,6 +25,7 @@ class InnovationCreate(BaseModel):
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     form_data: Optional[str] = None
+    submission_date: Optional[datetime] = None
     submitted_at: Optional[datetime] = None
 
 class InnovationRead(InnovationCreate):

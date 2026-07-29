@@ -18,6 +18,11 @@ class InnovationSubmission(Base):
     category        = Column(String(100), nullable=False, index=True)
     idea_title      = Column(String(500), nullable=False)
     idea_description = Column(Text, nullable=False)
+    problem_statement = Column(Text, nullable=True)
+    proposed_solution = Column(Text, nullable=True)
+    expected_impact = Column(Text, nullable=True)
+    technology_stack = Column(Text, nullable=True)
+    team_members    = Column(Text, nullable=True)
     expected_outcome = Column(Text, nullable=True)
     attachment_name = Column(String(500), nullable=True)
     attachment_type = Column(String(100), nullable=True)
@@ -25,6 +30,7 @@ class InnovationSubmission(Base):
     ip_address      = Column(String(100), nullable=True)
     user_agent      = Column(Text, nullable=True)
     form_data       = Column(Text, nullable=True)
+    submission_date = Column(DateTime(timezone=True), server_default=func.now())
     submitted_at    = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
