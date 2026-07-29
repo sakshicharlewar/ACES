@@ -36,7 +36,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     transactionId: '',
     paymentScreenshot: null,
   });
-  const [hasPaid, setHasPaid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successData, setSuccessData] = useState(null);
@@ -461,128 +460,81 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <div className="text-4xl">💳</div>
                 </div>
 
-                {!hasPaid ? (
-                  <>
-                    {/* QR Card + Pay Button */}
-                    <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-5 relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+                {/* QR Card */}
+                <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
 
-                      {/* Primary CTA: Deep Link */}
-                      <a
-                        href="#"
-                        onClick={handleUPIPayment}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold text-lg transition-all shadow-[0_0_40px_rgba(59,130,246,0.45)] hover:shadow-[0_0_56px_rgba(59,130,246,0.6)] mb-6"
-                      >
-                        <CreditCard size={22} /> Pay ₹40 Now
-                      </a>
+                  <a
+                    href="#"
+                    onClick={handleUPIPayment}
+                    className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
+                  >
+                    <img
+                      src="/ACESSScanner.jpeg"
+                      alt="ACES Bug Hunt Payment QR Code"
+                      style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block' }}
+                    />
+                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">Tap to Pay</span>
+                    </div>
+                  </a>
+                  <p className="text-sm font-medium text-gray-300 mt-5">Scan this QR Code to pay ₹40</p>
+                </div>
 
-                      <p className="text-xs text-gray-400 mb-5">Open in Google Pay, PhonePe, Paytm, or any UPI App</p>
+                <div className="space-y-6">
+                  {/* Transaction ID */}
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-2">
+                      UPI Transaction ID <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text" name="transactionId" value={formData.transactionId} onChange={handleChange}
+                      placeholder="Enter your UPI Transaction ID"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                      minLength="12"
+                      maxLength="40"
+                    />
+                  </div>
 
-                      {/* Divider */}
-                      <div className="flex items-center gap-3 w-full mb-5">
-                        <div className="flex-1 h-px bg-white/10" />
-                        <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">or scan QR</span>
-                        <div className="flex-1 h-px bg-white/10" />
-                      </div>
+                  {/* Screenshot Upload */}
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-2">
+                      Upload Payment Screenshot / Payment Proof <span className="text-red-400">*</span>
+                    </label>
 
-                      {/* Fallback QR linked to deep link */}
-                      <a
-                        href="#"
-                        onClick={handleUPIPayment}
-                        className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
-                      >
-                        <img
-                          src="/ACESSScanner.jpeg"
-                          alt="ACES Bug Hunt Payment QR Code"
-                          style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block' }}
+                    {formData.paymentScreenshot ? (
+                      <div className="relative rounded-xl border border-white/10 overflow-hidden bg-white/5 p-2">
+                        <img 
+                          src={formData.paymentScreenshot} 
+                          alt="Screenshot preview" 
+                          className="w-full h-48 object-contain rounded-lg bg-black/50"
                         />
-                        <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">Tap to Pay</span>
+                        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(p => ({ ...p, paymentScreenshot: null }))}
+                            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
+                          >
+                            Remove
+                          </button>
                         </div>
-                      </a>
-                      <p className="text-xs text-gray-400 mt-3 text-center">Scan or Tap to pay ₹40</p>
-                    </div>
-
-                    <div className="flex flex-col items-center">
-                      <p className="text-sm text-gray-300 mb-3 font-medium">Did you complete the payment?</p>
-                      <button
-                        type="button"
-                        onClick={() => setHasPaid(true)}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 font-medium transition-colors"
-                      >
-                        <CheckCircle size={18} /> Yes, I Have Paid
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                    <div className="flex justify-between items-center bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-                      <div className="flex items-center gap-2 text-green-400">
-                        <CheckCircle size={18} />
-                        <span className="text-sm font-medium">Payment Marked as Paid</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setHasPaid(false)}
-                        className="text-xs text-gray-400 hover:text-white underline"
+                    ) : (
+                      <div 
+                        onClick={() => fileRef.current?.click()}
+                        className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
                       >
-                        Retry Payment
-                      </button>
-                    </div>
-
-                    {/* Transaction ID */}
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">
-                        UPI Transaction ID <span className="text-red-400">*</span>
-                      </label>
-                      <input
-                        type="text" name="transactionId" value={formData.transactionId} onChange={handleChange}
-                        placeholder="Example: T2407291845123456789"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all font-mono text-sm"
-                        maxLength="40"
-                      />
-                      <p className="text-xs text-gray-500 mt-2">Enter the 12+ digit transaction ID provided by your UPI app.</p>
-                    </div>
-
-                    {/* Screenshot Upload */}
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">
-                        Upload Payment Screenshot / Proof <span className="text-red-400">*</span>
-                      </label>
-
-                      {formData.paymentScreenshot ? (
-                        <div className="relative rounded-xl border border-white/10 overflow-hidden bg-white/5 p-2">
-                          <img 
-                            src={formData.paymentScreenshot} 
-                            alt="Screenshot preview" 
-                            className="w-full h-48 object-contain rounded-lg bg-black/50"
-                          />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            <button
-                              type="button"
-                              onClick={() => fileRef.current?.click()}
-                              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
-                            >
-                              Replace
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormData(p => ({ ...p, paymentScreenshot: null }))}
-                              className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
-                            >
-                              Remove
-                            </button>
-                          </div>
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <Upload className="text-blue-400" size={24} />
                         </div>
-                      ) : (
-                        <div 
-                          onClick={() => fileRef.current?.click()}
-                          className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <Upload className="text-blue-400" size={24} />
-                          </div>
-                          <p className="text-sm text-gray-300 font-medium text-center">Click to upload screenshot</p>
+                        <p className="text-sm text-gray-300 font-medium text-center">Click to upload screenshot</p>
                           <p className="text-xs text-gray-500 mt-1 text-center">JPG, PNG, PDF (Max 10MB)</p>
                         </div>
                       )}
@@ -595,9 +547,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                         className="hidden"
                       />
                     </div>
-                  </motion.div>
-                )}
-              </div>
+                  </div>
+                </div>
 
             </form>
           </div>
@@ -628,7 +579,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </button>
               ) : (
                 <button
-                  type="submit" disabled={loading || !hasPaid || !formData.transactionId || !formData.paymentScreenshot}
+                  type="submit" disabled={loading || !formData.transactionId || !formData.paymentScreenshot}
                   className="ml-auto px-8 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(22,163,74,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : null}
