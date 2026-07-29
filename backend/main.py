@@ -1248,7 +1248,24 @@ async def startup_validation():
             InnovationSubmission.__table__.create(bind=engine)
             logger.info("[DB] Table 'innovation_box_submissions' created successfully.")
         else:
-            logger.info("[DB] Table 'innovation_box_submissions' exists.")
+            logger.info("[DB] Table 'innovation_box_submissions' exists. Checking columns...")
+            columns = [col["name"] for col in inspector.get_columns("innovation_box_submissions")]
+            if "submitted_at" not in columns:
+                logger.info("[DB] 'submitted_at' column is missing. Adding it...")
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE innovation_box_submissions ADD COLUMN submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+                    logger.info("[DB] 'submitted_at' column added successfully.")
+                except Exception as e:
+                    logger.error(f"[DB] Failed to add 'submitted_at' column: {e}")
+            if "created_at" not in columns:
+                logger.info("[DB] 'created_at' column is missing. Adding it...")
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text("ALTER TABLE innovation_box_submissions ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"))
+                    logger.info("[DB] 'created_at' column added successfully.")
+                except Exception as e:
+                    logger.error(f"[DB] Failed to add 'created_at' column: {e}")
 
     # Create other tables
     create_tables()
