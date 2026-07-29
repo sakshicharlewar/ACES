@@ -39,8 +39,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from dotenv import load_dotenv
 
-from database import get_db, create_tables, SessionLocal
-from models import EmailQueue
+from database import get_db, create_tables, SessionLocal, engine
+from models import EmailQueue, InnovationSubmission
+from sqlalchemy import inspect
 import crud
 import schemas
 
@@ -1239,7 +1240,17 @@ async def startup_validation():
     logger.info("  ACES Backend v6.0 — Startup")
     logger.info("=" * 60)
 
-    # Create all PostgreSQL tables
+    # Explicitly check for innovation_box_submissions and create if missing
+    if engine:
+        inspector = inspect(engine)
+        if not inspector.has_table("innovation_box_submissions"):
+            logger.info("[DB] Table 'innovation_box_submissions' missing. Creating it now...")
+            InnovationSubmission.__table__.create(bind=engine)
+            logger.info("[DB] Table 'innovation_box_submissions' created successfully.")
+        else:
+            logger.info("[DB] Table 'innovation_box_submissions' exists.")
+
+    # Create other tables
     create_tables()
 
     # Log configuration status
