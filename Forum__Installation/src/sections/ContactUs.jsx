@@ -109,15 +109,15 @@ export function ContactUs() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 w-full"
         >
-          <div className="flex-1 text-center md:text-left">
-            <p className="font-cambria text-[14px] font-medium text-white/65 m-0">
-              © {currentYear} ACES – Association of Computer Engineering Students. All Rights Reserved.
-            </p>
-          </div>
-          <div className="flex-1 flex justify-center md:justify-end">
+          <div className="flex-1 flex justify-center md:justify-start">
             <p className="text-[14px] text-white font-bold flex items-center gap-1.5 m-0">
               <Code className="w-4 h-4 text-accent" />
               <Link to="/admin/login" className="hover:text-accent transition-colors">Developed by CODEFury</Link>
+            </p>
+          </div>
+          <div className="flex-1 text-center md:text-right">
+            <p className="font-cambria text-[14px] font-medium text-white/65 m-0">
+              © {currentYear} ACES – Association of Computer Engineering Students. All Rights Reserved.
             </p>
           </div>
         </motion.div>
