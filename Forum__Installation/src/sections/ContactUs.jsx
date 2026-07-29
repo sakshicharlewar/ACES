@@ -102,21 +102,24 @@ export function ContactUs() {
 
         </div>
 
-        {/* Bottom Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="py-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
+          className="py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 w-full"
         >
-          <p className="font-cambria text-[14px] font-medium text-white/65">
-            © {currentYear} ACES – Association of Computer Engineering Students. All Rights Reserved.
-          </p>
-          <p className="text-[14px] text-white font-bold flex items-center gap-1.5 justify-center md:justify-end">
-            <Code className="w-4 h-4 text-accent" />
-            <Link to="/admin/login" className="hover:text-accent transition-colors">Developed by CODEFury</Link>
-          </p>
+          <div className="flex-1 text-center md:text-left">
+            <p className="font-cambria text-[14px] font-medium text-white/65 m-0">
+              © {currentYear} ACES – Association of Computer Engineering Students. All Rights Reserved.
+            </p>
+          </div>
+          <div className="flex-1 flex justify-center md:justify-end">
+            <p className="text-[14px] text-white font-bold flex items-center gap-1.5 m-0">
+              <Code className="w-4 h-4 text-accent" />
+              <Link to="/admin/login" className="hover:text-accent transition-colors">Developed by CODEFury</Link>
+            </p>
+          </div>
         </motion.div>
       </div>
     </footer>
