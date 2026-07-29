@@ -1,0 +1,377 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useParams } from "react-router-dom";
+import { 
+  ArrowLeft, BookOpen, GraduationCap, Briefcase, Award, 
+  Link, FileText, CheckCircle, Image as ImageIcon, ZoomIn, X, 
+  ChevronRight
+} from "lucide-react";
+import { facultyData } from "../data/facultyData";
+
+const pageVariants = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, y: -30, transition: { duration: 0.5, ease: "easeIn" } },
+};
+
+const fadeUpVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 1) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, delay: i * 0.1, ease: "easeOut" },
+  }),
+};
+
+function SectionHeading({ title }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+      <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
+      <h3 style={{ fontSize: "1rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#B5B5B5" }}>{title}</h3>
+      <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
+    </div>
+  );
+}
+
+export function FacultyProfilePage() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [activeImg, setActiveImg] = useState(null);
+  
+  const faculty = facultyData.find(f => f.id === id);
+
+  if (!faculty) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <h2>Faculty not found</h2>
+        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px" }}>Go Back</button>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
+    >
+      {/* Background glow */}
+      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+
+      {/* ── Top Nav ── */}
+      <div style={{ padding: "24px", position: "relative", zIndex: 50, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+        <motion.button
+          onClick={() => navigate("/faculty")}
+          whileHover={{ boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "#fff", borderRadius: "9999px", padding: "10px 20px",
+            fontSize: "0.9rem", fontWeight: 500, cursor: "pointer",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Faculty
+        </motion.button>
+      </div>
+
+      <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10, marginTop: "20px", display: "flex", flexDirection: "column", gap: "48px" }}>
+        
+        {/* ── Profile Section (Hero) ── */}
+        <motion.div
+          initial="hidden" animate="visible" variants={fadeUpVariants} custom={1}
+          style={{
+            background: "#171717",
+            backdropFilter: "blur(16px)",
+            borderRadius: "32px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            padding: "48px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "48px",
+            boxShadow: "0 4px 40px rgba(0,0,0,0.5)",
+          }}
+          className="flex-col md:flex-row text-center md:text-left"
+        >
+          {/* Left: Square Photo */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{
+              width: "260px", height: "260px", borderRadius: "24px",
+              padding: "8px", background: "linear-gradient(135deg, rgba(59,130,246,0.5), rgba(96,165,250,0.1))",
+              boxShadow: "0 0 40px rgba(59,130,246,0.25)"
+            }}>
+              <img
+                src={faculty.image}
+                alt={faculty.name}
+                style={{ width: "100%", height: "100%", borderRadius: "16px", objectFit: "cover" }}
+              />
+            </div>
+          </div>
+
+          {/* Right: Quick Info */}
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: "clamp(2rem, 4vw, 2.8rem)", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.02em" }}>
+              {faculty.name}
+            </h1>
+            <p style={{ color: "#3B82F6", fontSize: "1.2rem", fontWeight: 500, marginBottom: "4px" }}>
+              {faculty.designation}
+            </p>
+            <p style={{ color: "#B5B5B5", fontSize: "1.05rem", marginBottom: "32px" }}>
+              {faculty.department}
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
+              <div>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Qualification</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
+                  <GraduationCap className="w-4 h-4 text-blue-400" /> {faculty.qualification}
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Experience</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
+                  <Briefcase className="w-4 h-4 text-blue-400" /> {faculty.experience}
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Specialization</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
+                  <BookOpen className="w-4 h-4 text-blue-400" /> {faculty.specialization || "Computer Engineering"}
+                </div>
+              </div>
+            </div>
+            
+            {/* Contact / Social Links */}
+            <div style={{ marginTop: "32px", display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }} className="md:justify-start">
+              {faculty.linkedin && (
+                <a href={faculty.linkedin} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 20px", borderRadius: "12px", color: "#fff", textDecoration: "none", fontSize: "0.95rem", transition: "all 0.3s" }}
+                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                  <Link className="w-4 h-4" /> LinkedIn
+                </a>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── About & Achievements ── */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
+          <SectionHeading title="About" />
+          
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            
+            {/* Left Side: About Text (60%) */}
+            <div className="w-full lg:w-[60%]" style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", boxShadow: "0 4px 32px rgba(0,0,0,0.3)" }}>
+              <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
+                {faculty.professionalSummary}
+              </p>
+            </div>
+
+            {/* Right Side: Achievements Grid (40%) */}
+            {faculty.achievementImages && faculty.achievementImages.length > 0 && (
+              <div className="w-full lg:w-[40%]" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", alignContent: "start" }}>
+                {faculty.achievementImages.map((ach, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setActiveImg(ach.src)}
+                    style={{
+                      borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
+                      background: "#111", cursor: "pointer", position: "relative",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "16px", minHeight: "180px"
+                    }}
+                    onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
+                    onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
+                  >
+                    <img src={ach.src} alt={ach.title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} className="img-hover" />
+                    <div className="overlay" style={{
+                      position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                      opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
+                    }}>
+                      <ZoomIn className="w-8 h-8 text-white mb-2" />
+                      <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{ach.title}</p>
+                      {ach.year && <p style={{ color: "#B5B5B5", fontSize: "0.9rem", marginTop: "4px" }}>{ach.year}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </motion.div>
+
+        {/* ── Academic Qualifications & Research Interests ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "40px" }}>
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
+            <SectionHeading title="Academic Qualifications" />
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {faculty.academicQualifications && faculty.academicQualifications.map((qual, i) => (
+                <div key={i} style={{ background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <GraduationCap className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{qual.degree}</h4>
+                    <p style={{ color: "#B5B5B5", fontSize: "0.95rem" }}>{qual.institution} {qual.year && `(${qual.year})`}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={4}>
+            <SectionHeading title="Research Interests" />
+            <div style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", height: "100%" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+                {faculty.researchInterests && faculty.researchInterests.map((interest, i) => (
+                  <span key={i} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93C5FD", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
+
+        {/* ── Professional Information ── */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
+          <SectionHeading title="Professional Information" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+            
+            {/* Subjects */}
+            <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <BookOpen className="w-5 h-5 text-blue-400" />
+                <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
+              </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {faculty.subjectsTaught && faculty.subjectsTaught.map((sub, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
+                    <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
+                    <span>{sub}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </motion.div>
+
+        {/* ── Publications ── */}
+        {faculty.publications && faculty.publications.length > 0 && (
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={6}>
+            <SectionHeading title="Publications" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "24px" }}>
+              {faculty.publications.map((pub, i) => (
+                <div key={i} style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                    <FileText className="w-5 h-5 text-blue-400" />
+                    <span style={{ color: "#B5B5B5", fontSize: "0.9rem" }}>{pub.year}</span>
+                  </div>
+                  <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "12px", lineHeight: "1.4" }}>{pub.title}</h4>
+                  <p style={{ color: "#999", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{pub.journal}</p>
+
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Photo Gallery ── */}
+        {faculty.gallery && faculty.gallery.length > 0 && (
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={8}>
+            <SectionHeading title="Gallery" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
+              {faculty.gallery.map((imgSrc, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveImg(imgSrc)}
+                  style={{
+                    borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
+                    background: "#111", cursor: "pointer", aspectRatio: "1", position: "relative",
+                  }}
+                  onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
+                  onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
+                >
+                  <img src={imgSrc} alt="Gallery" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <div className="overlay" style={{
+                    position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    opacity: 0, transition: "opacity 0.3s"
+                  }}>
+                    <ZoomIn className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+      </div>
+
+      {/* ── Lightbox Modal ── */}
+      <AnimatePresence>
+        {activeImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActiveImg(null)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 100,
+              background: "rgba(0,0,0,0.92)",
+              backdropFilter: "blur(16px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <button
+              onClick={() => setActiveImg(null)}
+              style={{
+                position: "absolute", top: "32px", right: "32px",
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "50%", padding: "10px", cursor: "pointer",
+                color: "rgba(255,255,255,0.5)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.3s"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: "90vw", maxHeight: "90vh" }}
+            >
+              <motion.img
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                src={activeImg}
+                alt="Preview"
+                style={{
+                  maxWidth: "90vw", maxHeight: "85vh",
+                  objectFit: "contain",
+                  borderRadius: "16px",
+                  boxShadow: "0 0 60px rgba(59,130,246,0.15), 0 24px 64px rgba(0,0,0,0.8)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
