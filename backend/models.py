@@ -30,6 +30,9 @@ class InnovationSubmission(Base):
     ip_address      = Column(String(100), nullable=True)
     user_agent      = Column(Text, nullable=True)
     form_data       = Column(Text, nullable=True)
+    idea_id         = Column(String(50), unique=True, index=True, nullable=True)
+    status          = Column(String(50), default="Pending Review", index=True)
+    admin_remarks   = Column(Text, nullable=True)
     submission_date = Column(DateTime(timezone=True), server_default=func.now())
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
     submitted_at    = Column(DateTime(timezone=True), server_default=func.now())
@@ -112,6 +115,12 @@ class TeamRegistration(Base):
     payment_time           = Column(DateTime(timezone=True), nullable=True)
     payment_verified_at    = Column(DateTime(timezone=True), nullable=True)
     payment_verified_by    = Column(String(255), nullable=True)
+    
+    # Admin Approval Workflow
+    approval_status = Column(String(50), default="pending", index=True)
+    approval_date   = Column(DateTime(timezone=True), nullable=True)
+    approved_by     = Column(String(255), nullable=True)
+    rejection_reason= Column(Text, nullable=True)
     
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 

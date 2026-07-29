@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -31,6 +32,8 @@ export default function AdminEventRegistrations() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [screenshotModal, setScreenshotModal] = useState(null);
+  const [rejectionModal, setRejectionModal] = useState(null); // { id: 123 }
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => { fetchEvents(); }, []);
   useEffect(() => {
@@ -91,27 +94,47 @@ export default function AdminEventRegistrations() {
     } catch (e) { console.error(e); }
   };
 
-  const handleVerifyPayment = async (regId, newStatus) => {
-    // ── Optimistic update: change UI instantly ──
+  const handleApproveRegistration = async (regId) => {
     setRegistrations(prev =>
-      prev.map(r => r.id === regId ? { ...r, payment_status: newStatus } : r)
+      prev.map(r => r.id === regId ? { ...r, approval_status: "approved" } : r)
     );
     try {
-      const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}/payment`, {
+      const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}/approve`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
+      });
+      if (!res.ok) fetchRegistrations(selectedEventId);
+    } catch (e) {
+      console.error(e);
+      fetchRegistrations(selectedEventId);
+    }
+  };
+
+  const submitRejection = async () => {
+    if (!rejectionModal) return;
+    const regId = rejectionModal.id;
+    const reason = rejectionReason;
+    
+    setRejectionModal(null);
+    setRejectionReason("");
+    
+    setRegistrations(prev =>
+      prev.map(r => r.id === regId ? { ...r, approval_status: "rejected" } : r)
+    );
+    
+    try {
+      const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}/reject`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
         },
-        body: JSON.stringify({ payment_status: newStatus }),
+        body: JSON.stringify({ rejection_reason: reason }),
       });
-      // If API fails, revert back
-      if (!res.ok) {
-        fetchRegistrations(selectedEventId);
-      }
+      if (!res.ok) fetchRegistrations(selectedEventId);
     } catch (e) {
       console.error(e);
-      fetchRegistrations(selectedEventId); // revert on error
+      fetchRegistrations(selectedEventId);
     }
   };
 
@@ -128,6 +151,7 @@ export default function AdminEventRegistrations() {
       "Member 2 Email":  r.member2_email,
       "Member 2 Phone":  r.member2_phone,
       "Member 2 Year":   r.member2_year,
+      "Approval Status": r.approval_status || "pending",
       "Payment Status":  r.payment_status || "pending",
       "Registration Fee": r.registration_fee || "₹40",
       "Transaction ID":  r.transaction_id || "",
@@ -248,8 +272,8 @@ export default function AdminEventRegistrations() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { label: "Total", count: registrations.length, color: "blue" },
-            { label: "Approved", count: registrations.filter(r => r.payment_status === "approved").length, color: "green" },
-            { label: "Pending", count: registrations.filter(r => !r.payment_status || r.payment_status === "pending").length, color: "yellow" },
+            { label: "Approved", count: registrations.filter(r => r.approval_status === "approved").length, color: "green" },
+            { label: "Pending", count: registrations.filter(r => !r.approval_status || r.approval_status === "pending").length, color: "yellow" },
           ].map(({ label, count, color }) => (
             <div key={label} className={`bg-${color}-50 border border-${color}-200 rounded-lg p-4 text-center`}>
               <p className={`text-2xl font-bold text-${color}-700`}>{count}</p>
@@ -269,7 +293,7 @@ export default function AdminEventRegistrations() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leader</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member 2</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Txn ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screenshot</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
@@ -295,20 +319,38 @@ export default function AdminEventRegistrations() {
                     <div className="text-xs text-gray-500">{reg.member2_email}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    {statusBadge(reg.payment_status)}
-                    <div className="text-xs text-gray-400 mt-1">{reg.registration_fee || "₹40"}</div>
+                    {statusBadge(reg.approval_status)}
+                    <div className="text-xs text-gray-400 mt-1">Fee: {reg.registration_fee || "₹40"}</div>
                   </td>
                   <td className="px-4 py-4 text-xs font-mono text-gray-700 max-w-[120px] truncate">
                     {reg.transaction_id || <span className="text-gray-400">—</span>}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {reg.payment_screenshot ? (
-                      <button
+                      <div 
+                        className="relative w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group bg-gray-100 flex items-center justify-center"
                         onClick={() => setScreenshotModal(reg.payment_screenshot)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
                       >
-                        <Eye size={14} /> View
-                      </button>
+                        {(reg.payment_screenshot.startsWith("data:application/pdf") || reg.payment_screenshot.toLowerCase().endsWith(".pdf")) ? (
+                          <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-gray-800 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-[10px] font-medium uppercase">View PDF</span>
+                          </div>
+                        ) : (
+                          <>
+                            <img 
+                              src={reg.payment_screenshot} 
+                              alt="Payment" 
+                              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Eye className="text-white w-6 h-6" />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-gray-400 text-xs">—</span>
                     )}
@@ -319,20 +361,20 @@ export default function AdminEventRegistrations() {
                   <td className="px-4 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Approve */}
-                      {reg.payment_status !== "approved" && (
+                      {reg.approval_status !== "approved" && (
                         <button
-                          onClick={() => handleVerifyPayment(reg.id, "approved")}
-                          title="Approve Payment"
+                          onClick={() => handleApproveRegistration(reg.id)}
+                          title="Approve Registration"
                           className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
                         >
                           <CheckCircle size={15} />
                         </button>
                       )}
                       {/* Reject */}
-                      {reg.payment_status !== "rejected" && (
+                      {reg.approval_status !== "rejected" && (
                         <button
-                          onClick={() => handleVerifyPayment(reg.id, "rejected")}
-                          title="Reject Payment"
+                          onClick={() => setRejectionModal({ id: reg.id })}
+                          title="Reject Registration"
                           className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 transition-colors"
                         >
                           <XCircle size={15} />
@@ -355,28 +397,41 @@ export default function AdminEventRegistrations() {
         </div>
       </div>
 
-      {/* Screenshot Preview Modal */}
-      {screenshotModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          onClick={() => setScreenshotModal(null)}
-        >
-          <div className="relative max-w-2xl w-full p-4" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setScreenshotModal(null)}
-              className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow text-gray-700 hover:text-black"
-            >✕</button>
-            {screenshotModal.startsWith('data:application/pdf') ? (
-              <div className="bg-white rounded-xl p-8 text-center">
-                <p className="text-gray-700 font-medium">PDF Screenshot Uploaded</p>
-                <a href={screenshotModal} download="payment_screenshot.pdf"
-                  className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
-                  Download PDF
-                </a>
-              </div>
-            ) : (
-              <img src={screenshotModal} alt="Payment Screenshot" className="w-full rounded-xl shadow-xl" />
-            )}
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!screenshotModal}
+        onClose={() => setScreenshotModal(null)}
+        imageUrl={screenshotModal}
+        altText="Payment Screenshot"
+      />
+
+      {/* Rejection Modal */}
+      {rejectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-100 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Reject Registration</h3>
+            <p className="text-sm text-gray-600 mb-4">Please provide a reason for rejecting this registration. This will be sent to the team leader.</p>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-red-500 focus:border-red-500 resize-none h-24 mb-4"
+              placeholder="e.g. Transaction ID mismatch, Fake screenshot, etc."
+            />
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { setRejectionModal(null); setRejectionReason(""); }}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRejection}
+                disabled={!rejectionReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                Reject Registration
+              </button>
+            </div>
           </div>
         </div>
       )}

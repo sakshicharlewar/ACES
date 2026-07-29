@@ -6,6 +6,7 @@ import {
   Search, Filter, Download, Trash2, Eye,
   ChevronLeft, ChevronRight, Loader2, AlertCircle, X,
 } from "lucide-react";
+import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 
 const DEPTS = ["", "Computer Engineering", "Information Technology", "Mechanical", "Civil", "Electrical", "Electronics", "Other"];
 
@@ -25,6 +26,7 @@ export function AdminSubmissions() {
   const [page,       setPage]       = useState(1);
   const [delId,      setDelId]      = useState(null);
   const [delLoading, setDelLoading] = useState(false);
+  const [previewModal, setPreviewModal] = useState(null);
   const [exporting,  setExporting]  = useState(false);
 
   const load = useCallback(async (pg = page) => {
@@ -147,11 +149,12 @@ export function AdminSubmissions() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-white/40 text-xs uppercase tracking-wider">
-                  <th className="px-5 py-3.5 text-left font-medium">ID</th>
+                  <th className="px-5 py-3.5 text-left font-medium">Idea ID</th>
                   <th className="px-5 py-3.5 text-left font-medium">Name</th>
                   <th className="px-5 py-3.5 text-left font-medium">Email</th>
-                  <th className="px-5 py-3.5 text-left font-medium">Dept / Year</th>
                   <th className="px-5 py-3.5 text-left font-medium">Idea Title</th>
+                  <th className="px-5 py-3.5 text-left font-medium">Status</th>
+                  <th className="px-5 py-3.5 text-left font-medium">Attachment</th>
                   <th className="px-5 py-3.5 text-left font-medium">Date</th>
                   <th className="px-5 py-3.5 text-left font-medium">Actions</th>
                 </tr>
@@ -160,7 +163,7 @@ export function AdminSubmissions() {
                 {loading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 7 }).map((_, j) => (
+                      {Array.from({ length: 8 }).map((_, j) => (
                         <td key={j} className="px-5 py-4">
                           <div className="h-3 bg-white/10 rounded w-full" />
                         </td>
@@ -169,21 +172,56 @@ export function AdminSubmissions() {
                   ))
                 ) : data.items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center text-white/30">
+                    <td colSpan={8} className="px-5 py-16 text-center text-white/30">
                       No submissions found.
                     </td>
                   </tr>
                 ) : (
                   data.items.map(s => (
                     <tr key={s.id} className="hover:bg-white/3 transition-colors">
-                      <td className="px-5 py-4 text-white/40 font-mono text-xs">#{s.id}</td>
+                      <td className="px-5 py-4 text-white/40 font-mono text-xs">{s.idea_id || `#${s.id}`}</td>
                       <td className="px-5 py-4 text-white font-medium max-w-[140px] truncate">{s.full_name}</td>
                       <td className="px-5 py-4 text-white/60 max-w-[160px] truncate">{s.email}</td>
-                      <td className="px-5 py-4 text-white/60">
-                        <span className="block">{s.department}</span>
-                        <span className="text-white/30 text-xs">{s.year}</span>
-                      </td>
                       <td className="px-5 py-4 text-white max-w-[200px] truncate">{s.idea_title}</td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider ${
+                          s.status === 'Approved' ? 'bg-green-500/20 text-green-400' :
+                          s.status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {s.status || "Pending"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {s.attachment_url ? (
+                          <div 
+                            className="relative w-[100px] h-[70px] rounded-lg overflow-hidden border border-white/10 cursor-pointer group bg-black/20 flex items-center justify-center"
+                            onClick={() => setPreviewModal(s.attachment_url)}
+                          >
+                            {(s.attachment_url.startsWith("data:application/pdf") || s.attachment_url.toLowerCase().endsWith(".pdf")) ? (
+                              <div className="flex flex-col items-center justify-center text-white/50 group-hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-[9px] font-medium uppercase">PDF</span>
+                              </div>
+                            ) : (
+                              <>
+                                <img 
+                                  src={s.attachment_url} 
+                                  alt="Attachment" 
+                                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Eye className="text-white w-5 h-5" />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-white/30 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-white/50 whitespace-nowrap">{fmt(s.submitted_at)}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
@@ -268,6 +306,14 @@ export function AdminSubmissions() {
           </div>
         </div>
       )}
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!previewModal}
+        onClose={() => setPreviewModal(null)}
+        imageUrl={previewModal}
+        altText="Innovation Box Attachment"
+      />
     </AdminLayout>
   );
 }

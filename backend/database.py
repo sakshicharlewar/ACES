@@ -14,9 +14,13 @@ if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if not DATABASE_URL:
-    logger.warning("[DB] DATABASE_URL is not set. PostgreSQL features will be unavailable.")
-    engine = None
-    SessionLocal = None
+    logger.warning("[DB] DATABASE_URL is not set. Falling back to local SQLite.")
+    engine = create_engine(
+        "sqlite:///./aces_local.db",
+        connect_args={"check_same_thread": False},
+        echo=False,
+    )
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 else:
     try:
         engine = create_engine(

@@ -30,6 +30,9 @@ class InnovationCreate(BaseModel):
 
 class InnovationRead(InnovationCreate):
     id: int
+    idea_id: Optional[str] = None
+    status: Optional[str] = None
+    admin_remarks: Optional[str] = None
     submitted_at: Optional[datetime] = None
 
     class Config:
@@ -124,6 +127,10 @@ class TeamRegistrationRead(TeamRegistrationCreate):
     payment_verified_at: Optional[datetime] = None
     payment_verified_by: Optional[str] = None
     payment_time: Optional[datetime] = None
+    approval_status: Optional[str] = None
+    approval_date: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    rejection_reason: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:

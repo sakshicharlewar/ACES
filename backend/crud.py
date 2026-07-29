@@ -175,6 +175,7 @@ def delete_registration(db: Session, reg_id: int) -> bool:
 # ═══════════════════════════════════════════════════════════════════════════════
 # ─── Team Registrations ────────────────────────────────────────────────────────
 def create_team_registration(db: Session, registration_id: str, **kwargs) -> Optional[TeamRegistration]:
+    from sqlalchemy.exc import IntegrityError
     try:
         reg = TeamRegistration(registration_id=registration_id, **kwargs)
         db.add(reg)
@@ -182,6 +183,10 @@ def create_team_registration(db: Session, registration_id: str, **kwargs) -> Opt
         db.refresh(reg)
         logger.info(f"[CRUD] Team Registration #{reg.id} saved for event #{reg.event_id}")
         return reg
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"[CRUD] Integrity error saving team registration: {e}")
+        raise ValueError("Transaction ID or duplicate data already exists.")
     except Exception as e:
         db.rollback()
         logger.error(f"[CRUD] Failed to save team registration: {e}")

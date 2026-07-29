@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Download, X, CreditCard } from 'lucide-react';
+import { CheckCircle, Download, X, CreditCard, Clock } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -60,19 +60,20 @@ export default function RegistrationSuccess({ data, onClose }) {
           <X size={20} />
         </button>
 
-        {/* Success Icon */}
+        {/* Pending Icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', bounce: 0.5 }}
-          className="w-20 h-20 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4"
+          className="w-20 h-20 bg-yellow-500/20 text-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4"
         >
-          <CheckCircle size={40} />
+          <Clock size={40} />
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-white mb-1">Registration Successful!</h2>
-        <p className="text-gray-400 mb-6 text-sm">
-          Your team <strong className="text-white">{data.teamName}</strong> has been registered.
+        <h2 className="text-2xl font-bold text-white mb-1">Registration Submitted!</h2>
+        <p className="text-gray-400 mb-6 text-sm leading-relaxed">
+          Your registration for <strong className="text-white">{data.teamName}</strong> has been received and is currently under review. 
+          You will receive an email once your registration is approved.
         </p>
 
         {/* Registration ID */}
@@ -91,10 +92,10 @@ export default function RegistrationSuccess({ data, onClose }) {
             <p className="text-xs text-gray-500 mb-1">Event</p>
             <p className="text-sm font-medium text-white truncate">{data.eventName}</p>
           </div>
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-1">Payment Status</p>
-            <p className="text-sm font-bold text-green-400 flex items-center gap-1">
-              <CreditCard size={13} /> Paid ✓
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+            <p className="text-xs text-gray-500 mb-1">Status</p>
+            <p className="text-sm font-bold text-yellow-400 flex items-center gap-1">
+              <Clock size={13} /> Pending Approval
             </p>
           </div>
           <div className="bg-white/5 rounded-xl p-3">
@@ -162,11 +163,11 @@ export default function RegistrationSuccess({ data, onClose }) {
               </div>
             </div>
 
-            {/* Payment Section */}
+            {/* Status Section */}
             <div className="border border-gray-800 rounded-xl p-6 mb-8 bg-white/5">
-              <h2 className="text-xl font-semibold text-white mb-4">Payment Details</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Registration Status</h2>
               <div className="grid grid-cols-3 gap-6">
-                <div><p className="text-gray-500 text-sm">Payment Status</p><p className="font-bold text-green-400 text-lg">✓ Paid</p></div>
+                <div><p className="text-gray-500 text-sm">Status</p><p className="font-bold text-yellow-400 text-lg">Pending Approval</p></div>
                 <div><p className="text-gray-500 text-sm">Registration Fee</p><p className="font-semibold text-lg">₹40</p></div>
                 <div><p className="text-gray-500 text-sm">Transaction ID</p><p className="font-mono text-sm">{data.transactionId || '—'}</p></div>
               </div>

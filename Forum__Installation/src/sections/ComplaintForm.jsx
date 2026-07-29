@@ -4,6 +4,43 @@ import { GlassCard } from "../components/ui/GlassCard";
 import { MagneticButton } from "../components/ui/MagneticButton";
 import { CheckCircle2, ArrowRight, X, Upload, Loader2, Rocket, Monitor, GraduationCap, Globe, Users, Star } from "lucide-react";
 
+const compressImage = async (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX = 1200;
+        
+        if (width > height && width > MAX) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else if (height > MAX) {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          }));
+        }, 'image/jpeg', 0.8);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 export function ComplaintForm() {
   const [activeModal, setActiveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +161,12 @@ export function ComplaintForm() {
       submitData.append('Submitted Date & Time', new Date().toLocaleString());
       
       if (formData.attachment) {
-        submitData.append('attachment', formData.attachment);
+        if (formData.attachment.type.startsWith('image/')) {
+          const compressed = await compressImage(formData.attachment);
+          submitData.append('attachment', compressed);
+        } else {
+          submitData.append('attachment', formData.attachment);
+        }
       }
 
       const res = await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
@@ -136,12 +178,13 @@ export function ComplaintForm() {
       clearTimeout(timeoutId);
 
       if (res.ok || res.status === 201) {
+        const data = await res.json();
         setIsSubmitting(false);
-        setIsSubmitted(true);
+        setIsSubmitted(data.idea_id || "INN-XXXX");
         setTimeout(() => {
           setIsSubmitted(false);
           closeModal();
-        }, 3000);
+        }, 5000);
       } else {
         // Non-2xx but server responded
         console.warn('Backend responded with status:', res.status);
@@ -303,13 +346,20 @@ export function ComplaintForm() {
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center py-24 text-center"
+                    className="flex flex-col items-center justify-center py-20 text-center"
                   >
                     <CheckCircle2 className="w-20 h-20 text-green-400 mb-6" />
                     <h3 className="text-3xl font-medium text-white mb-2">Success!</h3>
-                    <p className="text-text-secondary text-lg">
+                    <p className="text-text-secondary text-lg mb-6">
                       Your valuable idea has been received and will be reviewed.
                     </p>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 w-full max-w-sm">
+                      <p className="text-sm text-text-secondary mb-1">Idea ID</p>
+                      <p className="text-2xl font-mono text-accent font-semibold">{isSubmitted}</p>
+                      <p className="text-xs text-text-secondary mt-2">
+                        {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
                   </motion.div>
                 ) : (
                   <>

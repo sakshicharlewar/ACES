@@ -102,6 +102,16 @@ export async function deleteSubmission(id) {
   return data;
 }
 
+export async function updateSubmissionStatus(id, status, admin_remarks) {
+  const res = await apiFetch(`/admin/api/submissions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, admin_remarks }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Update failed");
+  return data;
+}
+
 export function submissionsExportUrl() {
   return `${BASE_URL}/admin/api/submissions/export?token=${getToken()}`;
 }

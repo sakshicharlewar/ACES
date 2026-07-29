@@ -530,6 +530,7 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     resend_attachments = []
     attachment_name  = None
     attachment_type  = None
+    attachment_data_uri = None
 
     iterator = form.multi_items() if hasattr(form, "multi_items") else form.items()
     for key, value in iterator:
@@ -538,7 +539,9 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
             attachment_name = value.filename
             attachment_type = value.content_type
             file_summaries.append({"name": value.filename, "type": value.content_type, "size": format_file_size(len(file_bytes))})
-            resend_attachments.append({"filename": value.filename, "content": base64.b64encode(file_bytes).decode('utf-8')})
+            b64_str = base64.b64encode(file_bytes).decode('utf-8')
+            resend_attachments.append({"filename": value.filename, "content": b64_str})
+            attachment_data_uri = f"data:{value.content_type};base64,{b64_str}"
         else:
             fields_dict[key] = value
 
@@ -576,7 +579,7 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
             submission_date = fields_dict.get("Submission Date") or fields_dict.get("submissionDate") or None,
             attachment_name = attachment_name,
             attachment_type = attachment_type,
-            attachment_url  = None,
+            attachment_url  = attachment_data_uri,
             ip_address      = ip_address,
             user_agent      = user_agent,
             form_data       = json.dumps(fields_dict),
@@ -597,26 +600,82 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     if not db_saved:
         return JSONResponse(status_code=500, content={"success": False, "message": "Failed to save submission to database."})
 
-    # ── Build email content ───────────────────────────────────────────────────
-    logger.info("[API] Step 3: Preparing email...")
-    idea_title_val  = fields_dict.get("Idea Title") or fields_dict.get("ideaTitle") or "New Submission"
-    subject         = f"🚀 New Innovation Box Submission: {idea_title_val}"
-    html_body       = build_dynamic_email_html(fields_dict, file_summaries, ip_address, user_agent)
-    attachments_json = json.dumps(resend_attachments)
+    # Generate Idea ID using the primary key
+    idea_id = f"INN-{saved_record.id:04d}"
+    
+    # Save the generated idea_id and default status to DB
+    db3 = SessionLocal()
+    try:
+        rec = db3.query(InnovationSubmission).filter(InnovationSubmission.id == saved_record.id).first()
+        if rec:
+            rec.idea_id = idea_id
+            rec.status = "Pending Review"
+            db3.commit()
+    except Exception as e:
+        logger.error(f"[API] Failed to update idea_id: {e}")
+    finally:
+        db3.close()
 
-    # ── Queue email in PostgreSQL (for retry poller) ──────────────────────────
+    # ── Build email content ───────────────────────────────────────────────────
+    logger.info("[API] Step 3: Preparing emails...")
+    
+    student_name = fields_dict.get("Full Name") or fields_dict.get("fullName") or "Student"
+    student_email = fields_dict.get("Email") or fields_dict.get("email") or ""
+    idea_title_val = fields_dict.get("Idea Title") or fields_dict.get("ideaTitle") or "New Submission"
+    submission_date = datetime.now().strftime("%d %B %Y, %I:%M %p")
+    
+    student_email_id = uuid.uuid4().hex
+    admin_email_id = uuid.uuid4().hex
+    attachments_json = json.dumps(resend_attachments)
+    
+    # Student Email
+    student_subject = "Innovation Idea Submitted Successfully | ACES"
+    student_html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#1e3a8a;">🎉 Idea Submitted Successfully!</h2>
+      <p>Dear <b>{student_name}</b>,</p>
+      <p>Thank you for submitting your idea to the ACES Innovation Box.</p>
+      <p><b>Idea ID:</b> {idea_id}</p>
+      <p><b>Idea Title:</b> {idea_title_val}</p>
+      <p><b>Submission Date:</b> {submission_date}</p>
+      <p><b>Current Status:</b> <span style="color:#d97706;font-weight:bold;">Pending Review</span></p>
+      <hr>
+      <p>Our team will review your submission and get back to you soon.</p>
+      <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+    </div>
+    """
+    
+    # Admin Email
+    admin_subject = "New Innovation Box Submission"
+    admin_html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#1e3a8a;">💡 New Innovation Box Submission</h2>
+      <p>A new idea has been submitted to the Innovation Box.</p>
+      <p><b>Idea ID:</b> {idea_id}</p>
+      <p><b>Student Name:</b> {student_name}</p>
+      <p><b>Idea Title:</b> {idea_title_val}</p>
+      <p><b>Submission Time:</b> {submission_date}</p>
+      <hr>
+      <p><a href="http://localhost:5173/admin/submissions">Click here to review the submission.</a></p>
+    </div>
+    """
+
+    # ── Queue emails in PostgreSQL (for retry poller) ──────────────────────────
     db2 = SessionLocal()
     try:
-        crud.add_email_to_queue(db2, email_id, subject, html_body, attachments_json)
-        logger.info(f"[API] Email queued in PostgreSQL — ID: {email_id}")
+        crud.add_email_to_queue(db2, student_email_id, student_subject, student_html, "[]")
+        crud.add_email_to_queue(db2, admin_email_id, admin_subject, admin_html, attachments_json)
+        logger.info(f"[API] Emails queued in PostgreSQL")
     except Exception as e:
         logger.warning(f"[API] Could not queue email in DB (will still attempt immediate send): {e}")
     finally:
         db2.close()
 
-    # ── Send email ASYNCHRONOUSLY using FastAPI BackgroundTasks ──
-    logger.info("[API] Step 4: Dispatching email to background task...")
-    background_tasks.add_task(send_email_with_retry, email_id, subject, html_body, attachments_json)
+    # ── Send emails ASYNCHRONOUSLY using FastAPI BackgroundTasks ──
+    logger.info("[API] Step 4: Dispatching emails to background task...")
+    if student_email:
+        background_tasks.add_task(send_email_with_retry, student_email_id, student_subject, student_html, "[]", 1, student_email)
+    background_tasks.add_task(send_email_with_retry, admin_email_id, admin_subject, admin_html, attachments_json, 1, RECIPIENT)
 
     logger.info("END REQUEST")
     logger.info("=" * 60)
@@ -625,8 +684,7 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
         content={
             "success": True, 
             "message": "Idea submitted successfully.", 
-            "email_id": email_id,
-            "email_status": "queued"
+            "idea_id": idea_id
         }
     )
 
@@ -753,44 +811,26 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     
     if reg:
         # Prepare and send emails
-        leader_email_id = uuid.uuid4().hex
         admin_email_id = uuid.uuid4().hex
-        
-        # Leader Email HTML
-        leader_html = f"""
-        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
-          <h2 style="color:#1e3a8a;">🎉 Registration Successful!</h2>
-          <p>Hi <b>{reg.leader_name}</b>,</p>
-          <p>Your team <b>{reg.team_name}</b> has successfully registered for <b>{event.title}</b>.</p>
-          <p><b>Registration ID:</b> {reg.registration_id}</p>
-          <p><b>Transaction ID:</b> {reg.transaction_id}</p>
-          <p><b>Status:</b> Payment Pending Verification</p>
-          <hr>
-          <p>We will verify your payment shortly and update your status.</p>
-          <p>Best regards,<br>ACES Team</p>
-        </div>
-        """
         
         # Admin Email HTML
         admin_html = f"""
         <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
-          <h2 style="color:#1e3a8a;">🚨 New Team Registration</h2>
+          <h2 style="color:#1e3a8a;">🚨 New Team Registration (Pending Approval)</h2>
           <p>A new team has registered for <b>{event.title}</b>.</p>
           <p><b>Team Name:</b> {reg.team_name}</p>
           <p><b>Registration ID:</b> {reg.registration_id}</p>
           <p><b>Leader:</b> {reg.leader_name} ({reg.leader_email})</p>
           <p><b>Transaction ID:</b> {reg.transaction_id}</p>
           <hr>
-          <p><a href="http://localhost:5173/admin">Click here to review the payment and approve/reject.</a></p>
+          <p><a href="http://localhost:5173/admin">Click here to review the registration and approve/reject.</a></p>
         </div>
         """
         
-        # Queue Emails in DB
-        crud.add_email_to_queue(db, leader_email_id, f"Registration Confirmed: {event.title}", leader_html, "[]")
+        # Queue Email in DB
         crud.add_email_to_queue(db, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]")
         
         # Send via background tasks
-        background_tasks.add_task(send_email_with_retry, leader_email_id, f"Registration Confirmed: {event.title}", leader_html, "[]", 1, reg.leader_email)
         background_tasks.add_task(send_email_with_retry, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
 
         return {"success": True, "registration_id": reg.registration_id}
@@ -873,6 +913,106 @@ async def verify_team_payment(reg_id: int, request: Request, db: Session = Depen
     db.commit()
     logger.info(f"[Admin] Payment for reg #{reg_id} marked as {new_status}")
     return {"success": True, "payment_status": new_status}
+
+@app.patch("/admin/api/team-registrations/{reg_id}/approve")
+async def approve_team_registration(reg_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: approve a team registration and send confirmation email."""
+    # Manual token check
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    reg = db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+    if not reg:
+        return JSONResponse(status_code=404, content={"error": "Registration not found."})
+    
+    event = crud.get_event(db, reg.event_id)
+    
+    from datetime import datetime as dt
+    reg.approval_status = "approved"
+    reg.approval_date = dt.utcnow()
+    reg.approved_by = "admin"
+    db.commit()
+    
+    # Send Approval Email
+    leader_email_id = uuid.uuid4().hex
+    leader_html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#1e3a8a;">🎉 Registration Approved!</h2>
+      <p>Dear <b>{reg.leader_name}</b>,</p>
+      <p>Congratulations! Your registration for <b>{event.title}</b> has been approved.</p>
+      <p><b>Registration ID:</b> {reg.registration_id}</p>
+      <p><b>Team Name:</b> {reg.team_name}</p>
+      <p><b>Event Date:</b> {event.event_date.strftime('%d %B %Y') if event.event_date else 'TBA'}</p>
+      <p><b>Venue:</b> {event.venue or 'TBA'}</p>
+      <p><b>Reporting Time:</b> {event.event_time or 'TBA'}</p>
+      <p><b>Payment Status:</b> Verified</p>
+      <hr>
+      <p>We look forward to seeing your team.</p>
+      <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+    </div>
+    """
+    crud.add_email_to_queue(db, leader_email_id, f"ACES Event Registration Approved – {event.title}", leader_html, "[]")
+    background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Event Registration Approved – {event.title}", leader_html, "[]", 1, reg.leader_email)
+    
+    logger.info(f"[Admin] Registration #{reg_id} approved")
+    return {"success": True, "approval_status": "approved"}
+
+@app.patch("/admin/api/team-registrations/{reg_id}/reject")
+async def reject_team_registration(reg_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Admin: reject a team registration with a reason and send rejection email."""
+    # Manual token check
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    body = await request.json()
+    reason = body.get("rejection_reason", "No reason provided.")
+    
+    reg = db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+    if not reg:
+        return JSONResponse(status_code=404, content={"error": "Registration not found."})
+        
+    event = crud.get_event(db, reg.event_id)
+    
+    from datetime import datetime as dt
+    reg.approval_status = "rejected"
+    reg.approval_date = dt.utcnow()
+    reg.approved_by = "admin"
+    reg.rejection_reason = reason
+    db.commit()
+    
+    # Send Rejection Email
+    leader_email_id = uuid.uuid4().hex
+    leader_html = f"""
+    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
+      <h2 style="color:#dc2626;">Registration Update</h2>
+      <p>Dear <b>{reg.leader_name}</b>,</p>
+      <p>We regret to inform you that your registration for <b>{event.title}</b> could not be approved.</p>
+      <p><b>Reason:</b></p>
+      <blockquote style="border-left: 4px solid #dc2626; padding-left: 10px; color: #4b5563;">{reason}</blockquote>
+      <hr>
+      <p>If you believe this is an error, please contact the event coordinator.</p>
+      <p>Regards,<br>ACES</p>
+    </div>
+    """
+    crud.add_email_to_queue(db, leader_email_id, f"ACES Event Registration Update", leader_html, "[]")
+    background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Event Registration Update", leader_html, "[]", 1, reg.leader_email)
+    
+    logger.info(f"[Admin] Registration #{reg_id} rejected. Reason: {reason}")
+    return {"success": True, "approval_status": "rejected"}
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  API ROUTES — Innovation Box Read
@@ -1160,7 +1300,11 @@ async def admin_list_submissions(
                     "expected_outcome": s.expected_outcome,
                     "attachment_name" : s.attachment_name,
                     "attachment_type" : s.attachment_type,
+                    "attachment_url"  : s.attachment_url,
                     "ip_address"      : s.ip_address,
+                    "idea_id"         : getattr(s, 'idea_id', f"#{s.id}"),
+                    "status"          : getattr(s, 'status', "Pending Review"),
+                    "admin_remarks"   : getattr(s, 'admin_remarks', None),
                     "submitted_at"    : s.submitted_at.isoformat() if s.submitted_at else None,
                 }
                 for s in items
@@ -1232,6 +1376,9 @@ async def admin_get_submission(submission_id: int, request: Request, _=Depends(_
             "ip_address"      : s.ip_address,
             "user_agent"      : s.user_agent,
             "form_data"       : s.form_data,
+            "idea_id"         : getattr(s, 'idea_id', f"#{s.id}"),
+            "status"          : getattr(s, 'status', "Pending Review"),
+            "admin_remarks"   : getattr(s, 'admin_remarks', None),
             "submitted_at"    : s.submitted_at.isoformat() if s.submitted_at else None,
         }
     finally:
@@ -1251,6 +1398,34 @@ async def admin_delete_submission(submission_id: int, request: Request, _=Depend
             raise HTTPException(status_code=404, detail="Submission not found")
         logger.info(f"[Admin] Submission #{submission_id} deleted")
         return {"success": True, "message": f"Submission #{submission_id} deleted."}
+    finally:
+        db.close()
+
+
+@app.patch("/admin/api/submissions/{submission_id}")
+async def admin_update_submission(submission_id: int, request: Request, _=Depends(_verify_admin_token)):
+    """Update a submission's status and remarks."""
+    if SessionLocal is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    body = await request.json()
+    new_status = body.get("status")
+    remarks = body.get("admin_remarks")
+
+    from models import InnovationSubmission
+    db = SessionLocal()
+    try:
+        s = db.query(InnovationSubmission).filter(InnovationSubmission.id == submission_id).first()
+        if not s:
+            raise HTTPException(status_code=404, detail="Submission not found")
+            
+        if new_status is not None:
+            s.status = new_status
+        if remarks is not None:
+            s.admin_remarks = remarks
+            
+        db.commit()
+        return {"success": True, "status": s.status, "admin_remarks": s.admin_remarks}
     finally:
         db.close()
 
@@ -1433,6 +1608,21 @@ async def startup_validation():
                     logger.info("[DB] 'created_at' column added successfully.")
                 except Exception as e:
                     logger.error(f"[DB] Failed to add 'created_at' column: {e}")
+            
+            # Innovation Box Optimization Columns
+            inn_migrations = [
+                ("idea_id",       "VARCHAR(50) UNIQUE"),
+                ("status",        "VARCHAR(50) DEFAULT 'Pending Review'"),
+                ("admin_remarks", "TEXT"),
+            ]
+            try:
+                with engine.begin() as conn:
+                    for col_name, col_def in inn_migrations:
+                        if col_name not in columns:
+                            logger.info(f"[DB] Adding column '{col_name}' to innovation_box_submissions...")
+                            conn.execute(text(f"ALTER TABLE innovation_box_submissions ADD COLUMN {col_name} {col_def}"))
+            except Exception as e:
+                logger.error(f"[DB] Failed to migrate 'innovation_box_submissions' columns: {e}")
 
         # Ensure upcoming_events has the new dynamic configuration columns
         if inspector.has_table("upcoming_events"):
@@ -1463,6 +1653,10 @@ async def startup_validation():
                 ("payment_time",        "TIMESTAMP WITH TIME ZONE"),
                 ("payment_verified_at", "TIMESTAMP WITH TIME ZONE"),
                 ("payment_verified_by", "VARCHAR(255)"),
+                ("approval_status",     "VARCHAR(50) DEFAULT 'pending'"),
+                ("approval_date",       "TIMESTAMP WITH TIME ZONE"),
+                ("approved_by",         "VARCHAR(255)"),
+                ("rejection_reason",    "TEXT"),
             ]
             try:
                 with engine.begin() as conn:
