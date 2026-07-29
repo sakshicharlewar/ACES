@@ -151,59 +151,138 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setError(null);
   };
 
+  // ── Friendly error sanitiser: never expose raw JS/network errors to users ──
+  const toFriendlyError = (err, responseData) => {
+    // Backend sent a known message (e.g., registration closed, duplicate team)
+    if (responseData?.error) {
+      const msg = responseData.error;
+      if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
+        return '⚠️ Registration is now closed. The maximum limit of 30 teams has been reached.';
+      }
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered')) {
+        return 'Your team name or email address is already registered for this event. Please use different details.';
+      }
+      if (msg.toLowerCase().includes('event not found')) {
+        return 'This event is no longer available. Please refresh the page and try again.';
+      }
+      // Return backend message only if it looks safe (not a stack trace)
+      if (msg.length < 200 && !msg.includes('Traceback') && !msg.includes('Exception')) {
+        return msg;
+      }
+    }
+    // Network / fetch failures
+    if (!err) return 'We are unable to process your registration right now. Please try again in a few moments or contact the event coordinator if the issue continues.';
+    const raw = err.message || '';
+    if (raw.includes('fetch') || raw.includes('network') || raw.includes('Network') || raw.includes('Failed to fetch')) {
+      return 'Unable to connect to the server. Please check your internet connection and try again.';
+    }
+    if (raw.includes('timeout') || raw.includes('AbortError')) {
+      return 'The request timed out. Please try again in a moment.';
+    }
+    return 'We are unable to process your registration right now. Please try again in a few moments or contact the event coordinator if the issue continues.';
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    if (loading) return; // prevent duplicate clicks
     if (!validateStep3()) return;
 
     setLoading(true);
     setError(null);
 
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/events/${eventDetails.id || 1}/team-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_id: eventDetails.id || 1,
-          team_name: formData.teamName,
-          leader_name: formData.leaderName,
-          leader_email: formData.leaderEmail,
-          leader_phone: formData.leaderPhone,
-          leader_year: formData.leaderYear,
-          leader_branch: formData.leaderBranch,
-          member2_name: formData.member2Name,
-          member2_email: formData.member2Email,
-          member2_phone: formData.member2Phone,
-          member2_year: formData.member2Year,
-          transaction_id: formData.transactionId.trim(),
-          payment_screenshot: formData.paymentScreenshot || null,
-          registration_fee: '₹40',
-          payment_status: 'pending',
-        }),
-      });
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const eventId = eventDetails?.id || 1;
+    const payload = {
+      event_id: eventId,
+      team_name: formData.teamName,
+      leader_name: formData.leaderName,
+      leader_email: formData.leaderEmail,
+      leader_phone: formData.leaderPhone,
+      leader_year: formData.leaderYear,
+      leader_branch: formData.leaderBranch,
+      member2_name: formData.member2Name,
+      member2_email: formData.member2Email,
+      member2_phone: formData.member2Phone,
+      member2_year: formData.member2Year,
+      transaction_id: formData.transactionId.trim(),
+      payment_screenshot: formData.paymentScreenshot || null,
+      registration_fee: '₹40',
+      payment_status: 'pending',
+    };
 
-      const data = await response.json();
+    // ── Retry up to 3 times for transient network errors ──
+    const MAX_ATTEMPTS = 3;
+    let lastErr = null;
+    let lastData = null;
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+
+        const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        // Parse JSON safely
+        let data = {};
+        try {
+          data = await response.json();
+        } catch {
+          // Non-JSON response — treat as server error
+          if (!response.ok) {
+            lastErr = new Error('Server error');
+            lastData = null;
+            if (attempt < MAX_ATTEMPTS) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+            break;
+          }
+        }
+
+        if (!response.ok) {
+          // 4xx errors should NOT retry (they are definitive: duplicate, closed, etc.)
+          if (response.status >= 400 && response.status < 500) {
+            setError(toFriendlyError(null, data));
+            setLoading(false);
+            return;
+          }
+          // 5xx errors: retry
+          lastErr = new Error('Server error');
+          lastData = data;
+          if (attempt < MAX_ATTEMPTS) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+          break;
+        }
+
+        // ── SUCCESS ──
+        setSuccessData({
+          ...formData,
+          registrationId: data.registration_id,
+          eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
+          transactionId: formData.transactionId.trim(),
+          paymentStatus: 'Paid',
+          registeredAt: new Date().toLocaleString(),
+        });
+        if (onSuccess) onSuccess();
+        setLoading(false);
+        return;
+
+      } catch (err) {
+        lastErr = err;
+        lastData = null;
+        // Don't retry on AbortError (user-triggered) or if it's the last attempt
+        if (err?.name === 'AbortError' || attempt === MAX_ATTEMPTS) break;
+        await new Promise(r => setTimeout(r, 1000 * attempt));
       }
-
-      setSuccessData({
-        ...formData,
-        registrationId: data.registration_id,
-        eventName: eventDetails.title || 'Bug Hunt: Debug the Web',
-        transactionId: formData.transactionId.trim(),
-        paymentStatus: 'Paid',
-        registeredAt: new Date().toLocaleString(),
-      });
-      if (onSuccess) onSuccess();
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
+
+    // All attempts failed
+    setError(toFriendlyError(lastErr, lastData));
+    setLoading(false);
   };
+
 
   if (successData) {
     return <RegistrationSuccess data={successData} onClose={onClose} />;
