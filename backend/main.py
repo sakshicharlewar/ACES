@@ -1393,6 +1393,50 @@ async def resend_registration_notification(reg_id: int, request: Request, backgr
 #  Utility & Diagnostic Routes
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@app.post("/admin/api/migrate")
+async def migrate_db(request: Request, db: Session = Depends(get_db)):
+    """Add missing columns to the database if they don't exist."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    
+    from sqlalchemy import text
+    try:
+        queries = [
+            "ALTER TABLE team_registrations ADD COLUMN email_sent BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE team_registrations ADD COLUMN sms_sent BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE team_registrations ADD COLUMN notification_timestamp TIMESTAMP;",
+            "ALTER TABLE team_registrations ADD COLUMN approval_date TIMESTAMP;",
+            "ALTER TABLE team_registrations ADD COLUMN approved_by VARCHAR;",
+            "ALTER TABLE team_registrations ADD COLUMN rejection_reason VARCHAR;",
+            
+            "ALTER TABLE innovation_box_submissions ADD COLUMN email_sent BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE innovation_box_submissions ADD COLUMN sms_sent BOOLEAN DEFAULT FALSE;",
+            "ALTER TABLE innovation_box_submissions ADD COLUMN notification_timestamp TIMESTAMP;",
+            "ALTER TABLE innovation_box_submissions ADD COLUMN approval_date TIMESTAMP;",
+            "ALTER TABLE innovation_box_submissions ADD COLUMN approved_by VARCHAR;",
+            "ALTER TABLE innovation_box_submissions ADD COLUMN rejection_reason VARCHAR;"
+        ]
+        
+        results = []
+        for q in queries:
+            try:
+                db.execute(text(q))
+                db.commit()
+                results.append(f"Success: {q}")
+            except Exception as e:
+                db.rollback()
+                results.append(f"Failed (already exists?): {q} - {str(e)}")
+                
+        return {"success": True, "results": results}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/test-email")
 async def test_email(background_tasks: BackgroundTasks):

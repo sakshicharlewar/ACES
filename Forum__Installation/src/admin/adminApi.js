@@ -78,6 +78,15 @@ export async function fetchStats() {
   return data;
 }
 
+// ─── Utility ────────────────────────────────────────────────────────────────────
+
+export async function migrateDatabase() {
+  const res = await apiFetch("/admin/api/migrate", { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Migration failed");
+  return data;
+}
+
 // ─── Submissions ──────────────────────────────────────────────────────────────
 
 export async function fetchSubmissions({ page = 1, limit = 20, search = "", department = "", date_from = "", date_to = "" } = {}) {

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "./AdminLayout";
-import { fetchStats } from "./adminApi";
+import { fetchStats, migrateDatabase } from "./adminApi";
 import {
   Lightbulb, Users, TrendingUp, CalendarCheck,
-  ArrowRight, Loader2, AlertCircle,
+  ArrowRight, Loader2, AlertCircle, Database
 } from "lucide-react";
 
 function StatCard({ label, value, icon: Icon, color, loading }) {
@@ -46,13 +46,31 @@ export function AdminDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleMigrate = async () => {
+    if (!window.confirm("Run database migrations? This will add missing columns to PostgreSQL.")) return;
+    try {
+      const res = await migrateDatabase();
+      alert(`Migration successful!\n${res.results.join("\n")}`);
+    } catch (e) {
+      alert(`Migration error: ${e.message}`);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-8">
         {/* Page header */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-white/40 text-sm mt-1">Overview of all ACES activity</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+            <p className="text-white/40 text-sm mt-1">Overview of all ACES activity</p>
+          </div>
+          <button
+            onClick={handleMigrate}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-sm font-medium rounded-xl transition-colors"
+          >
+            <Database className="w-4 h-4" /> Run DB Migration
+          </button>
         </div>
 
         {/* Error */}
