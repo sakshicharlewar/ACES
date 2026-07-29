@@ -112,9 +112,18 @@ class TeamRegistrationCreate(BaseModel):
     member2_phone: str = Field(..., min_length=10, max_length=10)
     member2_year: str
 
+    # Payment
+    transaction_id: Optional[str] = None
+    payment_screenshot: Optional[str] = None
+    registration_fee: Optional[str] = "₹40"
+    payment_status: Optional[str] = "pending"
+
 class TeamRegistrationRead(TeamRegistrationCreate):
     id: int
     registration_id: str
+    payment_verified_at: Optional[datetime] = None
+    payment_verified_by: Optional[str] = None
+    payment_time: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     class Config:

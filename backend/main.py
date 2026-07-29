@@ -751,6 +751,36 @@ async def delete_team_registration(reg_id: int, db: Session = Depends(get_db)):
         return {"success": True}
     return JSONResponse(status_code=404, content={"error": "Registration not found."})
 
+@app.patch("/admin/api/team-registrations/{reg_id}/payment")
+async def verify_team_payment(reg_id: int, request: Request, db: Session = Depends(get_db)):
+    """Admin: approve or reject a team payment."""
+    # Manual token check (avoid forward-reference to _verify_admin_token)
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    try:
+        payload = jwt.decode(auth[7:], ADMIN_JWT_SECRET, algorithms=[ADMIN_JWT_ALGO])
+        if payload.get("sub") != "admin":
+            return JSONResponse(status_code=401, content={"error": "Unauthorized"})
+    except Exception:
+        return JSONResponse(status_code=401, content={"error": "Token expired or invalid"})
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+    body = await request.json()
+    new_status = body.get("payment_status")  # 'approved' or 'rejected'
+    if new_status not in ("approved", "rejected", "pending"):
+        return JSONResponse(status_code=400, content={"error": "Invalid payment_status. Use approved/rejected/pending."})
+    reg = db.query(TeamRegistration).filter(TeamRegistration.id == reg_id).first()
+    if not reg:
+        return JSONResponse(status_code=404, content={"error": "Registration not found."})
+    from datetime import datetime as dt
+    reg.payment_status = new_status
+    reg.payment_verified_at = dt.utcnow()
+    reg.payment_verified_by = "admin"
+    db.commit()
+    logger.info(f"[Admin] Payment for reg #{reg_id} marked as {new_status}")
+    return {"success": True, "payment_status": new_status}
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  API ROUTES — Innovation Box Read
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1328,6 +1358,27 @@ async def startup_validation():
                         conn.execute(text("ALTER TABLE upcoming_events ADD COLUMN is_registration_open BOOLEAN DEFAULT TRUE"))
             except Exception as e:
                 logger.error(f"[DB] Failed to migrate 'upcoming_events': {e}")
+
+        # Migrate payment columns in team_registrations
+        if inspector.has_table("team_registrations"):
+            team_cols = [col["name"] for col in inspector.get_columns("team_registrations")]
+            payment_migrations = [
+                ("registration_fee",    "VARCHAR(20) DEFAULT '\u20b940'"),
+                ("payment_status",      "VARCHAR(50) DEFAULT 'pending'"),
+                ("transaction_id",      "VARCHAR(255)"),
+                ("payment_screenshot",  "TEXT"),
+                ("payment_time",        "TIMESTAMP WITH TIME ZONE"),
+                ("payment_verified_at", "TIMESTAMP WITH TIME ZONE"),
+                ("payment_verified_by", "VARCHAR(255)"),
+            ]
+            try:
+                with engine.begin() as conn:
+                    for col_name, col_def in payment_migrations:
+                        if col_name not in team_cols:
+                            logger.info(f"[DB] Adding column '{col_name}' to team_registrations...")
+                            conn.execute(text(f"ALTER TABLE team_registrations ADD COLUMN {col_name} {col_def}"))
+            except Exception as e:
+                logger.error(f"[DB] Failed to migrate 'team_registrations' payment columns: {e}")
 
     # Create other tables (including team_registrations)
     create_tables()

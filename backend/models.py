@@ -104,6 +104,15 @@ class TeamRegistration(Base):
     member2_phone   = Column(String(20), nullable=False)
     member2_year    = Column(String(50), nullable=False)
     
+    # Payment details
+    registration_fee       = Column(String(20), default="₹40")
+    payment_status         = Column(String(50), default="pending", index=True)  # pending / approved / rejected
+    transaction_id         = Column(String(255), nullable=True, unique=True, index=True)
+    payment_screenshot     = Column(Text, nullable=True)
+    payment_time           = Column(DateTime(timezone=True), nullable=True)
+    payment_verified_at    = Column(DateTime(timezone=True), nullable=True)
+    payment_verified_by    = Column(String(255), nullable=True)
+    
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
