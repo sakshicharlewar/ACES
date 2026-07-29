@@ -137,7 +137,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   }
 
   const branches = ["Computer Engineering", "IT", "EnTC", "Mechanical", "Civil"];
-  const years = ["First Year", "Second Year", "Third Year", "Fourth Year"];
+  const years = ["Second Year", "Third Year"];
 
   return (
     <AnimatePresence>
