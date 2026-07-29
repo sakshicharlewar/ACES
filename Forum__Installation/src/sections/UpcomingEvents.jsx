@@ -8,10 +8,11 @@ const BUG_HUNT_FALLBACK = {
   id: "bughunt-local",
   title: "🐞 Bug Hunt: Debug the Web",
   description:
-    "Participants receive a website with HTML, CSS & JavaScript bugs. Fix broken layouts, resolve JS errors, improve responsiveness, and optimize performance. Winner = Most bugs fixed in the least time.",
+    "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
   is_registration_open: true,
   max_teams: 30,
   team_size: 2,
+  fee: 40,
   registered_teams_count: 0,
   isFallback: true,
 };
@@ -187,6 +188,16 @@ export function UpcomingEvents() {
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-blue-400" />
                       <span>Team Size: {event.team_size} Members</span>
+                    </div>
+                    {(event.fee || event.registration_fee) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-400">💳</span>
+                        <span>Registration Fee: <span className="text-white font-semibold">₹{event.fee ?? event.registration_fee}</span></span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-purple-400">🏆</span>
+                      <span className="text-gray-400 text-xs">Winners by accuracy &amp; completion time</span>
                     </div>
                   </div>
 
