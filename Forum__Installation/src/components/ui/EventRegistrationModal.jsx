@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Loader2, Copy, Upload, CreditCard, Users } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -33,7 +33,16 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const [error, setError] = useState(null);
   const [successData, setSuccessData] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
   const fileRef = useRef(null);
+
+  // Close QR preview on Esc key
+  useEffect(() => {
+    if (!qrPreviewOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setQrPreviewOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [qrPreviewOpen]);
 
   if (!isOpen) return null;
 
@@ -505,22 +514,48 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
                   <p className="text-sm text-gray-300 mb-4 font-medium text-center">Scan the QR Code using any UPI application.</p>
-                  
-                  <div className="bg-white p-2 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-transform hover:scale-105 duration-300">
-                    <img 
-                      src="/ACESSScanner.jpeg" 
-                      alt="Payment QR Code" 
-                      className="w-48 h-48 object-contain rounded-xl"
+
+                  {/* Premium white QR card — click to open full preview */}
+                  <button
+                    type="button"
+                    onClick={() => setQrPreviewOpen(true)}
+                    title="Click to view full size"
+                    className="group relative bg-white rounded-2xl p-6 shadow-[0_8px_40px_rgba(59,130,246,0.20),0_2px_12px_rgba(0,0,0,0.30)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0B0B0B]"
+                    aria-label="Click to view QR code in full size"
+                  >
+                    <img
+                      src="/ACESSScanner.jpeg"
+                      alt="ACES Bug Hunt Payment QR Code"
+                      style={{
+                        width: 'clamp(220px, 40vw, 300px)',
+                        height: 'clamp(220px, 40vw, 300px)',
+                        objectFit: 'contain',
+                        imageRendering: 'auto',
+                        display: 'block',
+                      }}
                     />
+                    {/* Hover overlay hint */}
+                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors duration-200 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">
+                        🔍 Tap to enlarge
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Accepted Apps */}
+                  <p className="text-xs text-gray-400 mt-5 uppercase tracking-wider font-semibold text-center">Accepted Apps</p>
+                  <div className="flex flex-wrap justify-center gap-2 mt-2">
+                    {['PhonePe', 'Google Pay', 'Paytm', 'BHIM', 'Any UPI App'].map(app => (
+                      <span key={app} className="px-3 py-1 rounded-full bg-white/8 border border-white/10 text-gray-200 text-xs font-medium">
+                        {app}
+                      </span>
+                    ))}
                   </div>
-                  
-                  <p className="text-xs text-gray-400 mt-4 text-center">Accepted Apps</p>
-                  <p className="text-sm text-gray-200 mt-1 font-medium text-center">PhonePe • Google Pay • Paytm • BHIM • Any UPI App</p>
-                  
+
                   <div className="w-full mt-5 pt-5 border-t border-white/10">
                     <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-2">Payment Instructions</p>
                     <ol className="text-sm text-gray-300 space-y-1.5 pl-4 list-decimal marker:text-blue-500 font-medium">
-                      <li>Scan the QR Code.</li>
+                      <li>Tap the QR Code to enlarge, then scan it.</li>
                       <li>Pay ₹40.</li>
                       <li>Copy the UPI Transaction ID.</li>
                       <li>Paste the Transaction ID below.</li>
@@ -528,6 +563,46 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     </ol>
                   </div>
                 </div>
+
+                {/* QR Full-Size Preview Modal */}
+                {qrPreviewOpen && (
+                  <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md"
+                    onClick={() => setQrPreviewOpen(false)}
+                    role="dialog"
+                    aria-label="QR Code full size preview"
+                  >
+                    <div
+                      className="relative flex flex-col items-center"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {/* Close button */}
+                      <button
+                        onClick={() => setQrPreviewOpen(false)}
+                        className="absolute -top-12 right-0 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                        aria-label="Close preview"
+                      >
+                        <X size={22} />
+                      </button>
+
+                      {/* Premium white card at full size */}
+                      <div className="bg-white rounded-3xl p-8 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
+                        <img
+                          src="/ACESSScanner.jpeg"
+                          alt="ACES Bug Hunt Payment QR Code — Full Size"
+                          style={{
+                            width: 'min(500px, 85vw)',
+                            height: 'min(500px, 85vw)',
+                            objectFit: 'contain',
+                            imageRendering: 'auto',
+                            display: 'block',
+                          }}
+                        />
+                      </div>
+                      <p className="mt-4 text-white/60 text-sm">Tap outside or press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-xs">Esc</kbd> to close</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Transaction ID */}
                 <div className="mb-5">
