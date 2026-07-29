@@ -790,49 +790,7 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 #  API ROUTES — Razorpay Payment
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@app.post("/api/payment/create-order")
-async def create_razorpay_order(request: Request, db: Session = Depends(get_db)):
-    """Create a Razorpay order for ₹40 event registration fee."""
-    if not razorpay_client:
-        return JSONResponse(status_code=503, content={"error": "Payment gateway not configured. Please contact the administrator."})
-    try:
-        body = await request.json()
-        amount_paise = int(body.get("amount", 4000))  # ₹40 = 4000 paise
-        receipt = body.get("receipt", f"receipt_{uuid.uuid4().hex[:8]}")
-        order = razorpay_client.order.create({
-            "amount": amount_paise,
-            "currency": "INR",
-            "receipt": receipt,
-            "payment_capture": 1
-        })
-        logger.info(f"[Razorpay] Order created: {order['id']}")
-        return {"order_id": order["id"], "amount": order["amount"], "currency": order["currency"], "key": RAZORPAY_KEY_ID}
-    except Exception as e:
-        logger.error(f"[Razorpay] Failed to create order: {e}")
-        return JSONResponse(status_code=500, content={"error": "Failed to create payment order."})
-
-
-@app.post("/api/payment/verify")
-async def verify_razorpay_payment(data: schemas.RazorpayPaymentVerify, db: Session = Depends(get_db)):
-    """Verify Razorpay payment signature — MUST be called before finalizing registration."""
-    if not RAZORPAY_KEY_SECRET:
-        return JSONResponse(status_code=503, content={"error": "Payment gateway not configured."})
-    try:
-        # Cryptographic signature verification (prevents tampering)
-        message = f"{data.razorpay_order_id}|{data.razorpay_payment_id}"
-        expected_signature = hmac.new(
-            RAZORPAY_KEY_SECRET.encode("utf-8"),
-            message.encode("utf-8"),
-            hashlib.sha256
-        ).hexdigest()
-        if not hmac.compare_digest(expected_signature, data.razorpay_signature):
-            logger.warning(f"[Razorpay] Invalid signature for order {data.razorpay_order_id}")
-            return JSONResponse(status_code=400, content={"verified": False, "error": "Payment verification failed. Invalid signature."})
-        logger.info(f"[Razorpay] Payment verified: {data.razorpay_payment_id}")
-        return {"verified": True, "payment_id": data.razorpay_payment_id}
-    except Exception as e:
-        logger.error(f"[Razorpay] Verification error: {e}")
-        return JSONResponse(status_code=500, content={"error": "Payment verification failed."})
+# (Razorpay endpoints removed as part of reverting to manual UPI)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -860,39 +818,19 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     if not event.is_registration_open:
         return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
 
-    # ── Razorpay: verify payment before creating registration ──────────────────
-    razorpay_payment_id = data.razorpay_payment_id
-    razorpay_order_id   = data.razorpay_order_id
-    razorpay_signature  = data.razorpay_signature
+    if not data.transaction_id or not data.payment_screenshot:
+        return JSONResponse(status_code=400, content={"error": "Transaction ID and Payment Screenshot are required."})
 
-    if RAZORPAY_KEY_SECRET and razorpay_payment_id and razorpay_order_id and razorpay_signature:
-        # Backend signature check
-        message = f"{razorpay_order_id}|{razorpay_payment_id}"
-        expected_sig = hmac.new(
-            RAZORPAY_KEY_SECRET.encode("utf-8"),
-            message.encode("utf-8"),
-            hashlib.sha256
-        ).hexdigest()
-        if not hmac.compare_digest(expected_sig, razorpay_signature):
-            logger.warning(f"[Razorpay] Invalid payment signature on registration attempt for team {data.team_name}")
-            return JSONResponse(status_code=400, content={"error": "Payment verification failed. Registration not saved."})
-
-        # Prevent duplicate payment IDs
-        existing = db.query(TeamRegistration).filter(TeamRegistration.razorpay_payment_id == razorpay_payment_id).first()
-        if existing:
-            return JSONResponse(status_code=400, content={"error": "This payment has already been used for a registration."})
+    # ── Verify Duplicate Transaction IDs ─────────────────────────────────────────
+    existing_txn = db.query(TeamRegistration).filter(TeamRegistration.transaction_id == data.transaction_id.strip()).first()
+    if existing_txn:
+        return JSONResponse(status_code=400, content={"error": "This Transaction ID has already been used for a registration."})
 
     registration_id = f"BUG-{current_teams + 1:03d}"
     reg_data = data.dict()
-
-    # Mark payment as confirmed
-    if razorpay_payment_id:
-        reg_data["payment_status"]      = "paid"
-        reg_data["transaction_id"]      = razorpay_payment_id
-        reg_data["razorpay_payment_id"] = razorpay_payment_id
-        reg_data["razorpay_order_id"]   = razorpay_order_id
-        reg_data["razorpay_signature"]  = razorpay_signature
-        reg_data["payment_time"]        = datetime.utcnow()
+    reg_data["payment_status"] = "pending"
+    reg_data["approval_status"] = "pending"
+    reg_data["transaction_id"] = data.transaction_id.strip()
 
     reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
 
@@ -902,49 +840,45 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
 
         # ── Admin notification email ────────────────────────────────────────────
         admin_email_id = uuid.uuid4().hex
-        payment_info = f"<p><b>Payment ID:</b> {razorpay_payment_id}</p><p><b>Order ID:</b> {razorpay_order_id}</p><p><b>Payment Status:</b> ✅ Paid</p>" if razorpay_payment_id else f"<p><b>Transaction ID:</b> {reg.transaction_id or 'N/A'}</p>"
         admin_html = f"""
         <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
-          <h2 style="color:#1e3a8a;">🚨 New Team Registration</h2>
+          <h2 style="color:#1e3a8a;">🚨 New Team Registration (Pending Verification)</h2>
           <p>A new team has registered for <b>{event.title}</b>.</p>
           <p><b>Team Name:</b> {reg.team_name}</p>
           <p><b>Registration ID:</b> {reg.registration_id}</p>
           <p><b>Leader:</b> {reg.leader_name} ({reg.leader_email})</p>
-          {payment_info}
+          <p><b>Transaction ID:</b> {reg.transaction_id}</p>
           <p><b>Registered At:</b> {now_str}</p>
           <hr>
-          <p><a href="https://aces-backkend.onrender.com/admin">Click here to review the registration.</a></p>
+          <p><a href="https://aces-backkend.onrender.com/admin">Click here to review and approve the registration.</a></p>
         </div>
         """
-        crud.add_email_to_queue(db, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]")
-        background_tasks.add_task(send_email_with_retry, admin_email_id, f"New Registration: {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
+        crud.add_email_to_queue(db, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]")
+        background_tasks.add_task(send_email_with_retry, admin_email_id, f"Action Required: New Registration {reg.team_name}", admin_html, "[]", 1, RECIPIENT)
 
-        # ── Participant confirmation email ──────────────────────────────────────
-        if razorpay_payment_id:
-            participant_email_id = uuid.uuid4().hex
-            participant_html = f"""
-            <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;background:#f9fafb;border-radius:12px;">
-              <div style="background:#1e3a8a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
-                <h1 style="color:#fff;margin:0;">🎉 Registration Confirmed!</h1>
-              </div>
-              <div style="padding:24px;background:#fff;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
-                <p style="color:#374151;">Hi <b>{reg.leader_name}</b>,</p>
-                <p style="color:#374151;">Your team has been successfully registered for <b>{event.title}</b>!</p>
-                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Registration ID</td><td style="padding:8px;">{reg.registration_id}</td></tr>
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Team Name</td><td style="padding:8px;">{reg.team_name}</td></tr>
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Event</td><td style="padding:8px;">{event.title}</td></tr>
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Payment ID</td><td style="padding:8px;">{razorpay_payment_id}</td></tr>
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Payment Status</td><td style="padding:8px;color:#16a34a;font-weight:bold;">✅ Paid (₹40)</td></tr>
-                  <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Approval Status</td><td style="padding:8px;color:#d97706;font-weight:bold;">⏳ Pending Review</td></tr>
-                </table>
-                <p style="color:#6b7280;font-size:14px;">You will receive another email once your registration is approved by the coordinator.</p>
-                <p style="color:#374151;margin-top:16px;">Good luck! 🚀<br><b>ACES – Association of Computer Engineering Students</b></p>
-              </div>
-            </div>
-            """
-            crud.add_email_to_queue(db, participant_email_id, f"Registration Confirmed – {reg.registration_id}", participant_html, "[]")
-            background_tasks.add_task(send_email_with_retry, participant_email_id, f"Registration Confirmed – {reg.registration_id}", participant_html, "[]", 1, reg.leader_email)
+        # ── Participant "Pending" email ──────────────────────────────────────
+        participant_email_id = uuid.uuid4().hex
+        participant_html = f"""
+        <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;background:#f9fafb;border-radius:12px;">
+          <div style="background:#1e3a8a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
+            <h1 style="color:#fff;margin:0;">⏳ Registration Pending</h1>
+          </div>
+          <div style="padding:24px;background:#fff;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
+            <p style="color:#374151;">Hi <b>{reg.leader_name}</b>,</p>
+            <p style="color:#374151;">We have received your registration details for <b>{event.title}</b>.</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Registration ID</td><td style="padding:8px;">{reg.registration_id}</td></tr>
+              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Team Name</td><td style="padding:8px;">{reg.team_name}</td></tr>
+              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Transaction ID</td><td style="padding:8px;">{reg.transaction_id}</td></tr>
+              <tr><td style="padding:8px;background:#f3f4f6;font-weight:bold;">Status</td><td style="padding:8px;color:#d97706;font-weight:bold;">⏳ Pending Payment Verification</td></tr>
+            </table>
+            <p style="color:#6b7280;font-size:14px;">Our team is verifying your payment screenshot. You will receive a final confirmation email once approved.</p>
+            <p style="color:#374151;margin-top:16px;">Thanks! 🚀<br><b>ACES – Association of Computer Engineering Students</b></p>
+          </div>
+        </div>
+        """
+        crud.add_email_to_queue(db, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]")
+        background_tasks.add_task(send_email_with_retry, participant_email_id, f"Registration Pending Verification – {reg.registration_id}", participant_html, "[]", 1, reg.leader_email)
 
         return {"success": True, "registration_id": reg.registration_id, "payment_status": reg.payment_status}
     return JSONResponse(status_code=500, content={"error": "Failed to register. Team name or leader email may already be registered."})
