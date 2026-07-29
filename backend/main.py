@@ -357,67 +357,35 @@ def send_via_resend_api(email_id: str, subject: str, html_body: str, attachments
     except Exception as e:
         logger.error(f"[Resend|{email_id}] ❌ Unexpected exception: {e}")
         logger.error(traceback.format_exc())
+        logger.error(f"Error Message: {str(e)}")
+        logger.error(f"Stack Trace:\n{traceback.format_exc()}")
+        logger.info("EMAIL FAILED")
         return False
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Async wrapper — runs sync send_email_with_retry in thread pool
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def send_email_async(email_id: str, subject: str, html_body: str, attachments_json: str):
-    """Async wrapper that runs the sync email sender in a thread pool.
-    This guarantees the email runs even after the HTTP response is returned."""
-    loop = asyncio.get_event_loop()
-    try:
-        result = await loop.run_in_executor(
-            None,  # default ThreadPoolExecutor
-            send_email_with_retry,
-            email_id, subject, html_body, attachments_json
-        )
-        if result:
-            logger.info(f"[AsyncEmail|{email_id}] ✅ Email delivery confirmed.")
-        else:
-            logger.error(f"[AsyncEmail|{email_id}] ❌ Email delivery failed — check logs above.")
-    except Exception as e:
-        logger.error(f"[AsyncEmail|{email_id}] ❌ Unexpected async error: {e}")
-        logger.error(traceback.format_exc())
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Master Email Sender — Gmail SMTP Primary → Resend API Fallback
+#  Master Email Sender — Resend API Primary → Gmail SMTP Fallback
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def send_email_with_retry(email_id: str, subject: str, html_body: str, attachments_json: str, attempt: int = 1) -> bool:
     """
     Master email delivery function.
-    1. Try Gmail SMTP first (Primary — lands in Gmail Primary Inbox)
-    2. If SMTP fails, fall back to Resend HTTP API
+    1. Try Resend HTTP API first (Primary)
+    2. If Resend fails, fall back to Gmail SMTP
     3. Log every step, every success, every failure — no silent errors
     4. Update email queue status in PostgreSQL
     """
+    logger.info("EMAIL FUNCTION CALLED")
     logger.info("=" * 60)
     logger.info(f"[Email|{email_id}] ▶ Email Delivery Started")
     logger.info(f"[Email|{email_id}]   To      : {RECIPIENT}")
     logger.info(f"[Email|{email_id}]   Subject : {subject}")
-    logger.info(f"[Email|{email_id}]   SMTP set: {'YES' if SMTP_USERNAME and SMTP_PASSWORD else 'NO'}")
     logger.info(f"[Email|{email_id}]   Resend  : {'YES' if RESEND_API_KEY else 'NO'}")
+    logger.info(f"[Email|{email_id}]   SMTP set: {'YES' if SMTP_USERNAME and SMTP_PASSWORD else 'NO'}")
     logger.info("=" * 60)
 
-    # ── Step 1: Gmail SMTP (Primary) ─────────────────────────────────────────
-    if SMTP_USERNAME and SMTP_PASSWORD:
-        logger.info(f"[Email|{email_id}] Step 1: Trying Gmail SMTP (Primary)...")
-        smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json)
-        if smtp_ok:
-            _update_email_status_standalone(email_id, "sent")
-            logger.info(f"[Email|{email_id}] ✅ DELIVERED via Gmail SMTP")
-            logger.info("=" * 60)
-            return True
-        logger.warning(f"[Email|{email_id}] Gmail SMTP failed. Falling back to Resend API...")
-    else:
-        logger.warning(f"[Email|{email_id}] Step 1 SKIPPED: Gmail SMTP credentials not configured.")
-
-    # ── Step 2: Resend HTTP API (Fallback) ───────────────────────────────────
-    logger.info(f"[Email|{email_id}] Step 2: Trying Resend HTTP API (Fallback)...")
+    # ── Step 1: Resend HTTP API (Primary) ───────────────────────────────────
+    logger.info(f"[Email|{email_id}] Step 1: Trying Resend HTTP API (Primary)...")
     resend_ok = send_via_resend_api(email_id, subject, html_body, attachments_json, attempt=1)
     if resend_ok:
         _update_email_status_standalone(email_id, "sent")
@@ -425,11 +393,25 @@ def send_email_with_retry(email_id: str, subject: str, html_body: str, attachmen
         logger.info("=" * 60)
         return True
 
+    logger.warning(f"[Email|{email_id}] Resend API failed. Falling back to Gmail SMTP...")
+
+    # ── Step 2: Gmail SMTP (Fallback) ─────────────────────────────────────────
+    if SMTP_USERNAME and SMTP_PASSWORD:
+        logger.info(f"[Email|{email_id}] Step 2: Trying Gmail SMTP (Fallback)...")
+        smtp_ok = send_via_gmail_smtp(email_id, subject, html_body, attachments_json)
+        if smtp_ok:
+            _update_email_status_standalone(email_id, "sent")
+            logger.info(f"[Email|{email_id}] ✅ DELIVERED via Gmail SMTP")
+            logger.info("=" * 60)
+            return True
+    else:
+        logger.warning(f"[Email|{email_id}] Step 2 SKIPPED: Gmail SMTP credentials not configured.")
+
     # ── Both methods failed ───────────────────────────────────────────────────
-    error_msg = "Both Gmail SMTP and Resend API failed. Check SMTP_PASSWORD and RESEND_API_KEY in Render env vars."
+    error_msg = "Both Resend API and Gmail SMTP failed. Check SMTP_PASSWORD and RESEND_API_KEY."
     _update_email_status_standalone(email_id, "failed", error_msg)
     logger.error(f"[Email|{email_id}] ❌ ALL DELIVERY METHODS FAILED")
-    logger.error(f"[Email|{email_id}] {error_msg}")
+    logger.error(f"[Email|{email_id}] Request Payload Saved in Logs: Subject: {subject}, Body length: {len(html_body)}, Attachments length: {len(attachments_json)}")
     logger.info("=" * 60)
     return False
 
@@ -466,6 +448,7 @@ async def process_email_queue():
 
 @app.post("/api/submit-innovation", status_code=status.HTTP_201_CREATED)
 async def submit_innovation(request: Request, background_tasks: BackgroundTasks):  # noqa
+    logger.info("START REQUEST")
     logger.info("=" * 60)
     logger.info("[API] ▶ New innovation submission received")
 
@@ -480,6 +463,8 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
             form = await request.json()
         except Exception as e:
             logger.error(f"[API] Failed to parse request body: {e}")
+            logger.error(f"Stack Trace:\n{traceback.format_exc()}")
+            logger.info("END REQUEST")
             return JSONResponse(status_code=400, content={"success": False, "message": "Invalid request body."})
 
     fields_dict      = {}
@@ -565,16 +550,25 @@ async def submit_innovation(request: Request, background_tasks: BackgroundTasks)
     finally:
         db2.close()
 
-    # ── Fire email via asyncio.create_task (guaranteed to run after response) ──
-    logger.info("[API] Step 4: Firing email via asyncio.create_task (thread pool)...")
-    asyncio.create_task(send_email_async(email_id, subject, html_body, attachments_json))
-    logger.info(f"[API] ✅ Email task created — ID: {email_id}")
+    # ── Send email SYNCHRONOUSLY to prevent background execution cutoff ──
+    logger.info("[API] Step 4: Sending email synchronously (to prevent background execution cutoff)...")
+    email_delivered = send_email_with_retry(email_id, subject, html_body, attachments_json)
+    
+    if email_delivered:
+        logger.info(f"[API] Email delivered synchronously — ID: {email_id}")
+    else:
+        logger.error(f"[API] Synchronous email delivery failed — ID: {email_id}")
 
-    logger.info("[API] ✅ Submission complete. Returning success to client.")
+    logger.info("END REQUEST")
     logger.info("=" * 60)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
-        content={"success": True, "message": "Idea submitted successfully.", "email_id": email_id}
+        content={
+            "success": True, 
+            "message": "Idea submitted successfully.", 
+            "email_id": email_id,
+            "email_status": "sent" if email_delivered else "failed"
+        }
     )
 
 
@@ -710,10 +704,11 @@ async def test_email(background_tasks: BackgroundTasks):
         finally:
             db.close()
 
-    asyncio.create_task(send_email_async(email_id, "ACES Test Email", html, "[]"))
+    # Send synchronously
+    email_delivered = send_email_with_retry(email_id, "ACES Test Email", html, "[]")
     return {
-        "status": "success",
-        "message": f"Test email queued — ID: {email_id}. Check Render logs for delivery status.",
+        "status": "success" if email_delivered else "failed",
+        "message": f"Test email sent — ID: {email_id}. Check logs.",
         "check_inbox": RECIPIENT
     }
 
