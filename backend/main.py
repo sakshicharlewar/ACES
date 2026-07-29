@@ -1677,13 +1677,13 @@ async def startup_validation():
             existing_count = seed_db.query(__import__('models').UpcomingEvent).count()
             if existing_count == 0:
                 logger.info("[DB] No events found. Seeding Bug Hunt event...")
+                from datetime import datetime
                 bug_hunt = __import__('models').UpcomingEvent(
                     title="🐞 Bug Hunt: Debug the Web",
                     description="Participants receive a website containing HTML, CSS, and JavaScript bugs. They must fix broken layouts, resolve JavaScript errors, improve responsiveness, and optimize performance. Winner = Maximum bugs fixed in the least amount of time.",
-                    date="TBD",
-                    time="TBD",
+                    event_date=datetime.now(),
+                    event_time="TBD",
                     venue="TBD",
-                    max_registrations=30,
                     is_registration_open=True,
                     max_teams=30,
                     team_size=2,
