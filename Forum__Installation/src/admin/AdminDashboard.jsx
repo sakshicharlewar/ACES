@@ -35,16 +35,36 @@ function fmt(dateStr) {
 }
 
 export function AdminDashboard() {
-  const [stats,   setStats]   = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState("");
+  const [stats,     setStats]     = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState("");
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   useEffect(() => {
-    fetchStats()
-      .then(setStats)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false));
+    loadStats(0);
   }, []);
+
+  const loadStats = async (attempt = 0) => {
+    const MAX_ATTEMPTS = 6;
+    const RETRY_DELAY_MS = 8000;
+    try {
+      const data = await fetchStats();
+      setStats(data);
+      setError("");
+      setIsWakingUp(false);
+    } catch (e) {
+      console.warn(`[AdminDashboard] stats attempt ${attempt + 1} failed:`, e.message);
+      if (attempt < MAX_ATTEMPTS - 1) {
+        setIsWakingUp(true);
+        setTimeout(() => loadStats(attempt + 1), RETRY_DELAY_MS);
+      } else {
+        setIsWakingUp(false);
+        setError(e.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleMigrate = async () => {
     if (!window.confirm("Run database migrations? This will add missing columns to PostgreSQL.")) return;
@@ -72,6 +92,17 @@ export function AdminDashboard() {
             <Database className="w-4 h-4" /> Run DB Migration
           </button>
         </div>
+
+        {/* Server waking up */}
+        {isWakingUp && (
+          <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm px-5 py-4 rounded-xl">
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+            </span>
+            Backend server is waking up — retrying automatically, please wait a few seconds…
+          </div>
+        )}
 
         {/* Error */}
         {error && (

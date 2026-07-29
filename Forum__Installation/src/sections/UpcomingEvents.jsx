@@ -22,15 +22,22 @@ export function UpcomingEvents() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [isWakingUp, setIsWakingUp] = useState(false);
+  const retryRef = React.useRef(null);
 
   useEffect(() => {
     fetchEvents();
     // Poll every 30 seconds to stay in sync with seat count
     const interval = setInterval(fetchEvents, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (retryRef.current) clearTimeout(retryRef.current);
+    };
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (attempt = 0) => {
+    const MAX_ATTEMPTS = 6;       // try up to 6 times
+    const RETRY_DELAY_MS = 8000;  // 8 s between retries (cold start ~30-50 s)
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiUrl}/api/events`);
@@ -38,12 +45,20 @@ export function UpcomingEvents() {
         const data = await response.json();
         setEvents(data);
         setLoadFailed(false);
+        setIsWakingUp(false);
       } else {
-        setLoadFailed(true);
+        throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      console.error("Failed to fetch events:", error);
-      setLoadFailed(true);
+      console.warn(`[UpcomingEvents] fetch attempt ${attempt + 1} failed:`, error.message);
+      if (attempt < MAX_ATTEMPTS - 1) {
+        setIsWakingUp(true);
+        setLoadFailed(false);
+        retryRef.current = setTimeout(() => fetchEvents(attempt + 1), RETRY_DELAY_MS);
+      } else {
+        setIsWakingUp(false);
+        setLoadFailed(true);
+      }
     }
   };
 
@@ -101,6 +116,21 @@ export function UpcomingEvents() {
           <h2 className="font-sans text-3xl md:text-5xl font-medium mb-4">Upcoming Events</h2>
           <p className="font-cambria text-text-secondary text-lg">Participate &amp; Showcase your skills</p>
         </motion.div>
+
+        {/* ── Server warm-up banner ── */}
+        {isWakingUp && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-3 mb-8 px-5 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm max-w-md mx-auto"
+          >
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+            </span>
+            <span>Server is waking up — events will load in a few seconds…</span>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {displayEvents.map((event, index) => {
