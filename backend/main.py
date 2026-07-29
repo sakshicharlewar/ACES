@@ -123,16 +123,28 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: _Request, exc: StarletteHTTPException):
-    return JSONResponse(status_code=exc.status_code, content={"error": str(exc.detail)})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": str(exc.detail)},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: _Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content={"error": "Invalid request data. Please check your inputs."})
+    return JSONResponse(
+        status_code=422,
+        content={"error": "Invalid request data. Please check your inputs."},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: _Request, exc: Exception):
     logger.error(f"[Unhandled] {request.method} {request.url}: {exc}", exc_info=True)
-    return JSONResponse(status_code=500, content={"error": "An internal server error occurred. Please try again."})
+    return JSONResponse(
+        status_code=500,
+        content={"error": "An internal server error occurred. Please try again."},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1584,25 +1596,49 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
     try:
         today = date.today()
 
-        total_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
-        total_registrations = db.query(sqlfunc.count(TeamRegistration.id)).scalar() or 0
+        try:
+            total_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
+        except Exception as e:
+            logger.warning(f"[stats] InnovationSubmission count failed: {e}")
+            total_submissions = 0
 
-        today_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
-            sqlfunc.date(InnovationSubmission.submitted_at) == today
-        ).scalar() or 0
-        today_registrations = db.query(sqlfunc.count(TeamRegistration.id)).filter(
-            sqlfunc.date(TeamRegistration.created_at) == today
-        ).scalar() or 0
+        try:
+            total_registrations = db.query(sqlfunc.count(TeamRegistration.id)).scalar() or 0
+        except Exception as e:
+            logger.warning(f"[stats] TeamRegistration count failed: {e}")
+            total_registrations = 0
 
-        # Recent 5 submissions
-        recent_subs = db.query(InnovationSubmission).order_by(
-            InnovationSubmission.submitted_at.desc()
-        ).limit(5).all()
+        try:
+            today_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
+                sqlfunc.date(InnovationSubmission.submitted_at) == today
+            ).scalar() or 0
+        except Exception as e:
+            logger.warning(f"[stats] today_submissions failed: {e}")
+            today_submissions = 0
 
-        # Recent 5 registrations
-        recent_regs = db.query(TeamRegistration).order_by(
-            TeamRegistration.created_at.desc()
-        ).limit(5).all()
+        try:
+            today_registrations = db.query(sqlfunc.count(TeamRegistration.id)).filter(
+                sqlfunc.date(TeamRegistration.created_at) == today
+            ).scalar() or 0
+        except Exception as e:
+            logger.warning(f"[stats] today_registrations failed: {e}")
+            today_registrations = 0
+
+        try:
+            recent_subs = db.query(InnovationSubmission).order_by(
+                InnovationSubmission.submitted_at.desc()
+            ).limit(5).all()
+        except Exception as e:
+            logger.warning(f"[stats] recent_subs failed: {e}")
+            recent_subs = []
+
+        try:
+            recent_regs = db.query(TeamRegistration).order_by(
+                TeamRegistration.created_at.desc()
+            ).limit(5).all()
+        except Exception as e:
+            logger.warning(f"[stats] recent_regs failed: {e}")
+            recent_regs = []
 
         return {
             "total_submissions"   : total_submissions,
@@ -1630,6 +1666,13 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
                 for r in recent_regs
             ],
         }
+    except Exception as e:
+        logger.error(f"[admin_stats] Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Stats query failed: {str(e)}"},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
     finally:
         db.close()
 
