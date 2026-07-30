@@ -98,7 +98,7 @@ export default function AdminEventRegistrations() {
     if (id.toString().startsWith("LOC-")) {
       const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
       const updated = localRegs.map(r =>
-        r.id === id ? { ...r, approval_status: 'approved', email_sent: true } : r
+        r.id === id ? { ...r, payment_status: 'approved', email_sent: true } : r
       );
       localStorage.setItem('local_registrations', JSON.stringify(updated));
       fetchRegistrations(selectedEventId);
@@ -182,12 +182,12 @@ export default function AdminEventRegistrations() {
     setRejectionReason("");
     
     setRegistrations(prev =>
-      prev.map(r => r.id === regId ? { ...r, approval_status: "rejected" } : r)
+      prev.map(r => r.id === regId ? { ...r, payment_status: "rejected" } : r)
     );
 
     if (regId.toString().startsWith("LOC-")) {
       const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-      const updated = localRegs.map(r => r.id === regId ? { ...r, approval_status: 'rejected', rejection_reason: reason } : r);
+      const updated = localRegs.map(r => r.id === regId ? { ...r, payment_status: 'rejected', rejection_reason: reason } : r);
       localStorage.setItem('local_registrations', JSON.stringify(updated));
       fetchRegistrations(selectedEventId);
       return;
@@ -222,7 +222,7 @@ export default function AdminEventRegistrations() {
       "Member 2 Email":  r.member2_email,
       "Member 2 Phone":  r.member2_phone,
       "Member 2 Year":   r.member2_year,
-      "Approval Status": r.approval_status || "pending",
+      "Approval Status": r.payment_status || "pending",
       "Payment Status":  r.payment_status || "pending",
       "Registration Fee": r.registration_fee || "₹40",
       "Transaction ID":  r.transaction_id || "",
@@ -346,8 +346,8 @@ export default function AdminEventRegistrations() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { label: "Total", count: registrations.length, color: "blue" },
-            { label: "Approved", count: registrations.filter(r => r.approval_status === "approved").length, color: "green" },
-            { label: "Pending", count: registrations.filter(r => !r.approval_status || r.approval_status === "pending").length, color: "yellow" },
+            { label: "Approved", count: registrations.filter(r => r.payment_status === "approved").length, color: "green" },
+            { label: "Pending", count: registrations.filter(r => !r.payment_status || r.payment_status === "pending").length, color: "yellow" },
           ].map(({ label, count, color }) => (
             <div key={label} className={`bg-${color}-50 border border-${color}-200 rounded-lg p-4 text-center`}>
               <p className={`text-2xl font-bold text-${color}-700`}>{count}</p>
@@ -393,7 +393,7 @@ export default function AdminEventRegistrations() {
                     <div className="text-xs text-gray-500">{reg.member2_email}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    {statusBadge(reg.approval_status)}
+                    {statusBadge(reg.payment_status)}
                     <div className="flex flex-col gap-1 mt-2">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded w-max ${reg.email_sent ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                         Email: {reg.email_sent ? '✅ Sent' : '❌ Pending'}
@@ -453,7 +453,7 @@ export default function AdminEventRegistrations() {
                   <td className="px-4 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1">
                       {/* Resend Actions if handled */}
-                      {reg.approval_status !== "pending" && (
+                      {reg.payment_status !== "pending" && (
                         <>
                           <button
                             onClick={() => handleResend(reg.id, "email")}
@@ -466,7 +466,7 @@ export default function AdminEventRegistrations() {
                       )}
                       
                       {/* Approve */}
-                      {reg.approval_status !== "approved" && (
+                      {reg.payment_status !== "approved" && (
                         <button
                           onClick={() => handleApproveRegistration(reg.id)}
                           title="Approve Registration"
@@ -476,7 +476,7 @@ export default function AdminEventRegistrations() {
                         </button>
                       )}
                       {/* Reject */}
-                      {reg.approval_status !== "rejected" && (
+                      {reg.payment_status !== "rejected" && (
                         <button
                           onClick={() => setRejectionModal({ id: reg.id })}
                           title="Reject Registration"
