@@ -559,7 +559,17 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       </span>
                     </div>
                   </a>
-                  <p className="text-xs text-blue-300/70 mb-5 text-center">Tap the QR to open GPay · PhonePe · Paytm with ₹40 pre-filled</p>
+                  <p className="text-xs text-blue-300/70 mb-3 text-center">Tap the QR to open GPay · PhonePe · Paytm with ₹40 pre-filled</p>
+
+                  {/* Info box — explain GPay "not debited" message */}
+                  <div className="w-full bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 mb-5 flex gap-3 items-start">
+                    <span className="text-yellow-400 text-base mt-0.5 shrink-0">ℹ️</span>
+                    <p className="text-xs text-yellow-200 leading-relaxed">
+                      <span className="font-semibold block mb-0.5">Seeing "Your money has not been debited"?</span>
+                      That is normal — it is Google Pay's safety screen shown <span className="font-semibold">before</span> payment.
+                      Simply enter your <span className="font-semibold">UPI PIN</span> to complete the ₹40 payment.
+                    </p>
+                  </div>
 
                   {/* UPI ID block */}
                   <div className="w-full bg-black/30 rounded-xl p-4 border border-white/8 mb-4">
