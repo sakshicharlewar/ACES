@@ -541,14 +541,25 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                   <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
 
-                  {/* QR Code */}
-                  <div className="bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6 w-full max-w-[280px]">
+                  {/* QR Code — tap to pay */}
+                  <a
+                    href={UPI_STRING}
+                    className="relative bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.25)] mb-3 w-full max-w-[280px] block group cursor-pointer"
+                    title="Tap to pay ₹40 via UPI"
+                  >
                     <img
                       src="/YatharthScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
                       style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />
-                  </div>
+                    {/* Tap overlay */}
+                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 group-active:bg-black/20 transition-colors flex items-end justify-center pb-3 pointer-events-none">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-white bg-blue-600/90 px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
+                        💳 Tap to Pay ₹40
+                      </span>
+                    </div>
+                  </a>
+                  <p className="text-xs text-blue-300/70 mb-5 text-center">Tap the QR to open GPay · PhonePe · Paytm with ₹40 pre-filled</p>
 
                   {/* UPI ID block */}
                   <div className="w-full bg-black/30 rounded-xl p-4 border border-white/8 mb-4">
