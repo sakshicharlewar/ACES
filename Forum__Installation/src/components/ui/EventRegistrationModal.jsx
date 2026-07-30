@@ -673,7 +673,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <p className="text-xs text-gray-500 mt-2">Upload a screenshot of the payment confirmation from your UPI app.</p>
                   </div>
 
-                </div>
+                </div> {/* end space-y-5 */}
+              </div> {/* end step 3 */}
 
             </form>
           </div>
