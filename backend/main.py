@@ -1136,9 +1136,7 @@ async def approve_team_registration(reg_id: int, request: Request, background_ta
     event = crud.get_event(db, reg.event_id)
     
     from datetime import datetime as dt
-    reg.approval_status = "approved"
-    reg.approval_date = dt.utcnow()
-    reg.approved_by = "admin"
+    reg.payment_status = "approved"
     db.commit()
     
     # Send Approval / Seat Confirmed Email
@@ -1197,7 +1195,7 @@ async def approve_team_registration(reg_id: int, request: Request, background_ta
     db.commit()
     
     logger.info(f"[Admin] Registration #{reg_id} approved. Email/SMS dispatched.")
-    return {"success": True, "approval_status": "approved"}
+    return {"success": True, "payment_status": "approved"}
 
 @app.patch("/admin/api/team-registrations/{reg_id}/reject")
 async def reject_team_registration(reg_id: int, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -1223,9 +1221,7 @@ async def reject_team_registration(reg_id: int, request: Request, background_tas
     event = crud.get_event(db, reg.event_id)
     
     from datetime import datetime as dt
-    reg.approval_status = "rejected"
-    reg.approval_date = dt.utcnow()
-    reg.approved_by = "admin"
+    reg.payment_status = "rejected"
     reg.rejection_reason = reason
     db.commit()
     
@@ -1258,7 +1254,7 @@ async def reject_team_registration(reg_id: int, request: Request, background_tas
     db.commit()
     
     logger.info(f"[Admin] Registration #{reg_id} rejected. Reason: {reason}")
-    return {"success": True, "approval_status": "rejected"}
+    return {"success": True, "payment_status": "rejected"}
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  API ROUTES — Innovation Box Read
@@ -1514,8 +1510,8 @@ async def resend_registration_notification(reg_id: int, request: Request, backgr
     if notify_type == "sms":
         if not reg.leader_phone:
             return JSONResponse(status_code=400, content={"error": "No mobile number available."})
-        sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been {reg.approval_status.upper()}.\nPlease check your email for complete event details.\nThank you."
-        if reg.approval_status == "rejected" and reg.rejection_reason:
+        sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been {reg.payment_status.upper()}.\nPlease check your email for complete event details.\nThank you."
+        if reg.payment_status == "rejected" and reg.rejection_reason:
             sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been REJECTED.\nReason: {reg.rejection_reason}.\nPlease check email for details."
         
         if send_sms(reg.leader_phone, sms_msg):
@@ -1526,7 +1522,7 @@ async def resend_registration_notification(reg_id: int, request: Request, backgr
         
     elif notify_type == "email":
         leader_email_id = uuid.uuid4().hex
-        if reg.approval_status == "approved":
+        if reg.payment_status == "approved":
             leader_html = f"""
             <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
               <h2 style="color:#1e3a8a;">🎉 Registration Approved!</h2>
@@ -1847,11 +1843,11 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
                 bh_registered = db.query(TeamRegistration).filter(TeamRegistration.event_id == bh_event.id).count()
             else:
                 bh_registered = db.query(TeamRegistration).count()
-            bh_remaining = max(0, 30 - bh_registered)
+            bh_remaining = max(0, (bh_event.max_teams if bh_event else 31) - bh_registered)
         except Exception as e:
             logger.warning(f"[stats] bug hunt stats failed: {e}")
             bh_registered = 0
-            bh_remaining = 30
+            bh_remaining = 31
 
         return {
             "total_submissions"        : total_submissions,
