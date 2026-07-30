@@ -688,6 +688,42 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   </div>
 
                 </div> {/* end space-y-5 */}
+
+                {/* Complete Registration CTA — inside step 3 */}
+                <div className="mt-6 pt-5 border-t border-white/10">
+                  {error && (
+                    <div className="flex items-start gap-2 p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading || !formData.transactionId || !formData.paymentScreenshot}
+                    className="w-full py-4 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed
+                      bg-gradient-to-r from-green-600 to-emerald-500
+                      hover:from-green-500 hover:to-emerald-400
+                      text-white shadow-[0_4px_24px_rgba(22,163,74,0.4)]
+                      hover:shadow-[0_4px_32px_rgba(22,163,74,0.55)]
+                      active:scale-[0.98]"
+                  >
+                    {loading ? (
+                      <><Loader2 className="animate-spin" size={20} /> Submitting...</>
+                    ) : (
+                      <><CheckCircle size={20} /> Complete Registration</>
+                    )}
+                  </button>
+                  {(!formData.transactionId || !formData.paymentScreenshot) && (
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      {!formData.transactionId && !formData.paymentScreenshot
+                        ? '⚠️ Enter Transaction ID and upload Payment Screenshot to continue.'
+                        : !formData.transactionId
+                        ? '⚠️ Please enter your UPI Transaction ID.'
+                        : '⚠️ Please upload your payment screenshot.'}
+                    </p>
+                  )}
+                </div>
+
               </div> {/* end step 3 */}
 
             </form>
