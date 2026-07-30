@@ -754,13 +754,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   Continue →
                 </button>
               ) : (
-                <button
-                  type="submit" disabled={loading || !formData.transactionId || !formData.paymentScreenshot}
-                  className="ml-auto px-8 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(22,163,74,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : null}
-                  Complete Registration
-                </button>
+                <div className="ml-auto"></div>
               )}
             </div>
           </div>
