@@ -973,9 +973,25 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
         return JSONResponse(status_code=400, content={"error": "This Transaction ID has already been used for a registration."})
 
     registration_id = f"BUG-{current_teams + 1:03d}"
-    reg_data = data.dict()
-    reg_data["payment_status"] = "pending"
-    reg_data["transaction_id"] = data.transaction_id.strip()
+
+    # Only pass fields that exist in the TeamRegistration model
+    reg_data = {
+        "event_id":           data.event_id,
+        "team_name":          data.team_name,
+        "leader_name":        data.leader_name,
+        "leader_email":       data.leader_email,
+        "leader_phone":       data.leader_phone,
+        "leader_year":        data.leader_year,
+        "leader_branch":      data.leader_branch,
+        "member2_name":       data.member2_name,
+        "member2_email":      data.member2_email,
+        "member2_phone":      data.member2_phone,
+        "member2_year":       data.member2_year,
+        "transaction_id":     data.transaction_id.strip(),
+        "payment_screenshot": data.payment_screenshot,
+        "registration_fee":   getattr(data, "registration_fee", "₹40") or "₹40",
+        "payment_status":     "pending",
+    }
 
     try:
         reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
