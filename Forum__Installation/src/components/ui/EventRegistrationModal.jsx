@@ -587,35 +587,42 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
+
                   {/* Transaction ID */}
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-2">
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                      <span className="text-lg">🔢</span>
                       UPI Transaction ID <span className="text-red-400">*</span>
                     </label>
                     <input
-                      type="text" name="transactionId" value={formData.transactionId} onChange={handleChange}
-                      placeholder="Enter your UPI Transaction ID"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                      type="text"
+                      name="transactionId"
+                      value={formData.transactionId}
+                      onChange={handleChange}
+                      placeholder="e.g. 318512345678"
+                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 focus:bg-black/50 outline-none transition-all font-mono text-sm"
                       minLength="12"
                       maxLength="40"
                     />
+                    <p className="text-xs text-gray-500 mt-2">Enter the 12-digit UTR / Transaction ID from your UPI app after payment.</p>
                   </div>
 
                   {/* Screenshot Upload */}
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-2">
-                      Upload Payment Screenshot / Payment Proof <span className="text-red-400">*</span>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                      <span className="text-lg">📸</span>
+                      Payment Screenshot / Proof <span className="text-red-400">*</span>
                     </label>
 
                     {formData.paymentScreenshot ? (
                       <div className="relative rounded-xl border border-white/10 overflow-hidden bg-white/5 p-2">
-                        <img 
-                          src={formData.paymentScreenshot} 
-                          alt="Screenshot preview" 
+                        <img
+                          src={formData.paymentScreenshot}
+                          alt="Screenshot preview"
                           className="w-full h-48 object-contain rounded-lg bg-black/50"
                         />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4 rounded-xl">
                           <button
                             type="button"
                             onClick={() => fileRef.current?.click()}
@@ -633,27 +640,28 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                         </div>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         onClick={() => fileRef.current?.click()}
                         className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
                       >
-                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                          <Upload className="text-blue-400" size={24} />
+                        <div className="w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <Upload className="text-blue-400" size={26} />
                         </div>
-                        <p className="text-sm text-gray-300 font-medium text-center">Click to upload screenshot</p>
-                          <p className="text-xs text-gray-500 mt-1 text-center">JPG, PNG, PDF (Max 10MB)</p>
-                        </div>
-                      )}
-                      
-                      <input
-                        type="file"
-                        ref={fileRef}
-                        onChange={handleFileChange}
-                        accept="image/jpeg, image/png, image/jpg, application/pdf"
-                        className="hidden"
-                      />
-                    </div>
+                        <p className="text-sm text-gray-300 font-medium text-center">Tap to upload payment screenshot</p>
+                        <p className="text-xs text-gray-500 mt-1 text-center">JPG, PNG, PDF · Max 10MB</p>
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      ref={fileRef}
+                      onChange={handleFileChange}
+                      accept="image/jpeg, image/png, image/jpg, application/pdf"
+                      className="hidden"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Upload a screenshot of the payment confirmation from your UPI app.</p>
                   </div>
+
                 </div>
 
             </form>
