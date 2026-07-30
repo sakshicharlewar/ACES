@@ -542,11 +542,11 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
 
                   {/* QR Code */}
-                  <div className="bg-white rounded-2xl p-4 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6">
+                  <div className="bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6 w-full max-w-[280px]">
                     <img
                       src="/YatharthScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
-                      style={{ width: 'clamp(170px, 40vw, 230px)', height: 'clamp(170px, 40vw, 230px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />
                   </div>
 
