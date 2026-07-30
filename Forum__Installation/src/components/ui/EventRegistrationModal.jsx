@@ -584,19 +584,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <span className="text-2xl font-bold text-white">₹{FEE_AMOUNT}</span>
                   </div>
 
-                  {/* Pay via UPI deep-link */}
-                  <a
-                    href={UPI_STRING}
-                    onClick={handleUPIPayment}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-[0_4px_20px_rgba(99,102,241,0.35)] transition-all duration-300 active:scale-95"
-                  >
-                    <CreditCard size={16} />
-                    💳 Pay via UPI
-                  </a>
 
-                  <p className="text-xs text-blue-300/70 mt-3 text-center">
-                    Opens GPay · PhonePe · Paytm · BHIM with amount pre-filled.
-                  </p>
                 </div>
 
                 <div className="space-y-6">
