@@ -201,58 +201,17 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     };
 
     try {
-      let isSuccess = false;
-      let data = {};
+      const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
       
-      // Temporarily disabled to prevent 500 errors in the browser console
-      // try {
-      //   const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
-      //     method: 'POST',
-      //     headers: { 'Content-Type': 'application/json' },
-      //     body: JSON.stringify(payload),
-      //   });
-      //   data = await response.json();
-      //   if (response.ok && data.success) {
-      //     isSuccess = true;
-      //   }
-      // } catch (e) {
-      //   console.error("Backend failed:", e);
-      // }
-
-      // If backend fails (e.g. 500), we mock success as requested
-      if (!isSuccess) {
-        const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-        const regId = 'LOC-' + Math.floor(Math.random() * 100000);
-        // Use the real event ID from eventDetails so it matches admin panel event dropdown
-        const storedEventId = eventDetails?.id || 'bug-hunt-1';
-        const newReg = {
-           id: regId,
-           registration_id: regId,
-           event_id: storedEventId,
-           event_title: eventDetails?.title || 'Bug Hunt: Debug the Web',
-           team_name: formData.teamName,
-           leader_name: formData.leaderName,
-           leader_email: formData.leaderEmail,
-           leader_phone: formData.leaderPhone,
-           leader_year: formData.leaderYear,
-           leader_branch: formData.leaderBranch,
-           leader_dept: formData.leaderBranch,
-           member2_name: formData.member2Name,
-           member2_email: formData.member2Email,
-           member2_phone: formData.member2Phone,
-           member2_year: formData.member2Year,
-           transaction_id: formData.transactionId.trim(),
-           payment_screenshot: formData.paymentScreenshot,
-           approval_status: 'pending',
-           payment_status: 'pending',
-           email_sent: false,
-           sms_sent: false,
-           created_at: new Date().toISOString(),
-        };
-        localRegs.unshift(newReg);
-        localStorage.setItem('local_registrations', JSON.stringify(localRegs));
-        
-        data = { registration_id: regId };
+      if (!response.ok) {
+        setError(data.error || 'Registration failed. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
 
       setPendingSuccessData({

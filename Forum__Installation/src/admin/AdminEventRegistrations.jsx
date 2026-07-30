@@ -36,7 +36,6 @@ export default function AdminEventRegistrations() {
   const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => { 
-    normalizeLocalRegs();
     fetchEvents(); 
   }, []);
   useEffect(() => {
@@ -44,107 +43,34 @@ export default function AdminEventRegistrations() {
     else setRegistrations([]);
   }, [selectedEventId]);
 
-  // One-time fix: normalize any old local registrations that have slug-based event_ids
-  const normalizeLocalRegs = () => {
-    try {
-      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-      // Ensure every local reg has all required fields
-      const fixed = localRegs.map(r => ({
-        id: r.id,
-        registration_id: r.registration_id || r.id,
-        event_id: r.event_id || 'bug-hunt-1',
-        event_title: r.event_title || 'Bug Hunt: Debug the Web',
-        team_name: r.team_name || r.full_name || '',
-        leader_name: r.leader_name || r.full_name || '',
-        leader_email: r.leader_email || r.email || '',
-        leader_phone: r.leader_phone || r.mobile || '',
-        leader_year: r.leader_year || r.year || '',
-        leader_branch: r.leader_branch || r.leader_dept || r.department || 'Computer Engineering',
-        member2_name: r.member2_name || '',
-        member2_email: r.member2_email || '',
-        member2_phone: r.member2_phone || '',
-        member2_year: r.member2_year || '',
-        transaction_id: r.transaction_id || '',
-        payment_screenshot: r.payment_screenshot || null,
-        approval_status: r.approval_status || 'pending',
-        payment_status: r.payment_status || 'pending',
-        email_sent: r.email_sent || false,
-        sms_sent: r.sms_sent || false,
-        created_at: r.created_at || new Date().toISOString(),
-      }));
-      localStorage.setItem('local_registrations', JSON.stringify(fixed));
-    } catch(e) {}
-  };
-
   const fetchEvents = async () => {
-    let fetchedEvents = [];
     try {
       const res = await fetch(`${API_URL}/api/events`);
       if (res.ok) {
-        fetchedEvents = await res.json();
+        const fetchedEvents = await res.json();
+        setEvents(fetchedEvents);
+        if (fetchedEvents.length > 0) setSelectedEventId(fetchedEvents[0].id.toString());
       }
-    } catch (e) { /* backend offline, will use local fallback */ }
-
-    // Build event list from local registrations when backend is offline
-    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-
-    if (fetchedEvents.length === 0 && localRegs.length > 0) {
-      // Derive unique events from local registrations
-      const eventMap = {};
-      localRegs.forEach(r => {
-        const eid = (r.event_id || 1).toString();
-        if (!eventMap[eid]) {
-          eventMap[eid] = {
-            id: eid,
-            title: r.event_title || 'Bug Hunt: Debug the Web',
-            max_teams: 30,
-            registered_teams_count: 0,
-            is_registration_open: true,
-          };
-        }
-        eventMap[eid].registered_teams_count += 1;
-      });
-      fetchedEvents = Object.values(eventMap);
-    } else {
-      // Augment real events with local reg counts
-      // Match by ID first, if nothing matches (ID format mismatch), attach all local regs to the first/only event
-      const totalMatched = localRegs.filter(r => {
-        return fetchedEvents.some(ev => (r.event_id || 1).toString() === ev.id.toString());
-      }).length;
-
-      fetchedEvents = fetchedEvents.map((ev, idx) => {
-        const byId = localRegs.filter(r => (r.event_id || 1).toString() === ev.id.toString()).length;
-        // If no matches by ID at all, put all local regs under the first event
-        const mockCount = totalMatched === 0 && idx === 0 ? localRegs.length : byId;
-        return { ...ev, max_teams: 30, registered_teams_count: (ev.registered_teams_count || 0) + mockCount };
-      });
+    } catch (e) {
+      console.error("Failed to fetch events:", e);
     }
-
-    setEvents(fetchedEvents);
-    if (fetchedEvents.length > 0) setSelectedEventId(fetchedEvents[0].id.toString());
   };
 
   const fetchRegistrations = async (eventId) => {
     setLoading(true);
     try {
-      let data = [];
-      try {
-        const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
-        });
-        if (res.ok) data = await res.json();
-      } catch (e) { /* backend offline */ }
-      
-      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-
-      // Try exact match first; fall back to ALL local regs if IDs don't match
-      // (happens when backend uses numeric IDs but local regs use slug-based IDs)
-      const exactMatch = localRegs.filter(r => (r.event_id || 1).toString() === eventId.toString());
-      const filteredLocal = exactMatch.length > 0 ? exactMatch : localRegs;
-
-      setRegistrations([...filteredLocal, ...data]);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+      const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRegistrations(data);
+      }
+    } catch (e) { 
+        console.error("Failed to fetch registrations:", e);
+    } finally { 
+        setLoading(false); 
+    }
   };
 
   const handleToggleStatus = async (eventId, openNow) => {

@@ -76,7 +76,10 @@ def create_event(db: Session, **kwargs) -> Optional[UpcomingEvent]:
 
 def get_event(db: Session, event_id: int) -> Optional[UpcomingEvent]:
     try:
-        return db.query(UpcomingEvent).filter(UpcomingEvent.id == event_id).first()
+        event = db.query(UpcomingEvent).filter(UpcomingEvent.id == event_id).first()
+        if event:
+            event.registered_teams_count = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
+        return event
     except Exception as e:
         logger.error(f"[CRUD] Failed to get event #{event_id}: {e}")
         return None
@@ -199,9 +202,14 @@ def get_team_registration(db: Session, reg_id: int) -> Optional[TeamRegistration
         logger.error(f"[CRUD] Failed to get team registration #{reg_id}: {e}")
         return None
 
-def get_team_registrations(db: Session, event_id: int, skip: int = 0, limit: int = 100) -> List[TeamRegistration]:
+def get_team_registrations(db: Session, event_id: int, skip: int = 0, limit: int = None) -> List[TeamRegistration]:
     try:
-        return db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(desc(TeamRegistration.created_at)).offset(skip).limit(limit).all()
+        q = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(desc(TeamRegistration.created_at))
+        if skip:
+            q = q.offset(skip)
+        if limit:
+            q = q.limit(limit)
+        return q.all()
     except Exception as e:
         logger.error(f"[CRUD] Failed to get team registrations for event #{event_id}: {e}")
         return []
@@ -244,9 +252,14 @@ def get_contact(db: Session, msg_id: int) -> Optional[ContactMessage]:
         logger.error(f"[CRUD] Failed to get contact #{msg_id}: {e}")
         return None
 
-def get_contacts(db: Session, skip: int = 0, limit: int = 100) -> List[ContactMessage]:
+def get_contacts(db: Session, skip: int = 0, limit: int = None) -> List[ContactMessage]:
     try:
-        return db.query(ContactMessage).order_by(desc(ContactMessage.created_at)).offset(skip).limit(limit).all()
+        q = db.query(ContactMessage).order_by(desc(ContactMessage.created_at))
+        if skip:
+            q = q.offset(skip)
+        if limit:
+            q = q.limit(limit)
+        return q.all()
     except Exception as e:
         logger.error(f"[CRUD] Failed to list contacts: {e}")
         return []

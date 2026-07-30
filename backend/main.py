@@ -818,6 +818,44 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 #  API ROUTES — Team Registrations (Bug Hunt)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@app.get("/api/events/bug-hunt/stats")
+async def bug_hunt_stats(db: Session = Depends(get_db)):
+    """Fetch live seat counter for Bug Hunt from PostgreSQL."""
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+
+    try:
+        from models import UpcomingEvent as UE
+        from sqlalchemy import or_
+        # Find Bug Hunt event by title
+        bh_event = db.query(UE).filter(
+            or_(
+                UE.title.ilike("%Bug Hunt%"),
+                UE.title.ilike("%bug hunt%"),
+            )
+        ).first()
+
+        if bh_event:
+            registered_teams = db.query(TeamRegistration).filter(
+                TeamRegistration.event_id == bh_event.id
+            ).count()
+        else:
+            # No specific Bug Hunt event found — count ALL team registrations
+            registered_teams = db.query(TeamRegistration).count()
+
+        total_seats = 30
+        remaining_seats = max(0, total_seats - registered_teams)
+
+        return {
+            "totalSeats": total_seats,
+            "registeredTeams": registered_teams,
+            "remainingSeats": remaining_seats,
+            "registrationOpen": remaining_seats > 0
+        }
+    except Exception as e:
+        logger.error(f"[bug_hunt_stats] Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.post("/api/events/{event_id}/team-register", status_code=status.HTTP_201_CREATED)
 async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     if db is None:
@@ -828,17 +866,16 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
         return JSONResponse(status_code=404, content={"error": "Event not found."})
 
     current_teams = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
-    if event.max_teams and event.max_teams > 0 and current_teams >= event.max_teams:
+    if current_teams >= 30:
         try:
             event.is_registration_open = False
             db.commit()
         except Exception:
             pass
-        return JSONResponse(status_code=400, content={"error": f"Registration Closed. Maximum limit of {event.max_teams} teams has been reached."})
+        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
 
     if not event.is_registration_open:
-        limit_msg = f" Maximum limit of {event.max_teams} teams has been reached." if event.max_teams else ""
-        return JSONResponse(status_code=400, content={"error": f"Registration Closed.{limit_msg}"})
+        return JSONResponse(status_code=400, content={"error": "Registration Closed."})
 
     if not data.transaction_id or not data.payment_screenshot:
         return JSONResponse(status_code=400, content={"error": "Transaction ID and Payment Screenshot are required."})
@@ -1633,26 +1670,28 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
 
     from datetime import date
     from sqlalchemy import func as sqlfunc
-    from models import InnovationSubmission, TeamRegistration
+    from models import InnovationSubmission, TeamRegistration, EventRegistration, UpcomingEvent
 
     db = SessionLocal()
     try:
         today = date.today()
 
         try:
-            total_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
+            total_submissions = db.query(sqlfunc.count(InnovationSubmission.id)).scalar() or 0
         except Exception as e:
             logger.warning(f"[stats] InnovationSubmission count failed: {e}")
             total_submissions = 0
 
         try:
-            total_registrations = db.query(sqlfunc.count(TeamRegistration.id)).scalar() or 0
+            team_regs = db.query(sqlfunc.count(TeamRegistration.id)).scalar() or 0
+            event_regs = db.query(sqlfunc.count(EventRegistration.id)).scalar() or 0
+            total_registrations = team_regs + event_regs
         except Exception as e:
-            logger.warning(f"[stats] TeamRegistration count failed: {e}")
+            logger.warning(f"[stats] Total registrations count failed: {e}")
             total_registrations = 0
 
         try:
-            today_submissions   = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
+            today_submissions = db.query(sqlfunc.count(InnovationSubmission.id)).filter(
                 sqlfunc.date(InnovationSubmission.submitted_at) == today
             ).scalar() or 0
         except Exception as e:
@@ -1660,9 +1699,13 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
             today_submissions = 0
 
         try:
-            today_registrations = db.query(sqlfunc.count(TeamRegistration.id)).filter(
+            today_team_regs = db.query(sqlfunc.count(TeamRegistration.id)).filter(
                 sqlfunc.date(TeamRegistration.created_at) == today
             ).scalar() or 0
+            today_event_regs = db.query(sqlfunc.count(EventRegistration.id)).filter(
+                sqlfunc.date(EventRegistration.created_at) == today
+            ).scalar() or 0
+            today_registrations = today_team_regs + today_event_regs
         except Exception as e:
             logger.warning(f"[stats] today_registrations failed: {e}")
             today_registrations = 0
@@ -1676,18 +1719,61 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
             recent_subs = []
 
         try:
-            recent_regs = db.query(TeamRegistration).order_by(
-                TeamRegistration.created_at.desc()
-            ).limit(5).all()
+            recent_team = db.query(TeamRegistration).order_by(TeamRegistration.created_at.desc()).limit(5).all()
+            recent_event = db.query(EventRegistration).order_by(EventRegistration.created_at.desc()).limit(5).all()
+            
+            combined_regs = []
+            for r in recent_team:
+                combined_regs.append({
+                    "id": f"team-{r.id}",
+                    "full_name": r.leader_name or r.team_name,
+                    "email": r.leader_email,
+                    "event_id": r.event_id,
+                    "created_at": r.created_at
+                })
+            for r in recent_event:
+                combined_regs.append({
+                    "id": f"event-{r.id}",
+                    "full_name": r.full_name,
+                    "email": r.email,
+                    "event_id": r.event_id,
+                    "created_at": r.created_at
+                })
+            
+            # Sort combined array descending by created_at
+            combined_regs.sort(key=lambda x: x["created_at"] if x["created_at"] else datetime.min, reverse=True)
+            recent_regs = combined_regs[:5]
+
         except Exception as e:
             logger.warning(f"[stats] recent_regs failed: {e}")
             recent_regs = []
 
+        # Bug Hunt specific stats — find by title, fall back to all team regs
+        try:
+            from sqlalchemy import or_ as sql_or_
+            bh_event = db.query(UpcomingEvent).filter(
+                sql_or_(
+                    UpcomingEvent.title.ilike("%Bug Hunt%"),
+                    UpcomingEvent.title.ilike("%bug hunt%"),
+                )
+            ).first()
+            if bh_event:
+                bh_registered = db.query(TeamRegistration).filter(TeamRegistration.event_id == bh_event.id).count()
+            else:
+                bh_registered = db.query(TeamRegistration).count()
+            bh_remaining = max(0, 30 - bh_registered)
+        except Exception as e:
+            logger.warning(f"[stats] bug hunt stats failed: {e}")
+            bh_registered = 0
+            bh_remaining = 30
+
         return {
-            "total_submissions"   : total_submissions,
-            "total_registrations" : total_registrations,
-            "today_submissions"   : today_submissions,
-            "today_registrations" : today_registrations,
+            "total_submissions"        : total_submissions,
+            "total_registrations"      : total_registrations,
+            "today_submissions"        : today_submissions,
+            "today_registrations"      : today_registrations,
+            "bug_hunt_registrations"   : bh_registered,
+            "bug_hunt_remaining_seats" : bh_remaining,
             "recent_submissions"  : [
                 {
                     "id"         : s.id,
@@ -1700,11 +1786,11 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
             ],
             "recent_registrations": [
                 {
-                    "id"         : r.id,
-                    "full_name"  : r.team_name,
-                    "email"      : r.leader_email,
-                    "event_id"   : r.event_id,
-                    "created_at" : r.created_at.isoformat() if r.created_at else None,
+                    "id"         : r["id"],
+                    "full_name"  : r["full_name"],
+                    "email"      : r["email"],
+                    "event_id"   : r["event_id"],
+                    "created_at" : r["created_at"].isoformat() if r["created_at"] else None,
                 }
                 for r in recent_regs
             ],

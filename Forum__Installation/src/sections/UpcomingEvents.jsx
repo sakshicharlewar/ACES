@@ -36,12 +36,61 @@ export function UpcomingEvents() {
   }, []);
 
   const fetchEvents = async (attempt = 0) => {
-    // Temporarily disabled to prevent ERR_CONNECTION_CLOSED errors in the browser console
-    // since the Render backend is offline. We immediately set an empty array to trigger the fallback.
-    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-    let data = []; // Empty array triggers BUG_HUNT_FALLBACK in the render logic
-    setEvents(data);
-    setLoadFailed(false);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+      
+      let eventsData = [];
+      let loadFailed = false;
+
+      // 1. Fetch Events
+      try {
+        const res = await fetch(`${apiUrl}/api/events`);
+        if (res.ok) {
+          eventsData = await res.json();
+        } else {
+          loadFailed = true;
+        }
+      } catch (e) {
+        console.error("Failed to fetch events", e);
+        loadFailed = true;
+      }
+
+      // 2. Fetch Bug Hunt Stats
+      try {
+        const statsRes = await fetch(`${apiUrl}/api/events/bug-hunt/stats`);
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          // If we have live events, find Bug Hunt and update it
+          if (eventsData.length > 0) {
+            const bhIndex = eventsData.findIndex(e => e.id === 1 || String(e.title).includes('Bug Hunt'));
+            if (bhIndex !== -1) {
+              eventsData[bhIndex].registered_teams_count = stats.registeredTeams;
+              eventsData[bhIndex].max_teams = stats.totalSeats;
+              eventsData[bhIndex].is_registration_open = stats.registrationOpen;
+            }
+          } else {
+            // Update fallback
+            BUG_HUNT_FALLBACK.registered_teams_count = stats.registeredTeams;
+            BUG_HUNT_FALLBACK.max_teams = stats.totalSeats;
+            BUG_HUNT_FALLBACK.is_registration_open = stats.registrationOpen;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch bug hunt stats", e);
+      }
+
+      if (!loadFailed) {
+        setEvents(eventsData);
+        setLoadFailed(false);
+      } else {
+        // Force state update to use fallback
+        setEvents([]);
+        setLoadFailed(true);
+      }
+    } catch (e) {
+      console.error(e);
+      setLoadFailed(true);
+    }
     setIsWakingUp(false);
   };
 
@@ -77,9 +126,7 @@ export function UpcomingEvents() {
   // show the hardcoded Bug Hunt fallback as the first card.
   let liveEvents = [...events];
   if (liveEvents.length === 0) {
-    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-    const mockCount = localRegs.filter(r => r.event_title === BUG_HUNT_FALLBACK.title || (r.event_id || 1).toString() === BUG_HUNT_FALLBACK.id || (r.event_id || 1).toString() === '1').length;
-    liveEvents = [{ ...BUG_HUNT_FALLBACK, registered_teams_count: mockCount }];
+    liveEvents = [BUG_HUNT_FALLBACK];
   }
 
   // Fill remaining slots up to 4 with "Coming Soon" placeholders

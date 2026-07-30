@@ -116,8 +116,8 @@ export function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard label="Total Submissions"    value={stats?.total_submissions}   icon={Lightbulb}     color="bg-blue-600"    loading={loading} />
           <StatCard label="Total Registrations"  value={stats?.total_registrations} icon={Users}         color="bg-purple-600"  loading={loading} />
-          <StatCard label="Today's Submissions"  value={stats?.today_submissions}   icon={TrendingUp}    color="bg-emerald-600" loading={loading} />
-          <StatCard label="Today's Registrations"value={stats?.today_registrations} icon={CalendarCheck} color="bg-amber-600"   loading={loading} />
+          <StatCard label="Total Bug Hunt Registrations"  value={stats?.bug_hunt_registrations}   icon={TrendingUp}    color="bg-emerald-600" loading={loading} />
+          <StatCard label="Remaining Seats"      value={stats?.bug_hunt_remaining_seats} icon={CalendarCheck} color="bg-amber-600"   loading={loading} />
         </div>
 
         {/* Recent activity */}
