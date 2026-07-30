@@ -179,8 +179,17 @@ def delete_registration(db: Session, reg_id: int) -> bool:
 # ─── Team Registrations ────────────────────────────────────────────────────────
 def create_team_registration(db: Session, registration_id: str, **kwargs) -> Optional[TeamRegistration]:
     from sqlalchemy.exc import IntegrityError
+    # Strip any kwargs not in the model to prevent unexpected column errors
+    valid_cols = {
+        "event_id", "team_name", "leader_name", "leader_email", "leader_phone",
+        "leader_year", "leader_branch", "member2_name", "member2_email",
+        "member2_phone", "member2_year", "transaction_id", "payment_screenshot",
+        "registration_fee", "payment_status", "rejection_reason",
+        "email_sent", "sms_sent", "notification_timestamp",
+    }
+    safe_kwargs = {k: v for k, v in kwargs.items() if k in valid_cols}
     try:
-        reg = TeamRegistration(registration_id=registration_id, **kwargs)
+        reg = TeamRegistration(registration_id=registration_id, **safe_kwargs)
         db.add(reg)
         db.commit()
         db.refresh(reg)
@@ -188,8 +197,11 @@ def create_team_registration(db: Session, registration_id: str, **kwargs) -> Opt
         return reg
     except IntegrityError as e:
         db.rollback()
-        logger.error(f"[CRUD] Integrity error saving team registration: {e}")
-        raise ValueError("Transaction ID or duplicate data already exists.")
+        detail = str(e.orig) if hasattr(e, 'orig') else str(e)
+        logger.error(f"[CRUD] Integrity error saving team registration: {detail}")
+        if "transaction_id" in detail.lower() or "unique" in detail.lower():
+            raise ValueError("This Transaction ID has already been used for another registration.")
+        raise ValueError(f"Registration failed (DB constraint): {detail}")
     except Exception as e:
         db.rollback()
         logger.error(f"[CRUD] Failed to save team registration: {e}")
