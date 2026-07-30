@@ -2330,17 +2330,17 @@ async def startup_validation():
         if inspector.has_table("team_registrations"):
             team_cols = [col["name"] for col in inspector.get_columns("team_registrations")]
             payment_migrations = [
-                ("registration_fee",    "VARCHAR(20) DEFAULT '\u20b940'"),
-                ("payment_status",      "VARCHAR(50) DEFAULT 'pending'"),
-                ("transaction_id",      "VARCHAR(255)"),
-                ("payment_screenshot",  "TEXT"),
-                ("payment_time",        "TIMESTAMP WITH TIME ZONE"),
-                ("payment_verified_at", "TIMESTAMP WITH TIME ZONE"),
-                ("payment_verified_by", "VARCHAR(255)"),
-                ("approval_status",     "VARCHAR(50) DEFAULT 'pending'"),
-                ("approval_date",       "TIMESTAMP WITH TIME ZONE"),
-                ("approved_by",         "VARCHAR(255)"),
-                ("rejection_reason",    "TEXT"),
+                ("registration_fee",       "VARCHAR(20) DEFAULT '₹40'"),
+                ("payment_status",         "VARCHAR(50) DEFAULT 'pending'"),
+                ("transaction_id",         "VARCHAR(255)"),
+                ("payment_screenshot",     "TEXT"),
+                ("payment_time",           "TIMESTAMP WITH TIME ZONE"),
+                ("payment_verified_at",    "TIMESTAMP WITH TIME ZONE"),
+                ("payment_verified_by",    "VARCHAR(255)"),
+                ("rejection_reason",       "TEXT"),
+                ("email_sent",             "BOOLEAN DEFAULT FALSE"),
+                ("sms_sent",               "BOOLEAN DEFAULT FALSE"),
+                ("notification_timestamp", "TIMESTAMP WITH TIME ZONE"),
             ]
             try:
                 with engine.begin() as conn:
