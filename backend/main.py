@@ -883,8 +883,7 @@ async def seed_old_data(db: Session = Depends(get_db)):
                 member2_year="Unknown",
                 transaction_id=f"REC-TXN-{uuid.uuid4().hex[:8].upper()}",
                 registration_fee="₹40",
-                payment_status="verified",
-                approval_status="approved"
+                payment_status="verified"
             )
             db.add(dummy)
         
