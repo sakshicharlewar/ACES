@@ -4,10 +4,10 @@ import { X, CheckCircle, AlertCircle, Loader2, Copy, Upload, CreditCard, Users }
 import { QRCodeSVG } from 'qrcode.react';
 import RegistrationSuccess from './RegistrationSuccess';
 
-const UPI_ID = 'acesbughunt@ybl';
-const UPI_NAME = 'ACES Bug Hunt';
+const UPI_ID = 'yatharthdonarkar2909@oksbi';
+const UPI_NAME = 'Yatharth Donarkar';
 const FEE_AMOUNT = '40';
-const UPI_STRING = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${FEE_AMOUNT}&cu=INR&tn=${encodeURIComponent('Bug Hunt Registration Fee')}`;
+const UPI_STRING = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${FEE_AMOUNT}&cu=INR&tn=${encodeURIComponent('ACES Bug Hunt Registration')}`;
 
 export default function EventRegistrationModal({ isOpen, onClose, eventDetails, onSuccess }) {
   const [step, setStep] = useState(1);
@@ -506,10 +506,11 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     onClick={handleUPIPayment}
                     className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
                   >
-                    <img
-                      src="/ACESSScanner.jpeg"
-                      alt="ACES Bug Hunt Payment QR Code"
-                      style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block' }}
+                    <QRCodeSVG
+                      value={UPI_STRING}
+                      level="H"
+                      includeMargin={true}
+                      style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
                     />
                     <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
                       <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">Tap to Pay</span>
