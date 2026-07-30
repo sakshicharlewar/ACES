@@ -15,7 +15,7 @@ const NAV = [
   { to: "/admin/dashboard",     label: "Dashboard",     icon: LayoutDashboard },
   { to: "/admin/submissions",   label: "Idea Submissions", icon: Lightbulb },
   { to: "/admin/registrations", label: "Registrations", icon: Users },
-  { to: "/admin/event-registrations", label: "Team Regs", icon: Users },
+  { to: "/admin/event-registrations", label: "Bug Hunt Regs", icon: Users },
 ];
 
 export function AdminLayout({ children }) {
