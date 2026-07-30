@@ -2350,8 +2350,8 @@ async def startup_validation():
     # Migrate existing max_teams for Bug Hunt
     try:
         with engine.begin() as conn:
-            conn.execute(text("UPDATE upcoming_events SET max_teams = 30 WHERE title LIKE '%Bug Hunt%' AND max_teams = 31"))
-            logger.info("[DB] Ensured Bug Hunt max_teams is 30")
+            conn.execute(text("UPDATE upcoming_events SET max_teams = 31 WHERE title LIKE '%Bug Hunt%'"))
+            logger.info("[DB] Ensured Bug Hunt max_teams is 31")
     except Exception as e:
         logger.error(f"[DB] Failed to update max_teams: {e}")
 
@@ -2370,7 +2370,7 @@ async def startup_validation():
                     event_time="TBD",
                     venue="TBD",
                     is_registration_open=True,
-                    max_teams=30,
+                    max_teams=31,
                     team_size=2,
                     status="upcoming",
                 )
