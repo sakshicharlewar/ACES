@@ -272,24 +272,38 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative w-full max-w-md bg-[#0B0B0B] border border-blue-500/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(59,130,246,0.15)] flex flex-col items-center text-center"
+          className="relative w-full max-w-md bg-[#0B0B0B] border border-yellow-500/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(234,179,8,0.12)] flex flex-col items-center text-center"
         >
-          <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-5 border border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-            <CheckCircle className="text-green-500" size={40} />
+          {/* Pending icon */}
+          <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-5 border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+            <span className="text-4xl">⏳</span>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">✅ Registration Successful!</h2>
-          <div className="text-gray-300 space-y-1.5 mb-8">
-            <p>Your Bug Hunt registration has been completed successfully.</p>
-            <p>Thank you for registering.</p>
+          <h2 className="text-2xl font-bold text-white mb-1">Registration Submitted!</h2>
+          <p className="text-yellow-400 font-semibold text-sm mb-5">⏳ Pending Approval</p>
+          <div className="w-full bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6 text-left space-y-2">
+            <p className="text-yellow-200 text-sm font-semibold mb-2">📋 What happens next?</p>
+            <div className="flex items-start gap-2 text-xs text-gray-300">
+              <span className="text-yellow-400 mt-0.5 shrink-0">1️⃣</span>
+              <span>Our team will verify your payment screenshot &amp; Transaction ID.</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-gray-300">
+              <span className="text-yellow-400 mt-0.5 shrink-0">2️⃣</span>
+              <span>Once verified, your registration will be <b className="text-green-400">Approved</b>.</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-gray-300">
+              <span className="text-green-400 mt-0.5 shrink-0">3️⃣</span>
+              <span>You will receive an email: <b className="text-green-400">"Your Seat is Confirmed! 🎉"</b></span>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 mb-6">A pending confirmation email has been sent to your registered email address.</p>
           <button 
             onClick={() => {
               if (onSuccess) onSuccess();
               setSuccessData(pendingSuccessData);
             }}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]"
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(234,179,8,0.25)] hover:shadow-[0_0_28px_rgba(234,179,8,0.4)]"
           >
-            OK
+            OK, Got it!
           </button>
         </motion.div>
       </div>
