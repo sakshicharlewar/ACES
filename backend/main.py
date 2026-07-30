@@ -893,6 +893,18 @@ async def seed_old_data(db: Session = Depends(get_db)):
         db.rollback()
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+@app.get("/api/admin/remove-dummy-data")
+async def remove_dummy_data(db: Session = Depends(get_db)):
+    """Temporarily remove dummy entries."""
+    try:
+        from models import TeamRegistration
+        deleted = db.query(TeamRegistration).filter(TeamRegistration.team_name.like("Recovered Team%")).delete(synchronize_session=False)
+        db.commit()
+        return {"message": f"Successfully removed {deleted} dummy entries. Seats should be reset."}
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.get("/api/events/bug-hunt/stats")
 async def bug_hunt_stats(db: Session = Depends(get_db)):
     """Fetch live seat counter for Bug Hunt from PostgreSQL."""
