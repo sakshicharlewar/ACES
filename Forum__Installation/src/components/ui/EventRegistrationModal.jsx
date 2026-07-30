@@ -14,12 +14,24 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
   const handleUPIPayment = (e) => {
     e.preventDefault();
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = UPI_STRING;
-    } else {
-      alert("UPI deep links only work on mobile devices. Please scan the QR code using your phone's UPI app (GPay, PhonePe, Paytm, etc.).");
-    }
+    window.location.href = UPI_STRING;
+  };
+
+  const handleCopyUPI = () => {
+    navigator.clipboard.writeText(UPI_ID).then(() => {
+      setUpiCopied(true);
+      setTimeout(() => setUpiCopied(false), 2500);
+    }).catch(() => {
+      // fallback for browsers without clipboard API
+      const el = document.createElement('textarea');
+      el.value = UPI_ID;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setUpiCopied(true);
+      setTimeout(() => setUpiCopied(false), 2500);
+    });
   };
   const [formData, setFormData] = useState({
     teamName: '',
@@ -42,6 +54,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [pendingSuccessData, setPendingSuccessData] = useState(null);
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
+  const [upiCopied, setUpiCopied] = useState(false);
   const fileRef = useRef(null);
 
   // Close QR preview on Esc key
@@ -221,7 +234,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     if (responseData?.error) {
       const msg = responseData.error;
       if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
-        return '⚠️ Registration is now closed. The maximum limit of 30 teams has been reached.';
+        const limitMatch = msg.match(/limit of (\d+) teams/i);
+        const limitNum = limitMatch ? limitMatch[1] : (eventDetails?.max_teams || 31);
+        return `⚠️ Registration is now closed. The maximum limit of ${limitNum} teams has been reached.`;
       }
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
         return 'You have already completed your registration.';
@@ -522,31 +537,66 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 <p className="text-sm text-gray-400 mb-6">Complete the registration fee to confirm your participation.</p>
 
                 {/* Payment Details */}
-                <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
+                <div className="flex flex-col items-center p-5 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                   <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
-                  
-                  <div className="bg-white rounded-2xl p-4 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6 block">
+
+                  {/* QR Code */}
+                  <div className="bg-white rounded-2xl p-4 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6">
                     <img
                       src="/YatharthScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
-                      style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
+                      style={{ width: 'clamp(170px, 40vw, 230px)', height: 'clamp(170px, 40vw, 230px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
                     />
                   </div>
-                  
-                  <div className="text-center w-full bg-black/20 rounded-xl p-5 border border-white/5">
-                    <p className="text-sm text-gray-400 mb-1">UPI ID:</p>
-                    <p className="text-white font-mono font-medium tracking-wide bg-white/5 py-2 px-4 rounded-lg inline-block border border-white/10 select-all mb-4">{UPI_ID}</p>
-                    
-                    <div className="flex justify-center items-center gap-2 mb-5">
-                      <p className="text-sm text-gray-400">Amount:</p>
-                      <p className="text-2xl font-bold text-white">₹{FEE_AMOUNT}</p>
+
+                  {/* UPI ID block */}
+                  <div className="w-full bg-black/30 rounded-xl p-4 border border-white/8 mb-4">
+                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 text-center">UPI ID</p>
+                    <div
+                      className="w-full text-center font-mono font-semibold text-white break-all select-all bg-white/5 rounded-lg px-3 py-3 border border-white/10 text-sm sm:text-base cursor-text mb-3"
+                      style={{ wordBreak: 'break-all' }}
+                    >
+                      {UPI_ID}
                     </div>
-                    
-                    <p className="text-xs text-blue-300 bg-blue-500/10 py-2.5 px-4 rounded-lg border border-blue-500/20">
-                      Scan the QR code using any UPI app or pay directly using the above UPI ID.
-                    </p>
+
+                    {/* Copy button */}
+                    <button
+                      type="button"
+                      onClick={handleCopyUPI}
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                        upiCopied
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                          : 'bg-white/8 hover:bg-white/15 text-gray-300 border border-white/10'
+                      }`}
+                    >
+                      {upiCopied ? (
+                        <><CheckCircle size={15} /> ✅ UPI ID Copied!</>
+                      ) : (
+                        <><Copy size={15} /> 📋 Copy UPI ID</>
+                      )}
+                    </button>
                   </div>
+
+                  {/* Amount */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-gray-400 text-sm">Amount:</span>
+                    <span className="text-2xl font-bold text-white">₹{FEE_AMOUNT}</span>
+                  </div>
+
+                  {/* Pay via UPI deep-link */}
+                  <a
+                    href={UPI_STRING}
+                    onClick={handleUPIPayment}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-[0_4px_20px_rgba(99,102,241,0.35)] transition-all duration-300 active:scale-95"
+                  >
+                    <CreditCard size={16} />
+                    💳 Pay via UPI
+                  </a>
+
+                  <p className="text-xs text-blue-300/70 mt-3 text-center">
+                    Opens GPay · PhonePe · Paytm · BHIM with amount pre-filled.
+                  </p>
                 </div>
 
                 <div className="space-y-6">

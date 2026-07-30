@@ -262,7 +262,7 @@ export function UpcomingEvents() {
                     {isFull ? (
                       <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-white/5 text-red-400 border border-red-500/30 cursor-not-allowed">
                         Registration Closed
-                        <div className="text-xs text-red-500/70 mt-1">Maximum limit of 30 teams has been reached.</div>
+                        <div className="text-xs text-red-500/70 mt-1">Registration has been closed because all {event.max_teams} team slots have been filled.</div>
                       </div>
                     ) : (
                       <button
