@@ -850,6 +850,44 @@ async def debug_counts(db: Session = Depends(get_db)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+@app.get("/api/admin/seed-old-data")
+async def seed_old_data(db: Session = Depends(get_db)):
+    """Temporarily seed 4 dummy entries so seats left = 26."""
+    try:
+        from models import UpcomingEvent as UE, TeamRegistration
+        from sqlalchemy import or_
+        bh_event = db.query(UE).filter(
+            or_(UE.title.ilike("%Bug Hunt%"), UE.title.ilike("%bug hunt%"))
+        ).first()
+
+        event_id = bh_event.id if bh_event else 1
+
+        # Check if we already seeded
+        existing = db.query(TeamRegistration).filter(TeamRegistration.full_name.like("Recovered Entry%")).count()
+        if existing >= 4:
+            return {"message": "Already seeded."}
+
+        for i in range(1, 5):
+            dummy = TeamRegistration(
+                event_id=event_id,
+                full_name=f"Recovered Entry {i}",
+                email=f"recovered{i}@example.com",
+                mobile=f"000000000{i}",
+                department="Unknown",
+                year="Unknown",
+                team_members=json.dumps([]),
+                transaction_id=f"REC-{uuid.uuid4().hex[:8].upper()}",
+                registration_fee="₹40",
+                payment_status="verified",
+                approval_status="approved"
+            )
+            db.add(dummy)
+        
+        db.commit()
+        return {"message": "Successfully added 4 recovered entries! Seats should now be 26."}
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/events/bug-hunt/stats")
 async def bug_hunt_stats(db: Session = Depends(get_db)):
