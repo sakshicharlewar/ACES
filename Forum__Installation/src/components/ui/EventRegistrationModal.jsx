@@ -39,6 +39,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successData, setSuccessData] = useState(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [pendingSuccessData, setPendingSuccessData] = useState(null);
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
   const fileRef = useRef(null);
 
@@ -194,7 +196,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSuccessData({
+        setPendingSuccessData({
           ...formData,
           registrationId: data.registration_id,
           eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
@@ -202,7 +204,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           paymentStatus: 'Pending Verification',
           registeredAt: new Date().toLocaleString(),
         });
-        if (onSuccess) onSuccess();
+        setShowSuccessPopup(true);
       } else {
         setError(toFriendlyError(null, data));
       }
@@ -221,8 +223,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
         return '⚠️ Registration is now closed. The maximum limit of 30 teams has been reached.';
       }
-      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered')) {
-        return 'Your team name or email address is already registered for this event. Please use different details.';
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
+        return 'You have already completed your registration.';
       }
       if (msg.toLowerCase().includes('event not found')) {
         return 'This event is no longer available. Please refresh the page and try again.';
@@ -246,6 +248,38 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
   if (successData) {
     return <RegistrationSuccess data={successData} onClose={onClose} />;
+  }
+
+  if (showSuccessPopup) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative w-full max-w-md bg-[#0B0B0B] border border-blue-500/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(59,130,246,0.15)] flex flex-col items-center text-center"
+        >
+          <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-5 border border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+            <CheckCircle className="text-green-500" size={40} />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3">✅ Registration Successful!</h2>
+          <div className="text-gray-300 space-y-1.5 mb-8">
+            <p>Your Bug Hunt registration is complete.</p>
+            <p>Thank you for registering.</p>
+            <p>Your registration has been recorded successfully.</p>
+          </div>
+          <button 
+            onClick={() => {
+              if (onSuccess) onSuccess();
+              setSuccessData(pendingSuccessData);
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]"
+          >
+            OK
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   const years = ['Second Year', 'Third Year'];
