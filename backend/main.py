@@ -972,7 +972,16 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     if existing_txn:
         return JSONResponse(status_code=400, content={"error": "This Transaction ID has already been used for a registration."})
 
-    registration_id = f"BUG-{current_teams + 1:03d}"
+    # Generate robust registration ID based on latest DB entry, immune to deleted rows
+    last_reg = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(TeamRegistration.id.desc()).first()
+    if last_reg and last_reg.registration_id.startswith("BUG-"):
+        try:
+            last_num = int(last_reg.registration_id.split("-")[1])
+        except ValueError:
+            last_num = 0
+    else:
+        last_num = 0
+    registration_id = f"BUG-{last_num + 1:03d}"
 
     # Only pass fields that exist in the TeamRegistration model
     reg_data = {
