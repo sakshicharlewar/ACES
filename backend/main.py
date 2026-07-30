@@ -818,6 +818,39 @@ async def list_registrations(event_id: int, db: Session = Depends(get_db)):
 #  API ROUTES — Team Registrations (Bug Hunt)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@app.get("/api/debug/counts")
+async def debug_counts(db: Session = Depends(get_db)):
+    """Public endpoint to verify raw database counts."""
+    if db is None:
+        return JSONResponse(status_code=503, content={"error": "Database unavailable"})
+    
+    try:
+        from models import UpcomingEvent as UE
+        from sqlalchemy import or_
+        bh_event = db.query(UE).filter(
+            or_(
+                UE.title.ilike("%Bug Hunt%"),
+                UE.title.ilike("%bug hunt%"),
+            )
+        ).first()
+
+        total_team_regs = db.query(TeamRegistration).count()
+        bh_event_regs = db.query(TeamRegistration).filter(TeamRegistration.event_id == bh_event.id).count() if bh_event else 0
+        total_event_regs = db.query(EventRegistration).count()
+        total_innovation_subs = db.query(InnovationSubmission).count()
+
+        return {
+            "bug_hunt_event_id": bh_event.id if bh_event else None,
+            "bug_hunt_event_max_teams": bh_event.max_teams if bh_event else None,
+            "total_team_registrations_in_db": total_team_regs,
+            "team_registrations_for_bug_hunt_event": bh_event_regs,
+            "total_event_registrations_in_db": total_event_regs,
+            "total_innovation_submissions_in_db": total_innovation_subs
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 @app.get("/api/events/bug-hunt/stats")
 async def bug_hunt_stats(db: Session = Depends(get_db)):
     """Fetch live seat counter for Bug Hunt from PostgreSQL."""
@@ -2275,8 +2308,8 @@ async def startup_validation():
     # Migrate existing max_teams for Bug Hunt
     try:
         with engine.begin() as conn:
-            conn.execute(text("UPDATE upcoming_events SET max_teams = 31 WHERE title LIKE '%Bug Hunt%' AND max_teams = 30"))
-            logger.info("[DB] Ensured Bug Hunt max_teams is 31")
+            conn.execute(text("UPDATE upcoming_events SET max_teams = 30 WHERE title LIKE '%Bug Hunt%' AND max_teams = 31"))
+            logger.info("[DB] Ensured Bug Hunt max_teams is 30")
     except Exception as e:
         logger.error(f"[DB] Failed to update max_teams: {e}")
 
@@ -2295,7 +2328,7 @@ async def startup_validation():
                     event_time="TBD",
                     venue="TBD",
                     is_registration_open=True,
-                    max_teams=31,
+                    max_teams=30,
                     team_size=2,
                     status="upcoming",
                 )
