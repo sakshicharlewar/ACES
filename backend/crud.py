@@ -199,9 +199,7 @@ def create_team_registration(db: Session, registration_id: str, **kwargs) -> Opt
         db.rollback()
         detail = str(e.orig) if hasattr(e, 'orig') else str(e)
         logger.error(f"[CRUD] Integrity error saving team registration: {detail}")
-        if "transaction_id" in detail.lower() or "unique" in detail.lower():
-            raise ValueError("This Transaction ID has already been used for another registration.")
-        raise ValueError(f"Registration failed (DB constraint): {detail}")
+        raise ValueError(f"DB Constraint Error: {detail}")
     except Exception as e:
         db.rollback()
         logger.error(f"[CRUD] Failed to save team registration: {e}")
