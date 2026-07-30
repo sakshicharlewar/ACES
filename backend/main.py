@@ -863,20 +863,22 @@ async def seed_old_data(db: Session = Depends(get_db)):
         event_id = bh_event.id if bh_event else 1
 
         # Check if we already seeded
-        existing = db.query(TeamRegistration).filter(TeamRegistration.full_name.like("Recovered Entry%")).count()
+        existing = db.query(TeamRegistration).filter(TeamRegistration.team_name.like("Recovered Team%")).count()
         if existing >= 4:
             return {"message": "Already seeded."}
 
         for i in range(1, 5):
             dummy = TeamRegistration(
+                registration_id=f"REC-{uuid.uuid4().hex[:8].upper()}",
                 event_id=event_id,
-                full_name=f"Recovered Entry {i}",
-                email=f"recovered{i}@example.com",
-                mobile=f"000000000{i}",
-                department="Unknown",
-                year="Unknown",
+                team_name=f"Recovered Team {i}",
+                leader_name=f"Recovered Leader {i}",
+                leader_email=f"recovered{i}@example.com",
+                leader_phone=f"000000000{i}",
+                leader_year="Unknown",
+                leader_branch="Unknown",
                 team_members=json.dumps([]),
-                transaction_id=f"REC-{uuid.uuid4().hex[:8].upper()}",
+                transaction_id=f"REC-TXN-{uuid.uuid4().hex[:8].upper()}",
                 registration_fee="₹40",
                 payment_status="verified",
                 approval_status="approved"
