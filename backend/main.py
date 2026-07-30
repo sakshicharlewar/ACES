@@ -930,7 +930,7 @@ async def bug_hunt_stats(db: Session = Depends(get_db)):
             # No specific Bug Hunt event found — count ALL team registrations
             registered_teams = db.query(TeamRegistration).count()
 
-        total_seats = 30
+        total_seats = bh_event.max_teams if bh_event else 31
         remaining_seats = max(0, total_seats - registered_teams)
 
         return {
@@ -953,13 +953,13 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
         return JSONResponse(status_code=404, content={"error": "Event not found."})
 
     current_teams = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).count()
-    if current_teams >= 30:
+    if current_teams >= event.max_teams:
         try:
             event.is_registration_open = False
             db.commit()
         except Exception:
             pass
-        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
+        return JSONResponse(status_code=400, content={"error": f"Registration Closed. Maximum limit of {event.max_teams} teams has been reached."})
 
     if not event.is_registration_open:
         return JSONResponse(status_code=400, content={"error": "Registration Closed."})
@@ -975,7 +975,6 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     registration_id = f"BUG-{current_teams + 1:03d}"
     reg_data = data.dict()
     reg_data["payment_status"] = "pending"
-    reg_data["approval_status"] = "pending"
     reg_data["transaction_id"] = data.transaction_id.strip()
 
     try:
