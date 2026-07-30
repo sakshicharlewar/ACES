@@ -834,10 +834,11 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
             db.commit()
         except Exception:
             pass
-        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
+        return JSONResponse(status_code=400, content={"error": f"Registration Closed. Maximum limit of {event.max_teams} teams has been reached."})
 
     if not event.is_registration_open:
-        return JSONResponse(status_code=400, content={"error": "Registration Closed. Maximum limit of 30 teams has been reached."})
+        limit_msg = f" Maximum limit of {event.max_teams} teams has been reached." if event.max_teams else ""
+        return JSONResponse(status_code=400, content={"error": f"Registration Closed.{limit_msg}"})
 
     if not data.transaction_id or not data.payment_screenshot:
         return JSONResponse(status_code=400, content={"error": "Transaction ID and Payment Screenshot are required."})
@@ -2160,6 +2161,14 @@ async def startup_validation():
     # Create other tables (including team_registrations)
     create_tables()
 
+    # Migrate existing max_teams for Bug Hunt
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("UPDATE upcoming_events SET max_teams = 31 WHERE title LIKE '%Bug Hunt%' AND max_teams = 30"))
+            logger.info("[DB] Ensured Bug Hunt max_teams is 31")
+    except Exception as e:
+        logger.error(f"[DB] Failed to update max_teams: {e}")
+
     # ── Auto-seed Bug Hunt event if the upcoming_events table is empty ──
     try:
         seed_db = SessionLocal()
@@ -2175,7 +2184,7 @@ async def startup_validation():
                     event_time="TBD",
                     venue="TBD",
                     is_registration_open=True,
-                    max_teams=30,
+                    max_teams=31,
                     team_size=2,
                     status="upcoming",
                 )
