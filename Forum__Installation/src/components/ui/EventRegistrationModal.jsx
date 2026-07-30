@@ -264,9 +264,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">✅ Registration Successful!</h2>
           <div className="text-gray-300 space-y-1.5 mb-8">
-            <p>Your Bug Hunt registration is complete.</p>
+            <p>Your Bug Hunt registration has been completed successfully.</p>
             <p>Thank you for registering.</p>
-            <p>Your registration has been recorded successfully.</p>
           </div>
           <button 
             onClick={() => {
@@ -522,34 +521,32 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </h3>
                 <p className="text-sm text-gray-400 mb-6">Complete the registration fee to confirm your participation.</p>
 
-                {/* Fee Banner */}
-                <div className="flex items-center justify-between px-5 py-4 rounded-xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 mb-6">
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Registration Fee</p>
-                    <p className="text-3xl font-bold text-white mt-1">₹40 <span className="text-sm font-normal text-gray-400">per Team</span></p>
-                  </div>
-                  <div className="text-4xl">💳</div>
-                </div>
-
-                {/* QR Card */}
+                {/* Payment Details */}
                 <div className="flex flex-col items-center p-6 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
-
-                  <a
-                    href="#"
-                    onClick={handleUPIPayment}
-                    className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
-                  >
+                  <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
+                  
+                  <div className="bg-white rounded-2xl p-4 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-6 block">
                     <img
                       src="/YatharthScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
                       style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
                     />
-                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-gray-700 bg-white/80 px-3 py-1 rounded-full shadow">Tap to Pay</span>
+                  </div>
+                  
+                  <div className="text-center w-full bg-black/20 rounded-xl p-5 border border-white/5">
+                    <p className="text-sm text-gray-400 mb-1">UPI ID:</p>
+                    <p className="text-white font-mono font-medium tracking-wide bg-white/5 py-2 px-4 rounded-lg inline-block border border-white/10 select-all mb-4">{UPI_ID}</p>
+                    
+                    <div className="flex justify-center items-center gap-2 mb-5">
+                      <p className="text-sm text-gray-400">Amount:</p>
+                      <p className="text-2xl font-bold text-white">₹{FEE_AMOUNT}</p>
                     </div>
-                  </a>
-                  <p className="text-sm font-medium text-gray-300 mt-5">Scan this QR Code to pay ₹40</p>
+                    
+                    <p className="text-xs text-blue-300 bg-blue-500/10 py-2.5 px-4 rounded-lg border border-blue-500/20">
+                      Scan the QR code using any UPI app or pay directly using the above UPI ID.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-6">
