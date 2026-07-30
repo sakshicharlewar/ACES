@@ -541,25 +541,15 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                   <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
 
-                  {/* QR Code — tap to pay */}
-                  <a
-                    href={UPI_STRING}
-                    className="relative bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.25)] mb-3 w-full max-w-[280px] block group cursor-pointer"
-                    title="Tap to pay ₹40 via UPI"
-                  >
+                  {/* QR Code — static image only */}
+                  <div className="bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-3 w-full max-w-[280px]">
                     <img
                       src="/YatharthScanner.jpeg"
                       alt="ACES Bug Hunt Payment QR Code"
                       style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />
-                    {/* Tap overlay */}
-                    <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 group-active:bg-black/20 transition-colors flex items-end justify-center pb-3 pointer-events-none">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-white bg-blue-600/90 px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
-                        💳 Tap to Pay ₹40
-                      </span>
-                    </div>
-                  </a>
-                  <p className="text-xs text-blue-300/70 mb-3 text-center">Tap the QR to open GPay · PhonePe · Paytm with ₹40 pre-filled</p>
+                  </div>
+                  <p className="text-xs text-blue-300/70 mb-3 text-center">Scan this QR using GPay · PhonePe · Paytm · BHIM</p>
 
                   {/* Info box — explain GPay "not debited" message */}
                   <div className="w-full bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 mb-5 flex gap-3 items-start">
