@@ -540,10 +540,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     onClick={handleUPIPayment}
                     className="group relative bg-white rounded-2xl p-5 shadow-[0_8px_40px_rgba(59,130,246,0.20)] hover:shadow-[0_8px_48px_rgba(59,130,246,0.35)] transition-shadow duration-300 block"
                   >
-                    <QRCodeSVG
-                      value={UPI_STRING}
-                      level="H"
-                      includeMargin={true}
+                    <img
+                      src="/YatharthScanner.jpeg"
+                      alt="ACES Bug Hunt Payment QR Code"
                       style={{ width: 'clamp(180px, 35vw, 240px)', height: 'clamp(180px, 35vw, 240px)', objectFit: 'contain', display: 'block', borderRadius: '12px' }}
                     />
                     <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center">
