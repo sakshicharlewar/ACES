@@ -181,9 +181,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setLoading(true);
     setError(null);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
     const eventId = eventDetails?.id || 1;
-    
+
     const payload = {
       event_id: eventId,
       team_name: formData.teamName,
@@ -200,38 +200,52 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       payment_screenshot: formData.paymentScreenshot,
     };
 
-    try {
-      const response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setError(data.error || 'Registration failed. Please try again.');
-        setIsSubmitting(false);
-        return;
+    // Retry up to 2 times on network failure
+    let lastErr = null;
+    let response = null;
+    let data = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        data = await response.json();
+        lastErr = null;
+        break; // success — exit retry loop
+      } catch (err) {
+        lastErr = err;
+        // wait 1.5s before retry
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
       }
-
-      setPendingSuccessData({
-        ...formData,
-        registrationId: data.registration_id,
-        eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
-        transactionId: formData.transactionId,
-        paymentStatus: 'Pending Verification',
-        registeredAt: new Date().toLocaleString(),
-      });
-      setShowSuccessPopup(true);
-
-    } catch (err) {
-      setError('Registration failed. Please contact the event coordinator.');
-    } finally {
-      setLoading(false);
     }
+
+    if (lastErr) {
+      // Network totally unreachable after retry
+      setError(toFriendlyError(lastErr, null));
+      setLoading(false);
+      return;
+    }
+
+    if (!response.ok) {
+      setError(toFriendlyError(null, data));
+      setLoading(false);
+      return;
+    }
+
+    setPendingSuccessData({
+      ...formData,
+      registrationId: data.registration_id,
+      eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
+      transactionId: formData.transactionId,
+      paymentStatus: 'Pending Verification',
+      registeredAt: new Date().toLocaleString(),
+    });
+    setShowSuccessPopup(true);
+    setLoading(false);
   };
 
-  // ── Friendly error sanitiser: never expose raw JS/network errors to users ──
   const toFriendlyError = (err, responseData) => {
     // Backend sent a known message (e.g., registration closed, duplicate team)
     if (responseData?.error) {
@@ -243,6 +257,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       }
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
         return 'You have already completed your registration.';
+      }
+      if (msg.toLowerCase().includes('transaction id') && msg.toLowerCase().includes('already been used')) {
+        return '⚠️ This Transaction ID has already been used. Please use a unique transaction ID from your UPI payment.';
+      }
+      if (msg.toLowerCase().includes('transaction id') || msg.toLowerCase().includes('payment screenshot')) {
+        return '⚠️ Transaction ID and Payment Screenshot are required to complete registration.';
       }
       if (msg.toLowerCase().includes('event not found')) {
         return 'This event is no longer available. Please refresh the page and try again.';
