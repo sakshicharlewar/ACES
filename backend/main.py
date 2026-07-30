@@ -1018,24 +1018,49 @@ async def approve_team_registration(reg_id: int, request: Request, background_ta
     reg.approved_by = "admin"
     db.commit()
     
-    # Send Approval Email
+    # Send Approval / Seat Confirmed Email
     leader_email_id = uuid.uuid4().hex
     leader_html = f"""
-    <div style="font-family:Arial;max-width:600px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:8px;">
-      <h2 style="color:#1e3a8a;">🎉 Registration Approved!</h2>
-      <p>Dear <b>{reg.leader_name}</b>,</p>
-      <p>Congratulations!</p>
-      <p>Your registration has been approved.</p>
-      <p><b>Registration ID:</b> {reg.registration_id}</p>
-      <p><b>Event:</b> {event.title}</p>
-      <p><b>Status:</b> Approved</p>
-      <p>Please report to the venue on the scheduled date and time.</p>
-      <br>
-      <p>Regards,<br>Association of Computer Engineering Students (ACES)</p>
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f9fafb;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:32px 24px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">🎉</div>
+        <h1 style="color:#fff;margin:0;font-size:24px;">Your Seat is Confirmed!</h1>
+        <p style="color:#bfdbfe;margin:8px 0 0;font-size:14px;">ACES Bug Hunt Registration Approved</p>
+      </div>
+      <div style="padding:28px 24px;background:#fff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
+        <p style="color:#374151;margin-top:0;">Hi <b>{reg.leader_name}</b>,</p>
+        <p style="color:#374151;">Congratulations! 🎊 Your payment has been verified and your registration for <b>{event.title}</b> is now <span style="color:#16a34a;font-weight:bold;">CONFIRMED</span>.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;border-radius:8px;overflow:hidden;">
+          <tr style="background:#f3f4f6;">
+            <td style="padding:10px 14px;font-weight:bold;color:#374151;width:40%;">Registration ID</td>
+            <td style="padding:10px 14px;color:#1d4ed8;font-weight:bold;font-family:monospace;">{reg.registration_id}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;font-weight:bold;color:#374151;background:#fafafa;">Team Name</td>
+            <td style="padding:10px 14px;color:#374151;">{reg.team_name}</td>
+          </tr>
+          <tr style="background:#f3f4f6;">
+            <td style="padding:10px 14px;font-weight:bold;color:#374151;">Event</td>
+            <td style="padding:10px 14px;color:#374151;">{event.title}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 14px;font-weight:bold;color:#374151;background:#fafafa;">Status</td>
+            <td style="padding:10px 14px;"><span style="background:#dcfce7;color:#16a34a;padding:3px 10px;border-radius:20px;font-weight:bold;font-size:13px;">✅ Confirmed</span></td>
+          </tr>
+        </table>
+
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin:20px 0;">
+          <p style="margin:0;color:#1e40af;font-size:13px;">📌 <b>Next Steps:</b> Further event details (venue, time, schedule) will be shared soon. Stay tuned!</p>
+        </div>
+
+        <p style="color:#6b7280;font-size:13px;">Please carry your Registration ID <b>{reg.registration_id}</b> on the day of the event.</p>
+        <p style="color:#374151;margin-top:20px;">Best of luck! 🚀<br><b>ACES – Association of Computer Engineering Students</b></p>
+      </div>
     </div>
     """
-    crud.add_email_to_queue(db, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]")
-    background_tasks.add_task(send_email_with_retry, leader_email_id, f"ACES Registration Approved – {event.title}", leader_html, "[]", 1, reg.leader_email)
+    crud.add_email_to_queue(db, leader_email_id, f"🎉 Your Seat is Confirmed – {reg.registration_id}", leader_html, "[]")
+    background_tasks.add_task(send_email_with_retry, leader_email_id, f"🎉 Your Seat is Confirmed – {reg.registration_id}", leader_html, "[]", 1, reg.leader_email)
     
     reg.email_sent = True
     
