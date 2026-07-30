@@ -1843,7 +1843,7 @@ async def admin_stats(request: Request, _=Depends(_verify_admin_token)):
                 bh_registered = db.query(TeamRegistration).filter(TeamRegistration.event_id == bh_event.id).count()
             else:
                 bh_registered = db.query(TeamRegistration).count()
-            bh_remaining = max(0, (bh_event.max_teams if bh_event else 31) - bh_registered)
+            bh_remaining = max(0, (bh_event.max_teams if bh_event else 33) - bh_registered)
         except Exception as e:
             logger.warning(f"[stats] bug hunt stats failed: {e}")
             bh_registered = 0
@@ -2357,8 +2357,8 @@ async def startup_validation():
     # Migrate existing max_teams for Bug Hunt
     try:
         with engine.begin() as conn:
-            conn.execute(text("UPDATE upcoming_events SET max_teams = 31 WHERE title LIKE '%Bug Hunt%'"))
-            logger.info("[DB] Ensured Bug Hunt max_teams is 31")
+            conn.execute(text("UPDATE upcoming_events SET max_teams = 33 WHERE title LIKE '%Bug Hunt%'"))
+            logger.info("[DB] Ensured Bug Hunt max_teams is 33")
     except Exception as e:
         logger.error(f"[DB] Failed to update max_teams: {e}")
 
@@ -2377,7 +2377,7 @@ async def startup_validation():
                     event_time="TBD",
                     venue="TBD",
                     is_registration_open=True,
-                    max_teams=31,
+                    max_teams=33,
                     team_size=2,
                     status="upcoming",
                 )
