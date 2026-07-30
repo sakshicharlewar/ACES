@@ -825,7 +825,7 @@ async def debug_counts(db: Session = Depends(get_db)):
         return JSONResponse(status_code=503, content={"error": "Database unavailable"})
     
     try:
-        from models import UpcomingEvent as UE
+        from models import UpcomingEvent as UE, TeamRegistration, EventRegistration, InnovationSubmission
         from sqlalchemy import or_
         bh_event = db.query(UE).filter(
             or_(
