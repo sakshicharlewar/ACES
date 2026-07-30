@@ -35,30 +35,114 @@ export default function AdminEventRegistrations() {
   const [rejectionModal, setRejectionModal] = useState(null); // { id: 123 }
   const [rejectionReason, setRejectionReason] = useState("");
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { 
+    normalizeLocalRegs();
+    fetchEvents(); 
+  }, []);
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
     else setRegistrations([]);
   }, [selectedEventId]);
 
+  // One-time fix: normalize any old local registrations that have slug-based event_ids
+  const normalizeLocalRegs = () => {
+    try {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      // Ensure every local reg has all required fields
+      const fixed = localRegs.map(r => ({
+        id: r.id,
+        registration_id: r.registration_id || r.id,
+        event_id: r.event_id || 'bug-hunt-1',
+        event_title: r.event_title || 'Bug Hunt: Debug the Web',
+        team_name: r.team_name || r.full_name || '',
+        leader_name: r.leader_name || r.full_name || '',
+        leader_email: r.leader_email || r.email || '',
+        leader_phone: r.leader_phone || r.mobile || '',
+        leader_year: r.leader_year || r.year || '',
+        leader_branch: r.leader_branch || r.leader_dept || r.department || 'Computer Engineering',
+        member2_name: r.member2_name || '',
+        member2_email: r.member2_email || '',
+        member2_phone: r.member2_phone || '',
+        member2_year: r.member2_year || '',
+        transaction_id: r.transaction_id || '',
+        payment_screenshot: r.payment_screenshot || null,
+        approval_status: r.approval_status || 'pending',
+        payment_status: r.payment_status || 'pending',
+        email_sent: r.email_sent || false,
+        sms_sent: r.sms_sent || false,
+        created_at: r.created_at || new Date().toISOString(),
+      }));
+      localStorage.setItem('local_registrations', JSON.stringify(fixed));
+    } catch(e) {}
+  };
+
   const fetchEvents = async () => {
+    let fetchedEvents = [];
     try {
       const res = await fetch(`${API_URL}/api/events`);
       if (res.ok) {
-        const data = await res.json();
-        setEvents(data);
-        if (data.length > 0) setSelectedEventId(data[0].id.toString());
+        fetchedEvents = await res.json();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { /* backend offline, will use local fallback */ }
+
+    // Build event list from local registrations when backend is offline
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+
+    if (fetchedEvents.length === 0 && localRegs.length > 0) {
+      // Derive unique events from local registrations
+      const eventMap = {};
+      localRegs.forEach(r => {
+        const eid = (r.event_id || 1).toString();
+        if (!eventMap[eid]) {
+          eventMap[eid] = {
+            id: eid,
+            title: r.event_title || 'Bug Hunt: Debug the Web',
+            max_teams: 30,
+            registered_teams_count: 0,
+            is_registration_open: true,
+          };
+        }
+        eventMap[eid].registered_teams_count += 1;
+      });
+      fetchedEvents = Object.values(eventMap);
+    } else {
+      // Augment real events with local reg counts
+      // Match by ID first, if nothing matches (ID format mismatch), attach all local regs to the first/only event
+      const totalMatched = localRegs.filter(r => {
+        return fetchedEvents.some(ev => (r.event_id || 1).toString() === ev.id.toString());
+      }).length;
+
+      fetchedEvents = fetchedEvents.map((ev, idx) => {
+        const byId = localRegs.filter(r => (r.event_id || 1).toString() === ev.id.toString()).length;
+        // If no matches by ID at all, put all local regs under the first event
+        const mockCount = totalMatched === 0 && idx === 0 ? localRegs.length : byId;
+        return { ...ev, max_teams: 30, registered_teams_count: (ev.registered_teams_count || 0) + mockCount };
+      });
+    }
+
+    setEvents(fetchedEvents);
+    if (fetchedEvents.length > 0) setSelectedEventId(fetchedEvents[0].id.toString());
   };
 
   const fetchRegistrations = async (eventId) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
-      });
-      if (res.ok) setRegistrations(await res.json());
+      let data = [];
+      try {
+        const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
+        });
+        if (res.ok) data = await res.json();
+      } catch (e) { /* backend offline */ }
+      
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+
+      // Try exact match first; fall back to ALL local regs if IDs don't match
+      // (happens when backend uses numeric IDs but local regs use slug-based IDs)
+      const exactMatch = localRegs.filter(r => (r.event_id || 1).toString() === eventId.toString());
+      const filteredLocal = exactMatch.length > 0 ? exactMatch : localRegs;
+
+      setRegistrations([...filteredLocal, ...data]);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -85,11 +169,20 @@ export default function AdminEventRegistrations() {
 
   const handleApproveRegistration = async (id) => {
     if (!window.confirm("Approve this registration?")) return;
+    if (id.toString().startsWith("LOC-")) {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const updated = localRegs.map(r =>
+        r.id === id ? { ...r, approval_status: 'approved', email_sent: true } : r
+      );
+      localStorage.setItem('local_registrations', JSON.stringify(updated));
+      fetchRegistrations(selectedEventId);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/admin/api/team-registrations/${id}/approve`, {
         method: "PATCH",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("adminToken")}`
+          "Authorization": `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}`
         }
       });
       if (res.ok) fetchRegistrations(selectedEventId);
@@ -101,7 +194,17 @@ export default function AdminEventRegistrations() {
   };
 
   const handleResend = async (id, type) => {
+
     if (!window.confirm(`Resend ${type.toUpperCase()} notification?`)) return;
+    if (id.toString().startsWith("LOC-")) {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const field = type === 'email' ? 'email_sent' : 'sms_sent';
+      const updated = localRegs.map(r => r.id === id ? { ...r, [field]: true } : r);
+      localStorage.setItem('local_registrations', JSON.stringify(updated));
+      alert(`${type.toUpperCase()} resent successfully! (Mocked)`);
+      fetchRegistrations(selectedEventId);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/admin/api/team-registrations/${id}/resend`, {
         method: "POST",
@@ -126,6 +229,14 @@ export default function AdminEventRegistrations() {
 
   const handleDelete = async (regId) => {
     if (!window.confirm("Delete this registration?")) return;
+    if (regId.toString().startsWith("LOC-")) {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const updated = localRegs.filter(r => r.id !== regId);
+      localStorage.setItem('local_registrations', JSON.stringify(updated));
+      fetchRegistrations(selectedEventId);
+      fetchEvents();
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}`, {
         method: "DELETE",
@@ -147,6 +258,14 @@ export default function AdminEventRegistrations() {
     setRegistrations(prev =>
       prev.map(r => r.id === regId ? { ...r, approval_status: "rejected" } : r)
     );
+
+    if (regId.toString().startsWith("LOC-")) {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const updated = localRegs.map(r => r.id === regId ? { ...r, approval_status: 'rejected', rejection_reason: reason } : r);
+      localStorage.setItem('local_registrations', JSON.stringify(updated));
+      fetchRegistrations(selectedEventId);
+      return;
+    }
     
     try {
       const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}/reject`, {
@@ -167,7 +286,7 @@ export default function AdminEventRegistrations() {
   const exportToExcel = () => {
     if (!registrations.length) return;
     const ws = XLSX.utils.json_to_sheet(registrations.map(r => ({
-      "Reg ID":          r.registration_id,
+      "Reg ID":          r.registration_id || r.id,
       "Team Name":       r.team_name,
       "Leader Name":     r.leader_name,
       "Leader Email":    r.leader_email,
@@ -181,6 +300,9 @@ export default function AdminEventRegistrations() {
       "Payment Status":  r.payment_status || "pending",
       "Registration Fee": r.registration_fee || "₹40",
       "Transaction ID":  r.transaction_id || "",
+      "Payment Screenshot": r.payment_screenshot
+        ? (r.payment_screenshot.startsWith('data:') ? '[Attached - Download manually from admin panel]' : r.payment_screenshot)
+        : 'Not uploaded',
       "Payment Date":    r.payment_time ? new Date(r.payment_time).toLocaleString() : "",
       "Verified At":     r.payment_verified_at ? new Date(r.payment_verified_at).toLocaleString() : "",
       "Reg Date":        new Date(r.created_at).toLocaleString(),
@@ -360,29 +482,40 @@ export default function AdminEventRegistrations() {
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {reg.payment_screenshot ? (
-                      <div 
-                        className="relative w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group bg-gray-100 flex items-center justify-center"
-                        onClick={() => setScreenshotModal(reg.payment_screenshot)}
-                      >
-                        {(reg.payment_screenshot.startsWith("data:application/pdf") || reg.payment_screenshot.toLowerCase().endsWith(".pdf")) ? (
-                          <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-gray-800 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                            <span className="text-[10px] font-medium uppercase">View PDF</span>
-                          </div>
-                        ) : (
-                          <>
-                            <img 
-                              src={reg.payment_screenshot} 
-                              alt="Payment" 
-                              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Eye className="text-white w-6 h-6" />
+                      <div className="flex flex-col gap-2">
+                        <div 
+                          className="relative w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group bg-gray-100 flex items-center justify-center"
+                          onClick={() => setScreenshotModal(reg.payment_screenshot)}
+                        >
+                          {(reg.payment_screenshot.startsWith("data:application/pdf") || reg.payment_screenshot.toLowerCase().endsWith(".pdf")) ? (
+                            <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-gray-800 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-[10px] font-medium uppercase">View PDF</span>
                             </div>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <img 
+                                src={reg.payment_screenshot} 
+                                alt="Payment" 
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Eye className="text-white w-6 h-6" />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {/* Download button */}
+                        <a
+                          href={reg.payment_screenshot}
+                          download={`payment_${reg.registration_id || reg.id}.${reg.payment_screenshot.startsWith("data:application/pdf") ? "pdf" : "jpg"}`}
+                          className="flex items-center justify-center gap-1 w-[120px] py-1 text-[11px] font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Download size={11} /> Download
+                        </a>
                       </div>
                     ) : (
                       <span className="text-gray-400 text-xs">—</span>

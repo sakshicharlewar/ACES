@@ -188,8 +188,15 @@ export function ComplaintForm() {
       } else {
         // Non-2xx but server responded
         console.warn('Backend responded with status:', res.status);
+        let errorMsg = "Failed to submit idea. Please try again.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.message || errData.error || errorMsg;
+        } catch (e) {
+          console.error("Failed to parse error response", e);
+        }
         setIsSubmitting(false);
-        alert("Failed to submit idea. Please try again.");
+        alert(errorMsg);
       }
     } catch (error) {
       clearTimeout(timeoutId);

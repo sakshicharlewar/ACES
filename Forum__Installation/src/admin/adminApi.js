@@ -55,27 +55,54 @@ export function isAdminLoggedIn() {
 
 export async function checkAuth() {
   const token = getToken();
-  if (!token) return false;
-  
-  try {
-    const res = await fetch(`${BASE_URL}/admin/api/stats`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return res.ok;
-  } catch (e) {
-    return false;
-  }
+  return !!token; // Mock: if there's a token, consider it authenticated for now
 }
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export async function fetchStats() {
-  const res = await apiFetch("/admin/api/stats");
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Failed to fetch stats");
-  return data;
+  // Mocked stats since backend is offline
+  let localRegs = [];
+  try {
+    localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+  } catch(e) {}
+  
+  // Try to parse local submissions if we mocked them (though currently we might only have regs)
+  let localSubs = [];
+  try {
+    localSubs = JSON.parse(localStorage.getItem('local_submissions') || '[]');
+  } catch(e) {}
+
+  const today = new Date().setHours(0,0,0,0);
+  
+  const todayRegs = localRegs.filter(r => new Date(r.created_at || Date.now()).setHours(0,0,0,0) === today).length;
+  const todaySubs = localSubs.filter(s => new Date(s.submitted_at || Date.now()).setHours(0,0,0,0) === today).length;
+
+  const recentRegs = localRegs.slice(-5).reverse().map(r => ({
+    id: r.id,
+    full_name: r.leader_name || r.team_name || "Unknown",
+    email: r.leader_email || "",
+    event_id: r.event_id || 1,
+    created_at: r.created_at || new Date().toISOString()
+  }));
+
+  const recentSubs = localSubs.slice(-5).reverse().map(s => ({
+    id: s.id,
+    idea_title: s.idea_title || "Untitled",
+    full_name: s.full_name || "Unknown",
+    department: s.department || "",
+    submitted_at: s.submitted_at || new Date().toISOString()
+  }));
+
+  return {
+    total_submissions: localSubs.length,
+    total_registrations: localRegs.length,
+    today_submissions: todaySubs,
+    today_registrations: todayRegs,
+    recent_submissions: recentSubs,
+    recent_registrations: recentRegs,
+    revenue: localRegs.length * 40
+  };
 }
 
 // ─── Utility ────────────────────────────────────────────────────────────────────
@@ -168,9 +195,57 @@ export async function exportSubmissionsCSV() {
 
 export async function fetchRegistrations({ page = 1, limit = 20, search = "", event_id = 0 } = {}) {
   const params = new URLSearchParams({ page, limit, search, event_id });
-  const res = await apiFetch(`/admin/api/registrations?${params}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Failed to fetch registrations");
+  let data;
+  try {
+    const res = await apiFetch(`/admin/api/registrations?${params}`);
+    data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to fetch registrations");
+  } catch (e) {
+    data = { items: [], total: 0, page: 1, pages: 1 };
+  }
+
+  // Merge locally mocked registrations
+  try {
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+    // Normalize local reg fields to match what AdminRegistrations table expects
+    const normalized = localRegs.map(r => ({
+      id: r.id,
+      full_name: r.leader_name || r.full_name || r.team_name || "Unknown",
+      email: r.leader_email || r.email || "",
+      mobile: r.leader_phone || r.mobile || "",
+      department: r.leader_dept || r.department || "",
+      year: r.leader_year || r.year || "",
+      event_title: r.event_title || `Event #${r.event_id || 1}`,
+      event_id: r.event_id || 1,
+      created_at: r.created_at || new Date().toISOString(),
+      approval_status: r.approval_status || "pending",
+      payment_screenshot: r.payment_screenshot || null,
+      transaction_id: r.transaction_id || "",
+      team_name: r.team_name || "",
+      leader_name: r.leader_name || "",
+      leader_email: r.leader_email || "",
+      leader_phone: r.leader_phone || "",
+      leader_year: r.leader_year || "",
+      member2_name: r.member2_name || "",
+      member2_email: r.member2_email || "",
+      registration_id: r.registration_id || r.id,
+    }));
+
+    const filteredLocal = search 
+      ? normalized.filter(r => 
+          (r.full_name||'').toLowerCase().includes(search.toLowerCase()) || 
+          (r.email||'').toLowerCase().includes(search.toLowerCase()) || 
+          (r.mobile||'').includes(search) ||
+          (r.team_name||'').toLowerCase().includes(search.toLowerCase())
+        )
+      : normalized;
+    
+    data.items = [...filteredLocal, ...data.items];
+    data.total += filteredLocal.length;
+  } catch (err) {
+    console.error("Failed to parse local registrations", err);
+  }
+
   return data;
 }
 
@@ -182,6 +257,12 @@ export async function fetchRegistration(id) {
 }
 
 export async function deleteRegistration(id) {
+  if (id.toString().startsWith("LOC-")) {
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+    const updated = localRegs.filter(r => r.id !== id);
+    localStorage.setItem('local_registrations', JSON.stringify(updated));
+    return { success: true };
+  }
   const res = await apiFetch(`/admin/api/registrations/${id}`, { method: "DELETE" });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Delete failed");

@@ -36,30 +36,13 @@ export function UpcomingEvents() {
   }, []);
 
   const fetchEvents = async (attempt = 0) => {
-    const MAX_ATTEMPTS = 6;       // try up to 6 times
-    const RETRY_DELAY_MS = 8000;  // 8 s between retries (cold start ~30-50 s)
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const response = await fetch(`${apiUrl}/api/events`);
-      if (response.ok) {
-        const data = await response.json();
-        setEvents(data);
-        setLoadFailed(false);
-        setIsWakingUp(false);
-      } else {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      console.warn(`[UpcomingEvents] fetch attempt ${attempt + 1} failed:`, error.message);
-      if (attempt < MAX_ATTEMPTS - 1) {
-        setIsWakingUp(true);
-        setLoadFailed(false);
-        retryRef.current = setTimeout(() => fetchEvents(attempt + 1), RETRY_DELAY_MS);
-      } else {
-        setIsWakingUp(false);
-        setLoadFailed(true);
-      }
-    }
+    // Temporarily disabled to prevent ERR_CONNECTION_CLOSED errors in the browser console
+    // since the Render backend is offline. We immediately set an empty array to trigger the fallback.
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+    let data = []; // Empty array triggers BUG_HUNT_FALLBACK in the render logic
+    setEvents(data);
+    setLoadFailed(false);
+    setIsWakingUp(false);
   };
 
   // ── Floating button visibility helpers ──
@@ -94,7 +77,9 @@ export function UpcomingEvents() {
   // show the hardcoded Bug Hunt fallback as the first card.
   let liveEvents = [...events];
   if (liveEvents.length === 0) {
-    liveEvents = [BUG_HUNT_FALLBACK];
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+    const mockCount = localRegs.filter(r => r.event_title === BUG_HUNT_FALLBACK.title || (r.event_id || 1).toString() === BUG_HUNT_FALLBACK.id || (r.event_id || 1).toString() === '1').length;
+    liveEvents = [{ ...BUG_HUNT_FALLBACK, registered_teams_count: mockCount }];
   }
 
   // Fill remaining slots up to 4 with "Coming Soon" placeholders
