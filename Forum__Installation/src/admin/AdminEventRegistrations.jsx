@@ -3,7 +3,7 @@ import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unloc
 import * as XLSX from 'xlsx';
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 const statusBadge = (status) => {
   const map = {
