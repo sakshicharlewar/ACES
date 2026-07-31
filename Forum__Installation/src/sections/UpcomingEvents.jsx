@@ -9,11 +9,11 @@ const BUG_HUNT_FALLBACK = {
   title: "🐞 Bug Hunt: Debug the Web",
   description:
     "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
-  is_registration_open: true,
+  is_registration_open: false,
   max_teams: 30,
   team_size: 2,
   fee: 40,
-  registered_teams_count: 0,
+  registered_teams_count: 30,
   isFallback: true,
 };
 
@@ -64,15 +64,15 @@ export function UpcomingEvents() {
           if (eventsData.length > 0) {
             const bhIndex = eventsData.findIndex(e => e.id === 1 || String(e.title).includes('Bug Hunt'));
             if (bhIndex !== -1) {
-              eventsData[bhIndex].registered_teams_count = stats.registeredTeams;
-              eventsData[bhIndex].max_teams = stats.totalSeats;
-              eventsData[bhIndex].is_registration_open = stats.registrationOpen;
+              eventsData[bhIndex].registered_teams_count = 30; // Hardcoded to 30
+              eventsData[bhIndex].max_teams = 30; // Hardcoded to 30
+              eventsData[bhIndex].is_registration_open = false; // Hardcoded to closed
             }
           } else {
             // Update fallback
-            BUG_HUNT_FALLBACK.registered_teams_count = stats.registeredTeams;
-            BUG_HUNT_FALLBACK.max_teams = stats.totalSeats;
-            BUG_HUNT_FALLBACK.is_registration_open = stats.registrationOpen;
+            BUG_HUNT_FALLBACK.registered_teams_count = 30;
+            BUG_HUNT_FALLBACK.max_teams = 30;
+            BUG_HUNT_FALLBACK.is_registration_open = false;
           }
         }
       } catch (e) {
