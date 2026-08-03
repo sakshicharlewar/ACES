@@ -265,31 +265,7 @@ export function UpcomingEvents() {
 
                   {/* Seat Tracker */}
                   <div className="mt-auto pt-4 border-t border-white/10">
-                    <div className="flex justify-between items-center mb-1 text-xs font-medium">
-                      <span className="text-gray-400">Registered Teams</span>
-                      <span className={isFull ? "text-red-400" : "text-blue-400"}>
-                        {event.registered_teams_count} / {event.max_teams}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mb-3 text-xs">
-                      <span className={isFull ? "text-red-400" : "text-green-400"}>
-                        {isFull ? "No seats available" : `Seats Left: ${seatsLeft}`}
-                      </span>
-                    </div>
 
-                    <div className="w-full bg-white/5 rounded-full h-1.5 mb-4 overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-full ${isFull ? "bg-red-500" : "bg-blue-500"}`}
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: `${Math.min(
-                            (event.registered_teams_count / event.max_teams) * 100,
-                            100
-                          )}%`,
-                        }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                      />
-                    </div>
 
                     {isFull ? (
                       <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-not-allowed">
