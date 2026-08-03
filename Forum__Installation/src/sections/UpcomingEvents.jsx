@@ -399,6 +399,7 @@ export function UpcomingEvents() {
               <div style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '4px' }}><span style={{ color: '#9ca3af' }}>Members</span></div>
               <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• Pranjal Godbole</div>
               <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '12px' }}>• Rushabh Kamble</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '2px' }}>Registration ID: <span style={{ color: '#d1d5db' }}>BUG-029</span></div>
               <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>2nd Year</span></div>
               <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: 0 }}>
                 Congratulations to Team TECHZACK on securing Second Place in BUG HUNT – DEBUG THE WEB 2026.
