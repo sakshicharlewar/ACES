@@ -23,7 +23,15 @@ export function UpcomingEvents() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
+  const [winnersPopupOpen, setWinnersPopupOpen] = useState(false);
   const retryRef = React.useRef(null);
+
+  // Close winners popup on ESC key
+  React.useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') setWinnersPopupOpen(false); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -268,9 +276,11 @@ export function UpcomingEvents() {
 
 
                     {isFull ? (
-                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-not-allowed">
-                        Result will be announced soon
-                        <div className="text-xs text-amber-500/70 mt-1">Date: 4/08/2026 at 12:00 PM</div>
+                      <div
+                        className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
+                        onClick={() => setWinnersPopupOpen(true)}
+                      >
+                        🎉 The Result Has Been Officially Announced!
                       </div>
                     ) : (
                       <button
@@ -300,6 +310,130 @@ export function UpcomingEvents() {
         eventDetails={selectedEvent}
         onSuccess={handleRegistrationSuccess}
       />
+
+      {/* ── Winners Popup ── */}
+      {winnersPopupOpen && (
+        <div
+          onClick={() => setWinnersPopupOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+            animation: 'winnersOverlayIn 0.25s ease'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0f0f0f',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '32px 28px',
+              position: 'relative',
+              animation: 'winnersPopupIn 0.3s cubic-bezier(0.34,1.56,0.64,1)'
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setWinnersPopupOpen(false)}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'rgba(255,255,255,0.08)', border: 'none',
+                borderRadius: '50%', width: '32px', height: '32px',
+                color: '#aaa', fontSize: '18px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                lineHeight: 1
+              }}
+            >×</button>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🏆</div>
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.05em', margin: 0 }}>
+                BUG HUNT – DEBUG THE WEB 2026
+              </h2>
+              <p style={{ color: '#f59e0b', fontWeight: 600, margin: '4px 0 8px', fontSize: '1rem' }}>Official Winners</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.78rem', margin: 0 }}>
+                Organized by ACES Forum, Department of Computer Engineering
+              </p>
+            </div>
+
+            {/* 1st Place */}
+            <div style={{
+              border: '1px solid rgba(251,191,36,0.35)',
+              borderRadius: '14px',
+              padding: '20px',
+              marginBottom: '16px',
+              background: 'rgba(251,191,36,0.05)'
+            }}>
+              <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', marginBottom: '6px' }}>🥇 FIRST PLACE</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', marginBottom: '12px' }}>Team CODEVIPERS</div>
+              <div style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '4px' }}><span style={{ color: '#9ca3af' }}>Members</span></div>
+              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• Rugved Dhomne</div>
+              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '12px' }}>• Aryan Raut</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '2px' }}>Registration ID: <span style={{ color: '#fbbf24' }}>BUG-021</span></div>
+              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>3rd Year</span></div>
+              <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: 0 }}>
+                Congratulations to Team CODEVIPERS on securing First Place in BUG HUNT – DEBUG THE WEB 2026.
+                Your exceptional debugging skills, logical thinking, creativity, and outstanding teamwork made you the top performers of this competition.
+                Your dedication and technical excellence truly set you apart.
+                Wishing you continued success in your future academic and professional journey.
+              </p>
+            </div>
+
+            {/* 2nd Place */}
+            <div style={{
+              border: '1px solid rgba(209,213,219,0.25)',
+              borderRadius: '14px',
+              padding: '20px',
+              marginBottom: '24px',
+              background: 'rgba(209,213,219,0.04)'
+            }}>
+              <div style={{ color: '#d1d5db', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', marginBottom: '6px' }}>🥈 SECOND PLACE</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', marginBottom: '12px' }}>Team TECHZACK</div>
+              <div style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '4px' }}><span style={{ color: '#9ca3af' }}>Members</span></div>
+              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• Pranjal Godbole</div>
+              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '12px' }}>• Rushabh Kamble</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>2nd Year</span></div>
+              <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: 0 }}>
+                Congratulations to Team TECHZACK on securing Second Place in BUG HUNT – DEBUG THE WEB 2026.
+                Your strong problem-solving abilities, persistence, and teamwork helped you achieve this remarkable accomplishment.
+                Keep learning, keep innovating, and continue reaching greater heights.
+              </p>
+            </div>
+
+            {/* Divider + Footer */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.3rem', marginBottom: '8px' }}>🎉</div>
+              <p style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.95rem', margin: '0 0 10px' }}>Congratulations to Every Participant!</p>
+              <p style={{ color: '#9ca3af', fontSize: '0.8rem', lineHeight: '1.7', margin: '0 0 12px' }}>
+                Thank you for participating in BUG HUNT – DEBUG THE WEB 2026.<br />
+                Your enthusiasm, debugging skills, teamwork, and passion for technology made this event a great success.<br />
+                Every challenge you solved helped you learn something new.<br />
+                Keep exploring. Keep debugging. Keep building.<br />
+                We look forward to seeing you again in our future technical events.
+              </p>
+              <p style={{ color: '#6b7280', fontSize: '0.78rem', lineHeight: '1.6', margin: 0 }}>
+                Best Wishes from<br />
+                <span style={{ color: '#e5e7eb', fontWeight: 600 }}>ACES Forum</span><br />
+                Department of Computer Engineering<br />
+                Suryodaya College of Engineering &amp; Technology, Nagpur
+              </p>
+            </div>
+          </div>
+
+          {/* Keyframes injected inline */}
+          <style>{`
+            @keyframes winnersOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes winnersPopupIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+          `}</style>
+        </div>
+      )}
     </section>
   );
 }
