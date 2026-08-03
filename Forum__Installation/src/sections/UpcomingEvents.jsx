@@ -294,7 +294,7 @@ export function UpcomingEvents() {
                     {isFull ? (
                       <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-not-allowed">
                         Result will be announced soon
-                        <div className="text-xs text-amber-500/70 mt-1">Pending</div>
+                        <div className="text-xs text-amber-500/70 mt-1">Date: 4/08/2026 at 12:00 PM</div>
                       </div>
                     ) : (
                       <button
