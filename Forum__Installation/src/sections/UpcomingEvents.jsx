@@ -292,9 +292,9 @@ export function UpcomingEvents() {
                     </div>
 
                     {isFull ? (
-                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-white/5 text-red-400 border border-red-500/30 cursor-not-allowed">
-                        Registration Closed
-                        <div className="text-xs text-red-500/70 mt-1">Registration has been closed because all {event.max_teams} team slots have been filled.</div>
+                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-not-allowed">
+                        Result will be announced soon
+                        <div className="text-xs text-amber-500/70 mt-1">Pending</div>
                       </div>
                     ) : (
                       <button
