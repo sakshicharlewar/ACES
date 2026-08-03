@@ -147,14 +147,7 @@ export function CompletedEvents() {
             {events.map((event, index) => (
               <div key={event.id} className="w-[428px] shrink-0 relative z-10">
                 <GlassCard
-                  className={`p-6 cursor-pointer group flex flex-col h-[620px] ${index % 2 === 0 ? '-translate-y-8' : 'translate-y-8'} transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] hover:border-accent/40`}
-                  onClick={() => {
-                    if (event.title.includes("REIMAGINE")) {
-                      navigate("/events/reimagine");
-                    } else {
-                      openGallery(event);
-                    }
-                  }}
+                  className={`p-6 group flex flex-col h-[620px] ${index % 2 === 0 ? '-translate-y-8' : 'translate-y-8'} transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] hover:border-accent/40`}
                 >
                   <div className="overflow-hidden rounded-xl mb-6 relative h-[380px] w-full shrink-0 bg-black/40">
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
