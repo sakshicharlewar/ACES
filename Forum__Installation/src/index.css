@@ -10,6 +10,9 @@
   body {
     @apply bg-background text-text-primary font-sans antialiased overflow-x-hidden;
   }
+  p {
+    @apply text-justify;
+  }
 }
 
 /* Custom Scrollbar for a premium feel */
