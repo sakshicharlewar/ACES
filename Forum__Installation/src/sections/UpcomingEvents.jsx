@@ -238,16 +238,16 @@ export function UpcomingEvents() {
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
                     <div className="flex items-center justify-between mb-4">
                       {isFull ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
-                          🔴 FULL
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
+                          🟢 Completed
                         </span>
                       ) : isOpen ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
                           🔥 Registration Open
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
-                          🔴 FULL
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
+                          🟢 Completed
                         </span>
                       )}
                     </div>
