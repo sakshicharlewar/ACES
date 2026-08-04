@@ -25,8 +25,8 @@ else:
     try:
         engine = create_engine(
             DATABASE_URL,
-            pool_size=5,
-            max_overflow=10,
+            pool_size=50,
+            max_overflow=100,
             pool_timeout=30,
             pool_recycle=1800,
             pool_pre_ping=True,

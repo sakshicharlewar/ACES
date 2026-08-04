@@ -172,6 +172,29 @@ def _update_email_status_standalone(email_id: str, new_status: str, error_messag
     finally:
         db.close()
 
+def background_send_sms_task(phone: str, message: str, table_name: str, record_id: int):
+    """Background task to send SMS and update database status safely."""
+    from models import TeamRegistration, InnovationSubmission
+    if send_sms(phone, message):
+        if SessionLocal is None:
+            return
+        db = SessionLocal()
+        try:
+            if table_name == "TeamRegistration":
+                row = db.query(TeamRegistration).get(record_id)
+                if row:
+                    row.sms_sent = True
+                    db.commit()
+            elif table_name == "InnovationSubmission":
+                row = db.query(InnovationSubmission).get(record_id)
+                if row:
+                    row.sms_sent = True
+                    db.commit()
+        except Exception as e:
+            logger.error(f"[SMS Background] DB update failed for {table_name} #{record_id}: {e}")
+        finally:
+            db.close()
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Email HTML Builder
@@ -972,17 +995,6 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
     if existing_txn:
         return JSONResponse(status_code=400, content={"error": "This Transaction ID has already been used for a registration."})
 
-    # Generate robust registration ID based on latest DB entry, immune to deleted rows
-    last_reg = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(TeamRegistration.id.desc()).first()
-    if last_reg and last_reg.registration_id.startswith("BUG-"):
-        try:
-            last_num = int(last_reg.registration_id.split("-")[1])
-        except ValueError:
-            last_num = 0
-    else:
-        last_num = 0
-    registration_id = f"BUG-{last_num + 1:03d}"
-
     # Only pass fields that exist in the TeamRegistration model
     reg_data = {
         "event_id":           data.event_id,
@@ -1002,10 +1014,34 @@ async def register_team(event_id: int, data: schemas.TeamRegistrationCreate, bac
         "payment_status":     "pending",
     }
 
-    try:
-        reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
+    # Generate robust registration ID with retry logic for high-concurrency race conditions
+    max_retries = 5
+    reg = None
+    for attempt in range(max_retries):
+        last_reg = db.query(TeamRegistration).filter(TeamRegistration.event_id == event_id).order_by(TeamRegistration.id.desc()).first()
+        if last_reg and last_reg.registration_id.startswith("BUG-"):
+            try:
+                last_num = int(last_reg.registration_id.split("-")[1])
+            except ValueError:
+                last_num = 0
+        else:
+            last_num = 0
+        registration_id = f"BUG-{last_num + 1:03d}"
         
-        if reg:
+        try:
+            reg = crud.create_team_registration(db, registration_id=registration_id, **reg_data)
+            break
+        except ValueError as e:
+            if attempt == max_retries - 1:
+                logger.error(f"[API] Max retries reached for ID generation: {e}")
+                return JSONResponse(status_code=500, content={"error": "Server is very busy. Please try again in 5 seconds."})
+            logger.warning(f"[API] ID collision {registration_id}, retrying... (Attempt {attempt+1}/{max_retries})")
+            continue
+        except Exception as e:
+            logger.error(f"[API] Registration failed: {e}", exc_info=True)
+            return JSONResponse(status_code=500, content={"error": "An internal server error occurred."})
+
+    if reg:
             from datetime import datetime as dt
             now_str = dt.now().strftime("%d %B %Y, %I:%M %p")
 
@@ -1213,8 +1249,7 @@ async def approve_team_registration(reg_id: int, request: Request, background_ta
     # Send SMS if leader phone exists
     if reg.leader_phone:
         sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been APPROVED.\n\nPlease check your email for complete event details.\n\nThank you."
-        if send_sms(reg.leader_phone, sms_msg):
-            reg.sms_sent = True
+        background_tasks.add_task(background_send_sms_task, reg.leader_phone, sms_msg, "TeamRegistration", reg.id)
 
     reg.notification_timestamp = dt.utcnow()
     db.commit()
@@ -1272,8 +1307,7 @@ async def reject_team_registration(reg_id: int, request: Request, background_tas
     # Send SMS if leader phone exists
     if reg.leader_phone:
         sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been REJECTED.\nReason: {reason}.\nPlease check email for details."
-        if send_sms(reg.leader_phone, sms_msg):
-            reg.sms_sent = True
+        background_tasks.add_task(background_send_sms_task, reg.leader_phone, sms_msg, "TeamRegistration", reg.id)
 
     reg.notification_timestamp = dt.utcnow()
     db.commit()
@@ -1461,11 +1495,8 @@ async def resend_innovation_notification(idea_id: int, request: Request, backgro
         sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been {submission.status.upper()}.\nPlease check your email for details."
         if submission.status == "Rejected" and submission.rejection_reason:
             sms_msg = f"Your Innovation Box submission ({submission.idea_id}) has been REJECTED.\nReason: {submission.rejection_reason}.\nPlease check email for details."
-        if send_sms(submission.mobile, sms_msg):
-            submission.sms_sent = True
-            db.commit()
-            return {"success": True, "message": "SMS resent successfully."}
-        return JSONResponse(status_code=500, content={"error": "Failed to send SMS."})
+        background_tasks.add_task(background_send_sms_task, submission.mobile, sms_msg, "InnovationSubmission", submission.id)
+        return {"success": True, "message": "SMS resent successfully."}
         
     elif notify_type == "email":
         email_id_uuid = uuid.uuid4().hex
@@ -1539,11 +1570,8 @@ async def resend_registration_notification(reg_id: int, request: Request, backgr
         if reg.payment_status == "rejected" and reg.rejection_reason:
             sms_msg = f"Your ACES {event.title} registration ({reg.registration_id}) has been REJECTED.\nReason: {reg.rejection_reason}.\nPlease check email for details."
         
-        if send_sms(reg.leader_phone, sms_msg):
-            reg.sms_sent = True
-            db.commit()
-            return {"success": True, "message": "SMS resent successfully."}
-        return JSONResponse(status_code=500, content={"error": "Failed to send SMS."})
+        background_tasks.add_task(background_send_sms_task, reg.leader_phone, sms_msg, "TeamRegistration", reg.id)
+        return {"success": True, "message": "SMS resent successfully."}
         
     elif notify_type == "email":
         leader_email_id = uuid.uuid4().hex
