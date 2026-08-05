@@ -7,7 +7,7 @@ import { Users } from "lucide-react";
 // ── Test event (second card — hardcoded) ──────────────────────────────────────
 const TEST_EVENT = {
   id: "test-event-local",
-  title: "Upcoming Event",
+  title: "Website Checking",
   subtitle: "Check the Website",
   description:
     "Test the website by participating in this sample event. This event is only for testing the registration system and database performance.",
