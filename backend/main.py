@@ -2409,8 +2409,37 @@ async def startup_validation():
             except Exception as e:
                 logger.error(f"[DB] Failed to migrate 'team_registrations' payment columns: {e}")
 
-    # Create other tables (including team_registrations)
+    # Create all tables (SQLAlchemy auto-creates any missing tables)
     create_tables()
+
+    # Explicitly ensure test_event_registrations table exists (for live DB compatibility)
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS test_event_registrations (
+                    id              SERIAL PRIMARY KEY,
+                    team_name       VARCHAR(255) NOT NULL,
+                    member1_name    VARCHAR(255) NOT NULL,
+                    member1_email   VARCHAR(255) NOT NULL,
+                    member1_mobile  VARCHAR(20)  NOT NULL,
+                    member2_name    VARCHAR(255) NOT NULL,
+                    member2_email   VARCHAR(255) NOT NULL,
+                    member2_mobile  VARCHAR(20)  NOT NULL,
+                    college_name    VARCHAR(500) NOT NULL,
+                    department      VARCHAR(100) NOT NULL,
+                    year            VARCHAR(20)  NOT NULL,
+                    ip_address      VARCHAR(100),
+                    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                )
+            """))
+            # Add unique index if not exists
+            conn.execute(text("""
+                CREATE UNIQUE INDEX IF NOT EXISTS ix_test_team_m1email
+                ON test_event_registrations (team_name, member1_email)
+            """))
+        logger.info("[DB] test_event_registrations table ensured.")
+    except Exception as e:
+        logger.error(f"[DB] Failed to ensure test_event_registrations table: {e}")
 
     # Migrate existing max_teams for Bug Hunt
     try:
@@ -2498,6 +2527,14 @@ async def test_event_register(request: Request, db: Session = Depends(get_db)):
     - Rate limiter: max 5 requests per IP per 60 s
     - Full server-side validation
     """
+    # ── Guard: ensure DB session is available ────────────────────────────────
+    if db is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Database unavailable. Please try again later."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+
     # ── Rate limiting ──────────────────────────────────────────────────────────
     client_ip = request.client.host if request.client else "unknown"
     now_ts = time.time()
