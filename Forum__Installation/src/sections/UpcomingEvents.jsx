@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import EventRegistrationModal from "../components/ui/EventRegistrationModal";
+import TestRegistrationModal from "../components/ui/TestRegistrationModal";
 import { Users } from "lucide-react";
+
+// ── Test event (second card — hardcoded) ──────────────────────────────────────
+const TEST_EVENT = {
+  id: "test-event-local",
+  title: "Upcoming Event",
+  subtitle: "Check the Website",
+  description:
+    "Test the website by participating in this sample event. This event is only for testing the registration system and database performance.",
+  isTestEvent: true,
+};
 
 // ── Hardcoded Bug Hunt event (fallback if DB is unreachable) ──
 const BUG_HUNT_FALLBACK = {
@@ -24,6 +35,7 @@ export function UpcomingEvents() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [winnersPopupOpen, setWinnersPopupOpen] = useState(false);
+  const [testModalOpen, setTestModalOpen] = useState(false);
   const retryRef = React.useRef(null);
 
   // Close winners popup on ESC key
@@ -130,15 +142,16 @@ export function UpcomingEvents() {
   };
 
   // ── Build display list ──
-  // Always show real events first. If the DB returned nothing (fail or empty),
-  // show the hardcoded Bug Hunt fallback as the first card.
+  // Slot 0: real Bug Hunt (or fallback)
+  // Slot 1: TEST_EVENT (hardcoded, always shown)
+  // Slots 2-3: remaining real events or Coming Soon fillers
   let liveEvents = [...events];
   if (liveEvents.length === 0) {
     liveEvents = [BUG_HUNT_FALLBACK];
   }
 
-  // Fill remaining slots up to 4 with "Coming Soon" placeholders
-  const displayEvents = [...liveEvents];
+  // Insert TEST_EVENT at index 1
+  const displayEvents = [liveEvents[0], TEST_EVENT, ...liveEvents.slice(1)];
   while (displayEvents.length < 4) {
     displayEvents.push({ id: `filler-${displayEvents.length}`, isFiller: true });
   }
@@ -194,6 +207,54 @@ export function UpcomingEvents() {
                     <p className="font-cambria text-text-secondary text-sm mb-6">Registration Opens Soon</p>
                     <div className="mt-auto inline-flex items-center justify-center px-6 py-2 rounded-full border border-white/10 text-xs font-label uppercase tracking-wider text-text-secondary">
                       Stay Tuned
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            }
+
+            // ── Test Event card ──
+            if (event.isTestEvent) {
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: index * 0.2 }}
+                  className="relative p-[1px] rounded-[28px] overflow-hidden group h-full flex"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/50 via-blue-500/50 to-purple-500/50 opacity-100 group-hover:animate-[spin_4s_linear_infinite] transition-all duration-500" />
+                  <div className="relative w-full h-full bg-[#0B0B0B]/90 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:bg-[#111111] transition-colors duration-500">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-4">
+                      <span className="text-xl">🧪</span>
+                    </div>
+                    <h4 className="font-sans text-xl font-bold text-white mb-1 leading-tight">{event.title}</h4>
+                    <p className="font-sans text-xs font-semibold text-purple-400 uppercase tracking-widest mb-3">{event.subtitle}</p>
+                    <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-3">{event.description}</p>
+                    <div className="space-y-2 mb-6 text-sm text-gray-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                          🔥 Registration Open
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-purple-400" />
+                        <span>Team Size: 2 Members</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400">✅</span>
+                        <span>Free — No Registration Fee</span>
+                      </div>
+                    </div>
+                    <div className="mt-auto pt-4 border-t border-white/10">
+                      <button
+                        id="register-btn-test-event"
+                        onClick={() => { hideFloatingButton(); setTestModalOpen(true); }}
+                        className="w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                      >
+                        Register Now
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -309,6 +370,11 @@ export function UpcomingEvents() {
         onClose={handleModalClose}
         eventDetails={selectedEvent}
         onSuccess={handleRegistrationSuccess}
+      />
+
+      <TestRegistrationModal
+        isOpen={testModalOpen}
+        onClose={() => { setTestModalOpen(false); showFloatingButton(); }}
       />
 
       {/* ── Winners Popup ── */}

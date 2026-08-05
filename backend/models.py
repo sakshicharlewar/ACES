@@ -170,3 +170,35 @@ class EmailQueue(Base):
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
     last_attempt  = Column(DateTime(timezone=True), nullable=True)
     error_message = Column(Text, nullable=True)
+
+
+# ─── Test Event Registrations ──────────────────────────────────────────────────
+class TestRegistration(Base):
+    __tablename__ = "test_event_registrations"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    team_name       = Column(String(255), nullable=False, index=True)
+
+    # Member 1 (Leader)
+    member1_name    = Column(String(255), nullable=False)
+    member1_email   = Column(String(255), nullable=False, index=True)
+    member1_mobile  = Column(String(20), nullable=False)
+
+    # Member 2
+    member2_name    = Column(String(255), nullable=False)
+    member2_email   = Column(String(255), nullable=False)
+    member2_mobile  = Column(String(20), nullable=False)
+
+    # College info
+    college_name    = Column(String(500), nullable=False)
+    department      = Column(String(100), nullable=False)
+    year            = Column(String(20), nullable=False)
+
+    # Meta
+    ip_address      = Column(String(100), nullable=True)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        # Prevent duplicate team+email combos under concurrent load
+        Index("ix_test_team_m1email", "team_name", "member1_email", unique=True),
+    )

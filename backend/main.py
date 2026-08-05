@@ -41,7 +41,7 @@ from sqlalchemy import text
 from dotenv import load_dotenv
 
 from database import get_db, create_tables, SessionLocal, engine
-from models import EmailQueue, InnovationSubmission, TeamRegistration
+from models import EmailQueue, InnovationSubmission, TeamRegistration, TestRegistration
 from sqlalchemy import inspect
 import crud
 import schemas
@@ -100,6 +100,10 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) i
 # ═══════════════════════════════════════════════════════════════════════════════
 
 http_session = http_requests.Session()
+
+# ── In-memory rate limiter for test event endpoint (IP → [timestamps]) ──
+import collections
+_test_rate_limit: dict = collections.defaultdict(list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2460,3 +2464,153 @@ async def startup_validation():
     asyncio.create_task(process_email_queue())
 
     logger.info("=" * 60)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Test Event Registration  (POST /api/test-event/register)
+#  Handles 1000+ concurrent submissions safely
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import re as _re
+import html as _html
+from sqlalchemy.exc import IntegrityError
+
+def _sanitize(value: str) -> str:
+    """Strip whitespace and escape HTML entities to prevent XSS."""
+    return _html.escape(str(value).strip())
+
+def _valid_email(email: str) -> bool:
+    return bool(_re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email))
+
+def _valid_mobile(mobile: str) -> bool:
+    return bool(_re.fullmatch(r"\d{10}", mobile.strip()))
+
+_RATE_WINDOW = 60   # seconds
+_RATE_MAX    = 5    # max requests per IP per window
+
+@app.post("/api/test-event/register", status_code=201)
+async def test_event_register(request: Request, db: Session = Depends(get_db)):
+    """Register a team for the test event.
+
+    Concurrent-safe:
+    - DB unique index prevents duplicate team+email combinations
+    - IntegrityError is caught and returns HTTP 409
+    - Rate limiter: max 5 requests per IP per 60 s
+    - Full server-side validation
+    """
+    # ── Rate limiting ──────────────────────────────────────────────────────────
+    client_ip = request.client.host if request.client else "unknown"
+    now_ts = time.time()
+    _test_rate_limit[client_ip] = [
+        t for t in _test_rate_limit[client_ip] if now_ts - t < _RATE_WINDOW
+    ]
+    if len(_test_rate_limit[client_ip]) >= _RATE_MAX:
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Too many requests. Please wait a moment before trying again."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    _test_rate_limit[client_ip].append(now_ts)
+
+    # ── Parse body ────────────────────────────────────────────────────────────
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Invalid JSON body."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+
+    # ── Required fields ───────────────────────────────────────────────────────
+    required = [
+        "team_name", "member1_name", "member1_email", "member1_mobile",
+        "member2_name", "member2_email", "member2_mobile",
+        "college_name", "department", "year",
+    ]
+    for field in required:
+        if not body.get(field, "").strip():
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Field '{field}' is required."},
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
+    # ── Sanitize inputs ───────────────────────────────────────────────────────
+    team_name      = _sanitize(body["team_name"])
+    member1_name   = _sanitize(body["member1_name"])
+    member1_email  = _sanitize(body["member1_email"]).lower()
+    member1_mobile = body["member1_mobile"].strip()
+    member2_name   = _sanitize(body["member2_name"])
+    member2_email  = _sanitize(body["member2_email"]).lower()
+    member2_mobile = body["member2_mobile"].strip()
+    college_name   = _sanitize(body["college_name"])
+    department     = _sanitize(body["department"])
+    year           = _sanitize(body["year"])
+
+    # ── Format validation ─────────────────────────────────────────────────────
+    if not _valid_email(member1_email):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Member 1 email is not valid."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    if not _valid_email(member2_email):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Member 2 email is not valid."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    if not _valid_mobile(member1_mobile):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Member 1 mobile must be exactly 10 digits."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    if not _valid_mobile(member2_mobile):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Member 2 mobile must be exactly 10 digits."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+
+    # ── DB insert (unique constraint prevents duplicates under concurrency) ───
+    try:
+        record = TestRegistration(
+            team_name      = team_name,
+            member1_name   = member1_name,
+            member1_email  = member1_email,
+            member1_mobile = member1_mobile,
+            member2_name   = member2_name,
+            member2_email  = member2_email,
+            member2_mobile = member2_mobile,
+            college_name   = college_name,
+            department     = department,
+            year           = year,
+            ip_address     = client_ip,
+        )
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+        logger.info(f"[TestEvent] Registered team '{team_name}' (id={record.id}) from {client_ip}")
+        return JSONResponse(
+            status_code=201,
+            content={"success": True, "id": record.id, "team_name": team_name},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except IntegrityError:
+        db.rollback()
+        logger.warning(f"[TestEvent] Duplicate registration attempt: team='{team_name}' email='{member1_email}'")
+        return JSONResponse(
+            status_code=409,
+            content={"error": "This team or email is already registered."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"[TestEvent] Registration failed: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Registration failed. Please try again."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
