@@ -110,7 +110,12 @@ _test_rate_limit: dict = collections.defaultdict(list)
 #  FastAPI App + CORS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+from fastapi.staticfiles import StaticFiles
+import os
+
 app = FastAPI(title="ACES Backend", version="6.0.0")
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
