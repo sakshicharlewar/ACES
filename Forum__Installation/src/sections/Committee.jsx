@@ -170,17 +170,17 @@ export function Committee() {
   return (
     <section id="committee" className="py-24 overflow-hidden relative">
       <div className="container mx-auto px-6 md:px-12 mb-16 text-center">
-          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-white mb-3 opacity-80">
+          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-white mb-3 opacity-80 text-center w-full">
             Academic Year
           </p>
           <h2
-            className="font-serif italic font-medium text-4xl md:text-6xl text-white"
+            className="font-serif italic font-medium text-4xl md:text-6xl text-white text-center"
             style={{ letterSpacing: "-0.01em" }}
           >
             ACES COMMITTEE
           </h2>
           <p
-            className="text-lg md:text-xl font-medium mt-1 tracking-widest uppercase text-white"
+            className="text-lg md:text-xl font-medium mt-1 tracking-widest uppercase text-white text-center w-full"
             style={{ letterSpacing: "0.25em" }}
           >
             2026 – 27
