@@ -196,3 +196,32 @@ export async function exportRegistrationsCSV() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ─── Test Event Registrations ─────────────────────────────────────────────────
+
+export async function fetchTestRegistrations({ page = 1, limit = 50, search = "" } = {}) {
+  const params = new URLSearchParams({ page, limit, search });
+  const res = await apiFetch(`/admin/api/test-registrations?${params}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch test registrations");
+  return data;
+}
+
+export async function deleteTestRegistration(id) {
+  const res = await apiFetch(`/admin/api/test-registrations/${id}`, { method: "DELETE" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Delete failed");
+  return data;
+}
+
+export async function exportTestRegistrationsCSV() {
+  const res = await apiFetch("/admin/api/test-registrations/export");
+  if (!res.ok) throw new Error("Export failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "test_registrations.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}

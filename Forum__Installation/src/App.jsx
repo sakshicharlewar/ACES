@@ -35,6 +35,7 @@ import { AdminSubmissionDetail } from "./admin/AdminSubmissionDetail";
 import { AdminRegistrations } from "./admin/AdminRegistrations";
 import { AdminRegistrationDetail } from "./admin/AdminRegistrationDetail";
 import AdminEventRegistrations from "./admin/AdminEventRegistrations";
+import AdminTestRegistrations from "./admin/AdminTestRegistrations";
 
 /* ── Scroll Progress Bar (homepage only) ── */
 function ScrollBar() {
@@ -110,6 +111,7 @@ function AppRoutes() {
           <Route path="/admin/registrations" element={<ProtectedAdminRoute><AdminRegistrations /></ProtectedAdminRoute>} />
           <Route path="/admin/registrations/:id" element={<ProtectedAdminRoute><AdminRegistrationDetail /></ProtectedAdminRoute>} />
           <Route path="/admin/event-registrations" element={<ProtectedAdminRoute><AdminEventRegistrations /></ProtectedAdminRoute>} />
+          <Route path="/admin/test-registrations" element={<ProtectedAdminRoute><AdminTestRegistrations /></ProtectedAdminRoute>} />
         </Routes>
       </AnimatePresence>
       <FloatingEventsButton />

@@ -2172,6 +2172,103 @@ async def admin_update_submission(submission_id: int, request: Request, _=Depend
         db.close()
 
 
+# ── Test Event Registrations (Admin) ──────────────────────────────────────────
+
+@app.get("/admin/api/test-registrations")
+async def admin_list_test_registrations(
+    request: Request,
+    page: int = 1,
+    limit: int = 50,
+    search: str = "",
+    _=Depends(_verify_admin_token),
+    db: Session = Depends(get_db),
+):
+    """List all test event registrations with optional search."""
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        q = db.query(TestRegistration)
+        if search:
+            s = f"%{search}%"
+            q = q.filter(
+                TestRegistration.team_name.ilike(s) |
+                TestRegistration.member1_name.ilike(s) |
+                TestRegistration.member1_email.ilike(s) |
+                TestRegistration.college_name.ilike(s)
+            )
+        total = q.count()
+        records = q.order_by(TestRegistration.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "results": [
+                {
+                    "id":             r.id,
+                    "team_name":      r.team_name,
+                    "member1_name":   r.member1_name,
+                    "member1_email":  r.member1_email,
+                    "member1_mobile": r.member1_mobile,
+                    "member2_name":   r.member2_name,
+                    "member2_email":  r.member2_email,
+                    "member2_mobile": r.member2_mobile,
+                    "college_name":   r.college_name,
+                    "department":     r.department,
+                    "year":           r.year,
+                    "ip_address":     r.ip_address,
+                    "created_at":     r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in records
+            ],
+        }
+    except Exception as e:
+        logger.error(f"[Admin] test-registrations list failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch test registrations")
+
+
+@app.get("/admin/api/test-registrations/export")
+async def admin_export_test_registrations(request: Request, _=Depends(_verify_admin_token), db: Session = Depends(get_db)):
+    """Export test event registrations as CSV."""
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        records = db.query(TestRegistration).order_by(TestRegistration.created_at.desc()).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID","Team Name","Member1 Name","Member1 Email","Member1 Mobile",
+                         "Member2 Name","Member2 Email","Member2 Mobile",
+                         "College","Department","Year","IP","Registered At"])
+        for r in records:
+            writer.writerow([r.id, r.team_name, r.member1_name, r.member1_email, r.member1_mobile,
+                             r.member2_name, r.member2_email, r.member2_mobile,
+                             r.college_name, r.department, r.year, r.ip_address,
+                             r.created_at.isoformat() if r.created_at else ""])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=test_registrations.csv",
+                     "Access-Control-Allow-Origin": "*"},
+        )
+    except Exception as e:
+        logger.error(f"[Admin] test-registrations export failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Export failed")
+
+
+@app.delete("/admin/api/test-registrations/{reg_id}")
+async def admin_delete_test_registration(reg_id: int, request: Request, _=Depends(_verify_admin_token), db: Session = Depends(get_db)):
+    """Delete a test registration by ID."""
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    record = db.query(TestRegistration).filter(TestRegistration.id == reg_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    db.delete(record)
+    db.commit()
+    logger.info(f"[Admin] Deleted test registration id={reg_id}")
+    return {"success": True}
+
+
 # ── Event Registrations ───────────────────────────────────────────────────────
 
 @app.get("/admin/api/registrations")
