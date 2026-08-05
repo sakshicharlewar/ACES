@@ -1,32 +1,26 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { X, CheckCircle, Loader2, AlertCircle, UploadCloud } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 const YEAR_OPTIONS = ["First Year", "Second Year", "Third Year", "Final Year"];
 const INITIAL_FORM = {
-  team_name: "", member1_name: "", member1_email: "", member1_mobile: "",
-  member2_name: "", member2_email: "", member2_mobile: "",
+  full_name: "", email: "", mobile: "",
   college_name: "", department: "", year: "",
 };
 
-function validate(form) {
+function validate(form, documentFile) {
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const mobileRe = /^\d{10}$/;
-  if (!form.team_name.trim())       return "Team Name is required.";
-  if (!form.member1_name.trim())    return "Member 1 Name is required.";
-  if (!form.member1_email.trim())   return "Member 1 Email is required.";
-  if (!emailRe.test(form.member1_email.trim())) return "Member 1 Email is not valid.";
-  if (!form.member1_mobile.trim())  return "Member 1 Mobile is required.";
-  if (!mobileRe.test(form.member1_mobile.trim())) return "Member 1 Mobile must be exactly 10 digits.";
-  if (!form.member2_name.trim())    return "Member 2 Name is required.";
-  if (!form.member2_email.trim())   return "Member 2 Email is required.";
-  if (!emailRe.test(form.member2_email.trim())) return "Member 2 Email is not valid.";
-  if (!form.member2_mobile.trim())  return "Member 2 Mobile is required.";
-  if (!mobileRe.test(form.member2_mobile.trim())) return "Member 2 Mobile must be exactly 10 digits.";
+  if (!form.full_name.trim())    return "Name is required.";
+  if (!form.email.trim())   return "Email is required.";
+  if (!emailRe.test(form.email.trim())) return "Email is not valid.";
+  if (!form.mobile.trim())  return "Mobile is required.";
+  if (!mobileRe.test(form.mobile.trim())) return "Mobile must be exactly 10 digits.";
   if (!form.college_name.trim())    return "College Name is required.";
   if (!form.department.trim())      return "Department is required.";
   if (!form.year)                   return "Year is required.";
+  if (!documentFile)                return "A document file is required.";
   return null;
 }
 
@@ -35,9 +29,11 @@ const labelCls = "block text-xs font-semibold text-gray-400 uppercase tracking-w
 
 export default function TestRegistrationModal({ isOpen, onClose }) {
   const [form, setForm]       = useState(INITIAL_FORM);
+  const [documentFile, setDocumentFile] = useState(null);
   const [error, setError]     = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,35 +43,43 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
   }, [isOpen, loading]);
 
   useEffect(() => {
-    if (isOpen) { setForm(INITIAL_FORM); setError(null); setLoading(false); setSuccess(false); }
+    if (isOpen) { setForm(INITIAL_FORM); setDocumentFile(null); setError(null); setLoading(false); setSuccess(false); }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleClose = () => { if (!loading) onClose(); };
   const handleChange = (e) => { setForm(p => ({ ...p, [e.target.name]: e.target.value })); setError(null); };
+  const handleFileChange = (e) => { 
+    if (e.target.files && e.target.files[0]) {
+      setDocumentFile(e.target.files[0]);
+    }
+    setError(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    const err = validate(form);
+    const err = validate(form, documentFile);
     if (err) { setError(err); return; }
     setLoading(true); setError(null);
     try {
+      const formData = new FormData();
+      formData.append("full_name", form.full_name.trim());
+      formData.append("email", form.email.trim().toLowerCase());
+      formData.append("mobile", form.mobile.trim());
+      formData.append("college_name", form.college_name.trim());
+      formData.append("department", form.department.trim());
+      formData.append("year", form.year);
+      formData.append("document", documentFile);
+
       const res = await fetch(`${API_URL}/api/test-event/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          team_name: form.team_name.trim(), member1_name: form.member1_name.trim(),
-          member1_email: form.member1_email.trim().toLowerCase(), member1_mobile: form.member1_mobile.trim(),
-          member2_name: form.member2_name.trim(), member2_email: form.member2_email.trim().toLowerCase(),
-          member2_mobile: form.member2_mobile.trim(), college_name: form.college_name.trim(),
-          department: form.department.trim(), year: form.year,
-        }),
+        body: formData,
       });
       const data = await res.json();
-      if (res.status === 201 && data.success) { setSuccess(true); setForm(INITIAL_FORM); }
-      else if (res.status === 409) setError("This team or email is already registered.");
+      if (res.status === 201 && data.success) { setSuccess(true); setForm(INITIAL_FORM); setDocumentFile(null); }
+      else if (res.status === 409) setError("This email is already registered.");
       else if (res.status === 429) setError("Too many requests. Please wait a moment and try again.");
       else setError(data.error || "Registration failed. Please try again.");
     } catch { setError("Network error. Please check your connection and try again."); }
@@ -104,7 +108,7 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
                 <div style={{fontSize:"3rem",marginBottom:"12px"}}>🎉</div>
                 <CheckCircle size={48} color="#22c55e" style={{margin:"0 auto 16px"}}/>
                 <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.35rem",marginBottom:"8px"}}>Registration Successful!</h2>
-                <p style={{color:"#9ca3af",fontSize:"0.9rem",lineHeight:1.7,marginBottom:"28px"}}>Your team has been registered successfully.</p>
+                <p style={{color:"#9ca3af",fontSize:"0.9rem",lineHeight:1.7,marginBottom:"28px"}}>Your registration and document have been submitted successfully.</p>
                 <button onClick={handleClose} style={{background:"#2563eb",color:"#fff",border:"none",borderRadius:"12px",padding:"12px 32px",fontSize:"0.95rem",fontWeight:600,cursor:"pointer"}}>Close</button>
               </div>
             ) : (
@@ -113,42 +117,23 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
                 <div style={{marginBottom:"24px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"6px"}}>
                     <span style={{fontSize:"1.4rem"}}>🧪</span>
-                    <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.2rem",margin:0}}>Test Event Registration</h2>
+                    <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.2rem",margin:0}}>Individual Test Registration</h2>
                   </div>
                   <p style={{color:"#6b7280",fontSize:"0.82rem",margin:0}}>Check the Website — All fields are required.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} noValidate>
-                  {/* Team Name */}
-                  <div style={{marginBottom:"16px"}}>
-                    <label className={labelCls}>Team Name</label>
-                    <input className={inputCls} type="text" name="team_name" value={form.team_name} onChange={handleChange} placeholder="Enter your team name" disabled={loading} maxLength={100}/>
-                  </div>
-
-                  {/* Member 1 */}
+                  {/* Participant */}
                   <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
-                    <p style={{color:"#3b82f6",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>👤 Member 1 (Leader)</p>
+                    <p style={{color:"#3b82f6",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>👤 Participant Details</p>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}}>
-                    <div><label className={labelCls}>Name</label><input className={inputCls} type="text" name="member1_name" value={form.member1_name} onChange={handleChange} placeholder="Full name" disabled={loading} maxLength={100}/></div>
-                    <div><label className={labelCls}>Mobile</label><input className={inputCls} type="tel" name="member1_mobile" value={form.member1_mobile} onChange={handleChange} placeholder="10-digit number" disabled={loading} maxLength={10}/></div>
+                    <div><label className={labelCls}>Full Name</label><input className={inputCls} type="text" name="full_name" value={form.full_name} onChange={handleChange} placeholder="Full name" disabled={loading} maxLength={100}/></div>
+                    <div><label className={labelCls}>Mobile</label><input className={inputCls} type="tel" name="mobile" value={form.mobile} onChange={handleChange} placeholder="10-digit number" disabled={loading} maxLength={10}/></div>
                   </div>
                   <div style={{marginBottom:"16px"}}>
                     <label className={labelCls}>Email</label>
-                    <input className={inputCls} type="email" name="member1_email" value={form.member1_email} onChange={handleChange} placeholder="email@example.com" disabled={loading} maxLength={200}/>
-                  </div>
-
-                  {/* Member 2 */}
-                  <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
-                    <p style={{color:"#a78bfa",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>👤 Member 2</p>
-                  </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}}>
-                    <div><label className={labelCls}>Name</label><input className={inputCls} type="text" name="member2_name" value={form.member2_name} onChange={handleChange} placeholder="Full name" disabled={loading} maxLength={100}/></div>
-                    <div><label className={labelCls}>Mobile</label><input className={inputCls} type="tel" name="member2_mobile" value={form.member2_mobile} onChange={handleChange} placeholder="10-digit number" disabled={loading} maxLength={10}/></div>
-                  </div>
-                  <div style={{marginBottom:"16px"}}>
-                    <label className={labelCls}>Email</label>
-                    <input className={inputCls} type="email" name="member2_email" value={form.member2_email} onChange={handleChange} placeholder="email@example.com" disabled={loading} maxLength={200}/>
+                    <input className={inputCls} type="email" name="email" value={form.email} onChange={handleChange} placeholder="email@example.com" disabled={loading} maxLength={200}/>
                   </div>
 
                   {/* College Info */}
@@ -173,6 +158,40 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
                     </div>
                   </div>
 
+                  {/* Document Upload */}
+                  <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
+                    <p style={{color:"#f59e0b",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>📄 Document Upload</p>
+                  </div>
+                  <div style={{marginBottom:"20px"}}>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{display: 'none'}} disabled={loading} />
+                    <div 
+                      onClick={() => !loading && fileInputRef.current.click()}
+                      style={{
+                        border: '1px dashed rgba(255,255,255,0.2)',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        textAlign: 'center',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        background: 'rgba(255,255,255,0.02)',
+                        transition: 'background 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                      onMouseOver={(e) => !loading && (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                      onMouseOut={(e) => !loading && (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                    >
+                      <UploadCloud size={32} color={documentFile ? "#34d399" : "#9ca3af"} />
+                      <div style={{color: documentFile ? "#34d399" : "#fff", fontSize: "0.9rem", fontWeight: 500}}>
+                        {documentFile ? documentFile.name : "Click to select a document"}
+                      </div>
+                      <div style={{color: "#6b7280", fontSize: "0.75rem"}}>
+                        Any file type is supported for testing (PDF, Image, DOC)
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Error */}
                   {error && (
                     <div style={{display:"flex",alignItems:"center",gap:"8px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:"10px",padding:"10px 14px",color:"#fca5a5",fontSize:"0.83rem",marginBottom:"16px"}}>
@@ -182,7 +201,7 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
 
                   {/* Submit */}
                   <button type="submit" disabled={loading} style={{width:"100%",padding:"13px",borderRadius:"14px",border:"none",background:loading?"rgba(37,99,235,0.5)":"#2563eb",color:"#fff",fontSize:"0.95rem",fontWeight:700,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",transition:"background 0.2s",boxShadow:loading?"none":"0 0 20px rgba(37,99,235,0.35)"}}>
-                    {loading ? <><Loader2 size={18} className="animate-spin"/>Submitting…</> : "Register Now"}
+                    {loading ? <><Loader2 size={18} className="animate-spin"/>Submitting…</> : "Submit Registration"}
                   </button>
                 </form>
               </>

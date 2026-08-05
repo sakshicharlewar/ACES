@@ -1,12 +1,14 @@
-﻿import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { fetchTestRegistrations, deleteTestRegistration, exportTestRegistrationsCSV } from "./adminApi";
-import { Search, Download, Trash2, Loader2, AlertCircle, RefreshCw, FlaskConical } from "lucide-react";
+import { Search, Download, Trash2, Loader2, AlertCircle, RefreshCw, FlaskConical, FileText } from "lucide-react";
 
 function fmt(d) {
   if (!d) return "—";
   return new Date(d).toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
 }
+
+const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 export default function AdminTestRegistrations() {
   const [data,    setData]    = useState({ results: [], total: 0 });
@@ -30,8 +32,8 @@ export default function AdminTestRegistrations() {
 
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
 
-  const handleDelete = async (id, teamName) => {
-    if (!window.confirm(`Delete registration for "${teamName}"?`)) return;
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete registration for "${name}"?`)) return;
     setDeleting(id);
     try {
       await deleteTestRegistration(id);
@@ -77,7 +79,7 @@ export default function AdminTestRegistrations() {
             type="text"
             value={search}
             onChange={handleSearch}
-            placeholder="Search by team name, member name, email or college…"
+            placeholder="Search by name, email, mobile or college…"
             className="w-full bg-[#0d1426] border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white text-sm placeholder-white/30 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
         </div>
@@ -96,11 +98,9 @@ export default function AdminTestRegistrations() {
               <thead>
                 <tr className="border-b border-white/10 text-white/40 text-xs uppercase tracking-wider">
                   <th className="px-4 py-3 text-left">ID</th>
-                  <th className="px-4 py-3 text-left">Team Name</th>
-                  <th className="px-4 py-3 text-left">Member 1</th>
-                  <th className="px-4 py-3 text-left">Member 2</th>
-                  <th className="px-4 py-3 text-left">College</th>
-                  <th className="px-4 py-3 text-left">Dept / Year</th>
+                  <th className="px-4 py-3 text-left">Participant Info</th>
+                  <th className="px-4 py-3 text-left">College Info</th>
+                  <th className="px-4 py-3 text-left">Document</th>
                   <th className="px-4 py-3 text-left">Registered At</th>
                   <th className="px-4 py-3 text-left">Action</th>
                 </tr>
@@ -109,7 +109,7 @@ export default function AdminTestRegistrations() {
                 {loading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i}>
-                      {Array.from({ length: 8 }).map((__, j) => (
+                      {Array.from({ length: 6 }).map((__, j) => (
                         <td key={j} className="px-4 py-4">
                           <div className="h-3 bg-white/10 rounded animate-pulse" style={{ width: `${60 + Math.random() * 40}%` }} />
                         </td>
@@ -118,7 +118,7 @@ export default function AdminTestRegistrations() {
                   ))
                 ) : data.results.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-16 text-center text-white/30">
+                    <td colSpan={6} className="px-4 py-16 text-center text-white/30">
                       No test registrations found.
                     </td>
                   </tr>
@@ -127,27 +127,27 @@ export default function AdminTestRegistrations() {
                     <tr key={r.id} className="hover:bg-white/3 transition-colors group">
                       <td className="px-4 py-3 text-white/40 font-mono text-xs">#{r.id}</td>
                       <td className="px-4 py-3">
-                        <span className="text-white font-semibold">{r.team_name}</span>
+                        <p className="text-white font-semibold">{r.full_name}</p>
+                        <p className="text-white/40 text-xs">{r.email}</p>
+                        <p className="text-white/40 text-xs">{r.mobile}</p>
+                      </td>
+                      <td className="px-4 py-3 text-white/70">
+                        <p className="max-w-[200px] truncate">{r.college_name}</p>
+                        <p className="text-white/40 text-xs">{r.department} • {r.year}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-white text-sm">{r.member1_name}</p>
-                        <p className="text-white/40 text-xs">{r.member1_email}</p>
-                        <p className="text-white/40 text-xs">{r.member1_mobile}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-white text-sm">{r.member2_name}</p>
-                        <p className="text-white/40 text-xs">{r.member2_email}</p>
-                        <p className="text-white/40 text-xs">{r.member2_mobile}</p>
-                      </td>
-                      <td className="px-4 py-3 text-white/70 max-w-[160px] truncate">{r.college_name}</td>
-                      <td className="px-4 py-3">
-                        <p className="text-white/70 text-xs">{r.department}</p>
-                        <p className="text-white/40 text-xs">{r.year}</p>
+                        {r.document_url ? (
+                          <a href={`${API_URL}/${r.document_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs rounded-lg transition-colors w-fit">
+                            <FileText className="w-3 h-3" /> View File
+                          </a>
+                        ) : (
+                          <span className="text-white/30 text-xs">No file</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-white/50 text-xs whitespace-nowrap">{fmt(r.created_at)}</td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => handleDelete(r.id, r.team_name)}
+                          onClick={() => handleDelete(r.id, r.full_name)}
                           disabled={deleting === r.id}
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded-lg transition-colors disabled:opacity-50"
                         >

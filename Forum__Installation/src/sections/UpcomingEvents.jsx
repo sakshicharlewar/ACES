@@ -240,7 +240,7 @@ export function UpcomingEvents() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-purple-400" />
-                        <span>Team Size: 2 Members</span>
+                        <span>Individual Participation</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-green-400">✅</span>

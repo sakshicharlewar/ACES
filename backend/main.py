@@ -20,7 +20,10 @@ import io
 import secrets
 from jose import JWTError, jwt
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, BackgroundTasks, status, Request, Depends, UploadFile, File, Form
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import IntegrityError
 import uuid
 import asyncio
 import json
@@ -33,9 +36,6 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 
-from fastapi import FastAPI, BackgroundTasks, status, Request, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from dotenv import load_dotenv
@@ -2191,9 +2191,8 @@ async def admin_list_test_registrations(
         if search:
             s = f"%{search}%"
             q = q.filter(
-                TestRegistration.team_name.ilike(s) |
-                TestRegistration.member1_name.ilike(s) |
-                TestRegistration.member1_email.ilike(s) |
+                TestRegistration.full_name.ilike(s) |
+                TestRegistration.email.ilike(s) |
                 TestRegistration.college_name.ilike(s)
             )
         total = q.count()
@@ -2205,16 +2204,13 @@ async def admin_list_test_registrations(
             "results": [
                 {
                     "id":             r.id,
-                    "team_name":      r.team_name,
-                    "member1_name":   r.member1_name,
-                    "member1_email":  r.member1_email,
-                    "member1_mobile": r.member1_mobile,
-                    "member2_name":   r.member2_name,
-                    "member2_email":  r.member2_email,
-                    "member2_mobile": r.member2_mobile,
+                    "full_name":      r.full_name,
+                    "email":          r.email,
+                    "mobile":         r.mobile,
                     "college_name":   r.college_name,
                     "department":     r.department,
                     "year":           r.year,
+                    "document_url":   r.document_url,
                     "ip_address":     r.ip_address,
                     "created_at":     r.created_at.isoformat() if r.created_at else None,
                 }
@@ -2235,13 +2231,9 @@ async def admin_export_test_registrations(request: Request, _=Depends(_verify_ad
         records = db.query(TestRegistration).order_by(TestRegistration.created_at.desc()).all()
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["ID","Team Name","Member1 Name","Member1 Email","Member1 Mobile",
-                         "Member2 Name","Member2 Email","Member2 Mobile",
-                         "College","Department","Year","IP","Registered At"])
+        writer.writerow(["ID", "Name", "Email", "Mobile", "College", "Department", "Year", "Document", "IP", "Registered At"])
         for r in records:
-            writer.writerow([r.id, r.team_name, r.member1_name, r.member1_email, r.member1_mobile,
-                             r.member2_name, r.member2_email, r.member2_mobile,
-                             r.college_name, r.department, r.year, r.ip_address,
+            writer.writerow([r.id, r.full_name, r.email, r.mobile, r.college_name, r.department, r.year, r.document_url, r.ip_address,
                              r.created_at.isoformat() if r.created_at else ""])
         output.seek(0)
         return StreamingResponse(
@@ -2509,34 +2501,31 @@ async def startup_validation():
     # Create all tables (SQLAlchemy auto-creates any missing tables)
     create_tables()
 
-    # Explicitly ensure test_event_registrations table exists (for live DB compatibility)
+    # Explicitly ensure test_event_individual_regs table exists
     try:
         with engine.begin() as conn:
             conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS test_event_registrations (
+                CREATE TABLE IF NOT EXISTS test_event_individual_regs (
                     id              SERIAL PRIMARY KEY,
-                    team_name       VARCHAR(255) NOT NULL,
-                    member1_name    VARCHAR(255) NOT NULL,
-                    member1_email   VARCHAR(255) NOT NULL,
-                    member1_mobile  VARCHAR(20)  NOT NULL,
-                    member2_name    VARCHAR(255) NOT NULL,
-                    member2_email   VARCHAR(255) NOT NULL,
-                    member2_mobile  VARCHAR(20)  NOT NULL,
+                    full_name       VARCHAR(255) NOT NULL,
+                    email           VARCHAR(255) NOT NULL,
+                    mobile          VARCHAR(20)  NOT NULL,
                     college_name    VARCHAR(500) NOT NULL,
                     department      VARCHAR(100) NOT NULL,
                     year            VARCHAR(20)  NOT NULL,
+                    document_url    VARCHAR(1000),
                     ip_address      VARCHAR(100),
                     created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
                 )
             """))
             # Add unique index if not exists
             conn.execute(text("""
-                CREATE UNIQUE INDEX IF NOT EXISTS ix_test_team_m1email
-                ON test_event_registrations (team_name, member1_email)
+                CREATE UNIQUE INDEX IF NOT EXISTS ix_test_indiv_email
+                ON test_event_individual_regs (email)
             """))
-        logger.info("[DB] test_event_registrations table ensured.")
+        logger.info("[DB] test_event_individual_regs table ensured.")
     except Exception as e:
-        logger.error(f"[DB] Failed to ensure test_event_registrations table: {e}")
+        logger.error(f"[DB] Failed to ensure test_event_individual_regs table: {e}")
 
     # Migrate existing max_teams for Bug Hunt
     try:
@@ -2615,136 +2604,77 @@ _RATE_WINDOW = 60   # seconds
 _RATE_MAX    = 5    # max requests per IP per window
 
 @app.post("/api/test-event/register", status_code=201)
-async def test_event_register(request: Request, db: Session = Depends(get_db)):
-    """Register a team for the test event.
-
-    Concurrent-safe:
-    - DB unique index prevents duplicate team+email combinations
-    - IntegrityError is caught and returns HTTP 409
-    - Rate limiter: max 5 requests per IP per 60 s
-    - Full server-side validation
-    """
-    # ── Guard: ensure DB session is available ────────────────────────────────
+async def test_event_register(
+    request: Request,
+    full_name: str = Form(...),
+    email: str = Form(...),
+    mobile: str = Form(...),
+    college_name: str = Form(...),
+    department: str = Form(...),
+    year: str = Form(...),
+    document: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Register an individual for the test event with a document upload."""
     if db is None:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Database unavailable. Please try again later."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+        return JSONResponse(status_code=503, content={"error": "Database unavailable. Please try again later."}, headers={"Access-Control-Allow-Origin": "*"})
 
-    # ── Rate limiting ──────────────────────────────────────────────────────────
     client_ip = request.client.host if request.client else "unknown"
     now_ts = time.time()
-    _test_rate_limit[client_ip] = [
-        t for t in _test_rate_limit[client_ip] if now_ts - t < _RATE_WINDOW
-    ]
+    _test_rate_limit[client_ip] = [t for t in _test_rate_limit.get(client_ip, []) if now_ts - t < _RATE_WINDOW]
     if len(_test_rate_limit[client_ip]) >= _RATE_MAX:
-        return JSONResponse(
-            status_code=429,
-            content={"error": "Too many requests. Please wait a moment before trying again."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+        return JSONResponse(status_code=429, content={"error": "Too many requests. Please wait."}, headers={"Access-Control-Allow-Origin": "*"})
     _test_rate_limit[client_ip].append(now_ts)
 
-    # ── Parse body ────────────────────────────────────────────────────────────
-    try:
-        body = await request.json()
-    except Exception:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Invalid JSON body."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+    if not document.filename:
+        return JSONResponse(status_code=400, content={"error": "Document is required."}, headers={"Access-Control-Allow-Origin": "*"})
 
-    # ── Required fields ───────────────────────────────────────────────────────
-    required = [
-        "team_name", "member1_name", "member1_email", "member1_mobile",
-        "member2_name", "member2_email", "member2_mobile",
-        "college_name", "department", "year",
-    ]
-    for field in required:
-        if not body.get(field, "").strip():
-            return JSONResponse(
-                status_code=400,
-                content={"error": f"Field '{field}' is required."},
-                headers={"Access-Control-Allow-Origin": "*"},
-            )
+    # Sanitize & Validate
+    fname = _sanitize(full_name)
+    em = _sanitize(email).lower()
+    mob = mobile.strip()
+    col = _sanitize(college_name)
+    dep = _sanitize(department)
+    yr = _sanitize(year)
 
-    # ── Sanitize inputs ───────────────────────────────────────────────────────
-    team_name      = _sanitize(body["team_name"])
-    member1_name   = _sanitize(body["member1_name"])
-    member1_email  = _sanitize(body["member1_email"]).lower()
-    member1_mobile = body["member1_mobile"].strip()
-    member2_name   = _sanitize(body["member2_name"])
-    member2_email  = _sanitize(body["member2_email"]).lower()
-    member2_mobile = body["member2_mobile"].strip()
-    college_name   = _sanitize(body["college_name"])
-    department     = _sanitize(body["department"])
-    year           = _sanitize(body["year"])
+    if not _valid_email(em): return JSONResponse(status_code=400, content={"error": "Email is not valid."}, headers={"Access-Control-Allow-Origin": "*"})
+    if not _valid_mobile(mob): return JSONResponse(status_code=400, content={"error": "Mobile must be exactly 10 digits."}, headers={"Access-Control-Allow-Origin": "*"})
 
-    # ── Format validation ─────────────────────────────────────────────────────
-    if not _valid_email(member1_email):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Member 1 email is not valid."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
-    if not _valid_email(member2_email):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Member 2 email is not valid."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
-    if not _valid_mobile(member1_mobile):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Member 1 mobile must be exactly 10 digits."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
-    if not _valid_mobile(member2_mobile):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Member 2 mobile must be exactly 10 digits."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+    # Read file
+    doc_bytes = await document.read()
+    # Mocking upload - normally we'd save to S3 or a local folder.
+    # We will save it locally in an uploads dir for the test event.
+    import os
+    os.makedirs("uploads/test_event", exist_ok=True)
+    safe_filename = f"{int(time.time())}_{document.filename.replace(' ', '_')}"
+    filepath = f"uploads/test_event/{safe_filename}"
+    with open(filepath, "wb") as f:
+        f.write(doc_bytes)
 
-    # ── DB insert (unique constraint prevents duplicates under concurrency) ───
     try:
         record = TestRegistration(
-            team_name      = team_name,
-            member1_name   = member1_name,
-            member1_email  = member1_email,
-            member1_mobile = member1_mobile,
-            member2_name   = member2_name,
-            member2_email  = member2_email,
-            member2_mobile = member2_mobile,
-            college_name   = college_name,
-            department     = department,
-            year           = year,
-            ip_address     = client_ip,
+            full_name=fname,
+            email=em,
+            mobile=mob,
+            college_name=col,
+            department=dep,
+            year=yr,
+            document_url=filepath,
+            ip_address=client_ip,
         )
         db.add(record)
         db.commit()
         db.refresh(record)
-        logger.info(f"[TestEvent] Registered team '{team_name}' (id={record.id}) from {client_ip}")
+        logger.info(f"[TestEvent] Registered '{fname}' (id={record.id}) from {client_ip}")
         return JSONResponse(
             status_code=201,
-            content={"success": True, "id": record.id, "team_name": team_name},
+            content={"success": True, "id": record.id, "name": fname},
             headers={"Access-Control-Allow-Origin": "*"},
         )
     except IntegrityError:
         db.rollback()
-        logger.warning(f"[TestEvent] Duplicate registration attempt: team='{team_name}' email='{member1_email}'")
-        return JSONResponse(
-            status_code=409,
-            content={"error": "This team or email is already registered."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+        return JSONResponse(status_code=409, content={"error": "This email is already registered."}, headers={"Access-Control-Allow-Origin": "*"})
     except Exception as e:
         db.rollback()
         logger.error(f"[TestEvent] Registration failed: {e}", exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Registration failed. Please try again."},
-            headers={"Access-Control-Allow-Origin": "*"},
-        )
+        return JSONResponse(status_code=500, content={"error": "Registration failed."}, headers={"Access-Control-Allow-Origin": "*"})
