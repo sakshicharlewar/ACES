@@ -21,7 +21,7 @@ export default {
         accent: '#3B82F6',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
         serif: ['"Cormorant Garamond"', 'serif'],
         button: ['Geist', 'sans-serif'],
         label: ['"Space Grotesk"', 'sans-serif'],

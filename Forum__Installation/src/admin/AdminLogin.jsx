@@ -26,6 +26,11 @@ export function AdminLogin() {
       }
     }
     verify();
+
+    // Listen for session-expiry events dispatched by apiFetch
+    const onUnauthorized = () => navigate("/admin/login", { replace: true });
+    window.addEventListener("aces_admin_unauthorized", onUnauthorized);
+    return () => window.removeEventListener("aces_admin_unauthorized", onUnauthorized);
   }, [navigate]);
 
   async function handleSubmit(e) {

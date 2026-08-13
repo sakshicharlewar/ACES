@@ -169,7 +169,8 @@ export function ComplaintForm() {
         }
       }
 
-      const res = await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
+      const res = await fetch(`${apiUrl}/api/submit-innovation`, {
         method:  'POST',
         signal:  controller.signal,
         body: submitData,

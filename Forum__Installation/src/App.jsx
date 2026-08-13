@@ -36,6 +36,18 @@ import { AdminRegistrations } from "./admin/AdminRegistrations";
 import { AdminRegistrationDetail } from "./admin/AdminRegistrationDetail";
 import AdminEventRegistrations from "./admin/AdminEventRegistrations";
 import AdminTestRegistrations from "./admin/AdminTestRegistrations";
+import { AdminEvents } from "./admin/AdminEvents";
+import AdminEventDashboard from "./admin/AdminEventDashboard";
+import AdminResults from "./admin/AdminResults";
+import AdminGallery from "./admin/AdminGallery";
+import AdminNotices from "./admin/AdminNotices";
+import AdminTeam from "./admin/AdminTeam";
+import { AdminDepartmentalEvents } from "./admin/AdminDepartmentalEvents";
+import { AdminCommittee } from "./admin/AdminCommittee";
+import { AdminToppers } from "./admin/AdminToppers";
+import { AdminFaculty } from "./admin/AdminFaculty";
+import { AdminHod } from "./admin/AdminHod";
+import { AdminLaboratories } from "./admin/AdminLaboratories";
 
 /* ── Scroll Progress Bar (homepage only) ── */
 function ScrollBar() {
@@ -110,8 +122,20 @@ function AppRoutes() {
           <Route path="/admin/submissions/:id" element={<ProtectedAdminRoute><AdminSubmissionDetail /></ProtectedAdminRoute>} />
           <Route path="/admin/registrations" element={<ProtectedAdminRoute><AdminRegistrations /></ProtectedAdminRoute>} />
           <Route path="/admin/registrations/:id" element={<ProtectedAdminRoute><AdminRegistrationDetail /></ProtectedAdminRoute>} />
+          <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
+          <Route path="/admin/events/:id" element={<ProtectedAdminRoute><AdminEventDashboard /></ProtectedAdminRoute>} />
           <Route path="/admin/event-registrations" element={<ProtectedAdminRoute><AdminEventRegistrations /></ProtectedAdminRoute>} />
           <Route path="/admin/test-registrations" element={<ProtectedAdminRoute><AdminTestRegistrations /></ProtectedAdminRoute>} />
+          <Route path="/admin/results" element={<ProtectedAdminRoute><AdminResults /></ProtectedAdminRoute>} />
+          <Route path="/admin/gallery" element={<ProtectedAdminRoute><AdminGallery /></ProtectedAdminRoute>} />
+          <Route path="/admin/notices" element={<ProtectedAdminRoute><AdminNotices /></ProtectedAdminRoute>} />
+          <Route path="/admin/team" element={<ProtectedAdminRoute><AdminTeam /></ProtectedAdminRoute>} />
+          <Route path="/admin/committee" element={<ProtectedAdminRoute><AdminCommittee /></ProtectedAdminRoute>} />
+          <Route path="/admin/toppers" element={<ProtectedAdminRoute><AdminToppers /></ProtectedAdminRoute>} />
+          <Route path="/admin/faculty" element={<ProtectedAdminRoute><AdminFaculty /></ProtectedAdminRoute>} />
+          <Route path="/admin/hod" element={<ProtectedAdminRoute><AdminHod /></ProtectedAdminRoute>} />
+          <Route path="/admin/laboratories" element={<ProtectedAdminRoute><AdminLaboratories /></ProtectedAdminRoute>} />
+          <Route path="/admin/departmental-events" element={<ProtectedAdminRoute><AdminDepartmentalEvents /></ProtectedAdminRoute>} />
         </Routes>
       </AnimatePresence>
       <FloatingEventsButton />

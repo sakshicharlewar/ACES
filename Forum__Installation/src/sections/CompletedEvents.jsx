@@ -1,88 +1,52 @@
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
+import ResultModal from "../components/ui/ResultModal";
 
-const events = [
-  {
-    id: 1,
-    title: "REIMAGINE UI/UX Competition",
-    date: "August 20, 2025",
-    desc: "The Department of Computer Engineering, Suryodaya College of Engineering & Technology, organized the UI/UX Competition \"REIMAGINE\" under the ACES Forum on 20th August 2025 at MCA Seminar Hall for teams of two participants. A total of 40 teams (80participants) competed in preliminary and final rounds.",
-    image: "/Reimagin.jpeg",
-    gallery: []
-  },
-  {
-    id: 2,
-    title: "Debugging Competition",
-    date: "July 15, 2025",
-    desc: "The Department of Computer Engineering under Forum 'ACES' organized a Debugging Competition on 15th July 2025 at Room No. S-24 and S-30. The competition consisted of preliminary and final rounds for teams of three. A total of 60 teams (180 participants) participated.",
-    image: "/Debugging.jpeg",
-    gallery: [
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-    ]
-  },
-  {
-    id: 3,
-    title: "Logo Design Competition",
-    date: "August 13, 2025",
-    desc: "The Department of Computer Engineering, Suryodaya College of Engineering & Technology, organized a Logo Design Competition on 13th August 2025 at Lab-III. A total of 17 students participated and created logo designs for the ACES forum. The most creative and original design was selected as the official ACES logo.",
-    image: "/LogoCompition.jpeg",
-    gallery: [
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-    ]
-  },
-  {
-    id: 4,
-    title: "Face the Panel",
-    date: "Upcoming Event",
-    desc: "Face the Panel was a career-oriented mock interview event organized by the Department of Computer Engineering under the Students Forum. Participants experienced real interview scenarios, where faculty members assessed their communication, technical knowledge, confidence, and problem-solving skills. The event provided valuable feedback, helping students improve their interview performance, boost confidence, and prepare for placements and future professional opportunities.",
-    image: "/FaceThePanel.jpeg",
-    gallery: []
-  },
-  {
-    id: 5,
-    title: "Kite Making",
-    date: "Upcoming Event",
-    desc: "Kite Making and Flying Competition was a fun-filled event organized by the Department of Computer Engineering to encourage creativity, teamwork, and festive spirit. Students showcased their artistic skills by designing colorful kites and participated enthusiastically in the flying competition, making the event a memorable celebration of innovation, collaboration, and healthy competition.",
-    image: "/KiteMaking.jpeg",
-    gallery: []
-  },
-  {
-    id: 6,
-    title: "National Conference 2026",
-    date: "February 3, 2026",
-    desc: "National Conference 2026 was organized on 03 February 2026 to bring together academicians, researchers, industry experts, and students for knowledge sharing and research discussions. The event featured technical paper presentations, keynote sessions, and interactive discussions, promoting innovation, collaboration, and academic excellence across various disciplines.",
-    image: "/NationalConference.jpeg",
-    gallery: []
-  },
-  {
-    id: 7,
-    title: "International Conference 2026",
-    date: "April 13, 2026",
-    desc: "International Conference 2026 was organized on 13 April 2026 to provide a global platform for researchers, academicians, industry professionals, and students to share innovative research and emerging technologies. The conference featured keynote speeches, technical paper presentations, and interactive sessions, fostering international collaboration, knowledge exchange, and research excellence.",
-    image: "/InternationalConference.jpeg",
-    gallery: []
-  }
-];
+import { fetchPublicEvents } from "../admin/adminApi";
 
 const CARD_WIDTH = 476; // card width + gap
 const VISIBLE_COUNT = 3;
 
 export function CompletedEvents() {
   const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeGallery, setActiveGallery] = useState(null);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const dragStartX = useRef(0);
   const containerRef = useRef(null);
-  const [maxScrollX, setMaxScrollX] = useState((events.length - 1) * CARD_WIDTH);
+  const [maxScrollX, setMaxScrollX] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [selectedResultEvent, setSelectedResultEvent] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadEvents() {
+      setIsLoading(true);
+      try {
+        let eventsData = await fetchPublicEvents({ status: "completed" });
+        if (!Array.isArray(eventsData)) {
+          eventsData = eventsData.items || [];
+        }
+        if (!cancelled) setEvents(eventsData);
+      } catch (err) {
+        console.error("Failed to load completed events:", err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    loadEvents();
+    return () => { cancelled = true; };
+  }, []);
 
   // Compute the real max scroll so the last card aligns flush — no blank space
   useEffect(() => {
     const compute = () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || events.length === 0) return;
       const containerWidth = containerRef.current.clientWidth;
       // track = 96px left-pad + N*428px cards + (N-1)*32px gaps + 96px right-pad
       const trackWidth = 96 + events.length * 428 + (events.length - 1) * 32 + 96;
@@ -92,7 +56,7 @@ export function CompletedEvents() {
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
-  }, []);
+  }, [events]);
 
   const maxIndex = events.length - 1;
 
@@ -144,15 +108,18 @@ export function CompletedEvents() {
             style={{ cursor: "grab" }}
             whileTap={{ cursor: "grabbing" }}
           >
+            {events.length === 0 && !isLoading && (
+              <div className="w-full text-center text-white/50 py-12">No departmental events to show.</div>
+            )}
             {events.map((event, index) => (
-              <div key={event.id} className="w-[428px] shrink-0 relative z-10">
+              <div key={event.id} className="w-[428px] shrink-0 relative z-10 cursor-pointer" onClick={() => { if(event.gallery_images?.length) openGallery(event); }}>
                 <GlassCard
                   className={`p-6 group flex flex-col h-[620px] ${index % 2 === 0 ? '-translate-y-8' : 'translate-y-8'} transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] hover:border-accent/40`}
                 >
                   <div className="overflow-hidden rounded-xl mb-6 relative h-[380px] w-full shrink-0 bg-black/40">
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
                     <img
-                      src={event.image}
+                      src={event.banner || "/Reimagin.jpeg"}
                       alt={event.title}
                       className="w-full h-full object-contain object-center transition-transform duration-500 p-2"
                     />
@@ -160,7 +127,15 @@ export function CompletedEvents() {
                   <div className="px-2 flex flex-col flex-1">
                     <div className="font-label text-xs text-accent mb-2 uppercase tracking-wider">{event.date}</div>
                     <h4 className="font-sans text-xl font-bold text-white mb-3 group-hover:text-accent transition-colors">{event.title}</h4>
-                    <p className="font-cambria text-sm text-text-secondary line-clamp-2 flex-1">{event.desc}</p>
+                    <p className="font-cambria text-sm text-text-secondary line-clamp-2 flex-1">{event.full_description || event.short_description}</p>
+                    {event.result_status === "announced" && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setSelectedResultEvent(event); setResultModalOpen(true); }}
+                        className="mt-4 w-full py-2.5 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Trophy className="w-4 h-4" /> View Results
+                      </button>
+                    )}
                   </div>
                 </GlassCard>
               </div>
@@ -192,41 +167,67 @@ export function CompletedEvents() {
 
       {/* Lightbox Gallery */}
       {activeGallery && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex">
           <button
-            className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
+            className="absolute top-8 right-8 text-white/50 hover:text-white z-50"
             onClick={() => setActiveGallery(null)}
           >
             <X className="w-8 h-8" />
           </button>
 
-          <div className="relative w-full max-w-5xl aspect-video px-12 flex items-center justify-center">
-            <button
-              className="absolute left-4 p-4 text-white/50 hover:text-white transition-colors"
-              onClick={() => setCurrentImgIndex(prev => prev === 0 ? activeGallery.gallery.length - 1 : prev - 1)}
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
+          <div className="flex-1 min-w-0 p-8 flex flex-col items-center justify-center relative">
+            <div className="w-full max-w-4xl max-h-full flex items-center justify-center">
+              <img
+                src={activeGallery.gallery_images[currentImgIndex]}
+                alt="Gallery"
+                className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl"
+              />
+            </div>
 
-            <motion.img
-              key={currentImgIndex}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              src={activeGallery.gallery[currentImgIndex]}
-              className="max-h-[80vh] object-contain rounded-lg shadow-2xl"
-              alt="Gallery"
-            />
-
-            <button
-              className="absolute right-4 p-4 text-white/50 hover:text-white transition-colors"
-              onClick={() => setCurrentImgIndex(prev => prev === activeGallery.gallery.length - 1 ? 0 : prev + 1)}
-            >
-              <ChevronRight className="w-8 h-8" />
-            </button>
+            {/* Next/Prev overlay buttons */}
+            {activeGallery.gallery_images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentImgIndex(i => i === 0 ? activeGallery.gallery_images.length - 1 : i - 1)}
+                  className="absolute left-8 p-3 rounded-full bg-black/50 text-white/80 hover:bg-black/80 hover:text-white transition-all backdrop-blur"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={() => setCurrentImgIndex(i => i === activeGallery.gallery_images.length - 1 ? 0 : i + 1)}
+                  className="absolute right-8 p-3 rounded-full bg-black/50 text-white/80 hover:bg-black/80 hover:text-white transition-all backdrop-blur"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
           </div>
+
+          {/* Thumbnails list */}
+          {activeGallery.gallery_images.length > 1 && (
+            <div className="w-[300px] bg-[#1a1f2e] border-l border-white/10 p-4 overflow-y-auto">
+              <h4 className="font-sans font-medium text-white mb-4">Gallery ({activeGallery.gallery_images.length})</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {activeGallery.gallery_images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImgIndex(idx)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 ${currentImgIndex === idx ? 'border-accent' : 'border-transparent'}`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <ResultModal 
+        isOpen={resultModalOpen} 
+        onClose={() => setResultModalOpen(false)} 
+        eventDetails={selectedResultEvent} 
+      />
     </>
   );
 }

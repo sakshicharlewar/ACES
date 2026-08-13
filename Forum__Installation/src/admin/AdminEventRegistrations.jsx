@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock, Send } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
+import { fetchAdminEvents } from "./adminApi";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
@@ -26,14 +28,26 @@ const statusBadge = (status) => {
 };
 
 export default function AdminEventRegistrations() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialEventId = searchParams.get("event_id") || "";
+
   const [events, setEvents] = useState([]);
-  const [selectedEventId, setSelectedEventId] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState(initialEventId);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [screenshotModal, setScreenshotModal] = useState(null);
   const [rejectionModal, setRejectionModal] = useState(null); // { id: 123 }
   const [rejectionReason, setRejectionReason] = useState("");
+
+  useEffect(() => {
+    const currentParams = new URLSearchParams(location.search);
+    const eventIdFromUrl = currentParams.get("event_id");
+    if (eventIdFromUrl) {
+      setSelectedEventId(eventIdFromUrl);
+    }
+  }, [location.search]);
 
   useEffect(() => { 
     fetchEvents(); 
@@ -45,11 +59,13 @@ export default function AdminEventRegistrations() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/events`);
-      if (res.ok) {
-        const fetchedEvents = await res.json();
-        setEvents(fetchedEvents);
-        if (fetchedEvents.length > 0) setSelectedEventId(fetchedEvents[0].id.toString());
+      let fetchedEvents = await fetchAdminEvents();
+      if (!Array.isArray(fetchedEvents)) {
+        fetchedEvents = fetchedEvents.items || [];
+      }
+      setEvents(fetchedEvents);
+      if (fetchedEvents.length > 0 && !initialEventId) {
+        setSelectedEventId(fetchedEvents[0].id.toString());
       }
     } catch (e) {
       console.error("Failed to fetch events:", e);
@@ -59,13 +75,41 @@ export default function AdminEventRegistrations() {
   const fetchRegistrations = async (eventId) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setRegistrations(data);
+      let backendData = [];
+      try {
+        const res = await fetch(`${API_URL}/admin/api/events/${eventId}/team-registrations`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          backendData = Array.isArray(json) ? json : (json.items || json.data || []);
+        }
+      } catch (e) {
+        console.warn("Backend fetch failed, using local registrations");
       }
+      
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const eventLocalRegs = localRegs.filter(r => {
+        // Match if event_id matches exactly
+        if (r.event_id?.toString() === eventId.toString()) return true;
+        // Also match orphaned "BUG-XXX" registrations if this is the Bug Hunt event (ID 1)
+        if (eventId.toString() === "1" && r.registration_id && r.registration_id.startsWith("BUG-")) return true;
+        return false;
+      });
+      
+      const backendIds = new Set(backendData.map(d => d.id));
+      const uniqueLocalRegs = eventLocalRegs.filter(r => !backendIds.has(r.id));
+      
+      // The user wants to hide the dummy data and show ONLY their data if they have it
+      // Let's filter out the seed data if we have real local data
+      let finalData = [...backendData, ...uniqueLocalRegs];
+      const hasRealData = finalData.some(r => r.registration_id?.startsWith("BUG-"));
+      if (hasRealData) {
+        // Remove the seeded "BUGHUNT-XXX" dummy data so only their real data shows
+        finalData = finalData.filter(r => !r.registration_id?.startsWith("BUGHUNT-"));
+      }
+      
+      setRegistrations(finalData.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
     } catch (e) { 
         console.error("Failed to fetch registrations:", e);
     } finally { 
@@ -75,18 +119,23 @@ export default function AdminEventRegistrations() {
 
   const handleToggleStatus = async (eventId, openNow) => {
     if (!window.confirm(`${openNow ? 'Open' : 'Close'} registration for this event?`)) return;
+
     try {
       const res = await fetch(`${API_URL}/admin/api/events/${eventId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}`,
         },
         body: JSON.stringify({ is_registration_open: openNow }),
       });
       if (res.ok) {
-        fetchEvents();
-        if (selectedEventId) fetchRegistrations(selectedEventId);
+        // Only update this specific event in state — don't re-fetch all events
+        setEvents(prev => prev.map(e =>
+          String(e.id) === String(eventId)
+            ? { ...e, is_registration_open: openNow, registration_status: openNow ? "open" : "closed" }
+            : e
+        ));
       } else {
         alert("Failed to update registration status.");
       }
@@ -136,7 +185,7 @@ export default function AdminEventRegistrations() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("adminToken")}`
+          "Authorization": `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}`
         },
         body: JSON.stringify({ type })
       });
@@ -166,7 +215,7 @@ export default function AdminEventRegistrations() {
     try {
       const res = await fetch(`${API_URL}/admin/api/team-registrations/${regId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken")}` },
       });
       if (res.ok) { fetchRegistrations(selectedEventId); fetchEvents(); }
     } catch (e) { console.error(e); }
@@ -296,7 +345,11 @@ export default function AdminEventRegistrations() {
 
       {/* Event Status Dashboard */}
       {selectedEvent && (
-        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+        <div className={`mb-6 p-4 rounded-xl border-2 ${
+          selectedEvent.is_registration_open
+            ? 'bg-green-50 border-green-300'
+            : 'bg-red-50 border-red-300'
+        }`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-6">
               <div className="text-center">
@@ -305,7 +358,7 @@ export default function AdminEventRegistrations() {
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-700">
-                  {Math.max(0, (selectedEvent.max_teams ?? 30) - (selectedEvent.registered_teams_count ?? registrations.length))}
+                  {Math.max(0, (selectedEvent.max_participants ?? selectedEvent.max_teams ?? 30) - (selectedEvent.registered_teams_count ?? registrations.length))}
                 </p>
                 <p className="text-xs text-green-600">Seats Remaining</p>
               </div>
@@ -320,21 +373,35 @@ export default function AdminEventRegistrations() {
                 <p className="text-xs text-gray-500 mt-1">Registration Status</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              {selectedEvent.is_registration_open ? (
+            <div className="flex flex-col items-end gap-2">
+              {selectedEvent.result_status === "announced" ? (
+                <button
+                  disabled
+                  className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow opacity-60 cursor-not-allowed"
+                  title="Results have been announced. No further changes can be made."
+                >
+                  <Lock size={14} /> Registration Locked
+                </button>
+              ) : selectedEvent.is_registration_open ? (
                 <button
                   onClick={() => handleToggleStatus(selectedEvent.id, false)}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow"
                 >
                   <Lock size={14} /> Close Registration
                 </button>
               ) : (
                 <button
                   onClick={() => handleToggleStatus(selectedEvent.id, true)}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow"
                 >
                   <Unlock size={14} /> Open Registration
                 </button>
+              )}
+              {selectedEvent.result_status === "announced" && (
+                <p className="text-xs text-amber-600 font-medium">⚠️ Event results are announced. Registration status cannot be changed.</p>
+              )}
+              {!selectedEvent.is_registration_open && selectedEvent.result_status !== "announced" && (
+                <p className="text-xs text-red-600 font-medium">⚠️ Registration is currently closed. Users will see a "Registration Closed" message.</p>
               )}
             </div>
           </div>
@@ -366,7 +433,7 @@ export default function AdminEventRegistrations() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reg ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leader</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member 2</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Txn ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screenshot</th>
@@ -389,8 +456,23 @@ export default function AdminEventRegistrations() {
                     <div className="text-xs text-gray-400">{reg.leader_phone}</div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{reg.member2_name}</div>
-                    <div className="text-xs text-gray-500">{reg.member2_email}</div>
+                    {/* Member 2 */}
+                    {reg.member2_name && (
+                      <div className="mb-1">
+                        <div className="text-sm text-gray-900 font-medium">M2: {reg.member2_name}</div>
+                        <div className="text-xs text-gray-500">{reg.member2_email}</div>
+                      </div>
+                    )}
+                    {/* Members 3+ from extra_members */}
+                    {reg.extra_members && reg.extra_members.map((m, i) => (
+                      <div key={i} className="mb-1">
+                        <div className="text-sm text-gray-900 font-medium">M{i + 3}: {m.name}</div>
+                        <div className="text-xs text-gray-500">{m.email}</div>
+                      </div>
+                    ))}
+                    {!reg.member2_name && (!reg.extra_members || reg.extra_members.length === 0) && (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {statusBadge(reg.payment_status)}

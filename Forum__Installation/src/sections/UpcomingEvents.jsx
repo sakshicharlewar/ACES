@@ -3,16 +3,9 @@ import { motion } from "framer-motion";
 import EventRegistrationModal from "../components/ui/EventRegistrationModal";
 import TestRegistrationModal from "../components/ui/TestRegistrationModal";
 import { Users } from "lucide-react";
+import { fetchPublicEvents } from "../admin/adminApi";
 
-// ── Test event (second card — hardcoded) ──────────────────────────────────────
-const TEST_EVENT = {
-  id: "test-event-local",
-  title: "Website Checking",
-  subtitle: "Check the Website",
-  description:
-    "Test the website by participating in this sample event. This event is only for testing the registration system and database performance.",
-  isTestEvent: true,
-};
+
 
 // ── Hardcoded Bug Hunt event (fallback if DB is unreachable) ──
 const BUG_HUNT_FALLBACK = {
@@ -28,13 +21,65 @@ const BUG_HUNT_FALLBACK = {
   isFallback: true,
 };
 
+// ── Winner Cards Component ─────────────────────────────────────────────────
+function parseWinnerDetails(details) {
+  const lines = (details || '').split('\n');
+  const members = [];
+  let regId = '', year = '', congrats = '';
+  let inMembers = false, inCongrats = false;
+  for (const line of lines) {
+    const t = line.trim();
+    if (t === 'Members') { inMembers = true; continue; }
+    if (t.startsWith('Registration ID:')) { inMembers = false; regId = t.replace('Registration ID:', '').trim(); continue; }
+    if (t.startsWith('Year:')) { year = t.replace('Year:', '').trim(); continue; }
+    if (t.startsWith('Congratulations')) { inCongrats = true; congrats = t; continue; }
+    if (inCongrats && t) { congrats += ' ' + t; continue; }
+    if (inMembers && t) { members.push(t.replace(/^[-•*]\s*/, '')); }
+  }
+  return { members, regId, year, congrats };
+}
+
+function WinnerCard({ place, teamName, details, borderColor, bgColor, labelColor, medal }) {
+  if (!teamName) return null;
+  const { members, regId, year, congrats } = parseWinnerDetails(details);
+  return (
+    <div style={{ border: `1px solid ${borderColor}`, borderRadius: '14px', padding: '20px', marginBottom: '16px', background: bgColor }}>
+      <div style={{ color: labelColor, fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', marginBottom: '6px' }}>{medal} {place}</div>
+      <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', marginBottom: '12px' }}>{teamName}</div>
+      {members.length > 0 && (
+        <div>
+          <div style={{ color: '#9ca3af', fontSize: '0.82rem', marginBottom: '4px' }}>Members</div>
+          {members.map((m, i) => <div key={i} style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• {m}</div>)}
+        </div>
+      )}
+      {regId && <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginTop: '10px', marginBottom: '2px' }}>Registration ID: <span style={{ color: labelColor }}>{regId}</span></div>}
+      {year && <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>{year}</span></div>}
+      {congrats && <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: '10px 0 0', textAlign: 'justify' }}>{congrats}</p>}
+    </div>
+  );
+}
+
+function WinnerCards({ data }) {
+  return (
+    <div>
+      <WinnerCard place="FIRST PLACE" teamName={data.winner} details={data.winner_details} borderColor="rgba(251,191,36,0.35)" bgColor="rgba(251,191,36,0.05)" labelColor="#fbbf24" medal="🥇" />
+      <WinnerCard place="SECOND PLACE" teamName={data.runner_up} details={data.runner_up_details} borderColor="rgba(209,213,219,0.25)" bgColor="rgba(209,213,219,0.04)" labelColor="#d1d5db" medal="🥈" />
+      <WinnerCard place="THIRD PLACE" teamName={data.second_runner_up} details={data.second_runner_up_details} borderColor="rgba(249,115,22,0.35)" bgColor="rgba(249,115,22,0.05)" labelColor="#f97316" medal="🥉" />
+    </div>
+  );
+}
+
 export function UpcomingEvents() {
+
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
   const [winnersPopupOpen, setWinnersPopupOpen] = useState(false);
+  const [winnersPopupEvent, setWinnersPopupEvent] = useState(null);
+  const [winnersData, setWinnersData] = useState(null);
+  const [loadingWinners, setLoadingWinners] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const retryRef = React.useRef(null);
 
@@ -49,66 +94,36 @@ export function UpcomingEvents() {
     fetchEvents();
     // Poll every 30 seconds to stay in sync with seat count
     const interval = setInterval(fetchEvents, 30000);
+    // Also instantly refresh when admin creates/edits an event
+    const onEventsUpdated = () => fetchEvents();
+    window.addEventListener("aces_events_updated", onEventsUpdated);
     return () => {
       clearInterval(interval);
+      window.removeEventListener("aces_events_updated", onEventsUpdated);
       if (retryRef.current) clearTimeout(retryRef.current);
     };
   }, []);
 
   const fetchEvents = async (attempt = 0) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+      let eventsData = await fetchPublicEvents({ status: "upcoming" });
+      // Ensure we have an array
+      if (!Array.isArray(eventsData)) {
+        eventsData = eventsData.items || [];
+      }
       
-      let eventsData = [];
-      let loadFailed = false;
-
-      // 1. Fetch Events
-      try {
-        const res = await fetch(`${apiUrl}/api/events`);
-        if (res.ok) {
-          eventsData = await res.json();
-        } else {
-          loadFailed = true;
-        }
-      } catch (e) {
-        console.error("Failed to fetch events", e);
-        loadFailed = true;
-      }
-
-      // 2. Fetch Bug Hunt Stats
-      try {
-        const statsRes = await fetch(`${apiUrl}/api/events/bug-hunt/stats`);
-        if (statsRes.ok) {
-          const stats = await statsRes.json();
-          // If we have live events, find Bug Hunt and update it
-          if (eventsData.length > 0) {
-            const bhIndex = eventsData.findIndex(e => e.id === 1 || String(e.title).includes('Bug Hunt'));
-            if (bhIndex !== -1) {
-              eventsData[bhIndex].registered_teams_count = 30; // Hardcoded to 30
-              eventsData[bhIndex].max_teams = 30; // Hardcoded to 30
-              eventsData[bhIndex].is_registration_open = false; // Hardcoded to closed
-            }
-          } else {
-            // Update fallback
-            BUG_HUNT_FALLBACK.registered_teams_count = 30;
-            BUG_HUNT_FALLBACK.max_teams = 30;
-            BUG_HUNT_FALLBACK.is_registration_open = false;
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch bug hunt stats", e);
-      }
-
-      if (!loadFailed) {
+      if (eventsData.length > 0) {
         setEvents(eventsData);
         setLoadFailed(false);
       } else {
-        // Force state update to use fallback
-        setEvents([]);
-        setLoadFailed(true);
+        // Only show fallback if we have no real data yet
+        setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
+        setLoadFailed(false);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Failed to fetch events", e);
+      // Only replace with fallback if no real events are loaded yet
+      setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
       setLoadFailed(true);
     }
     setIsWakingUp(false);
@@ -121,9 +136,8 @@ export function UpcomingEvents() {
     window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: true }));
 
   const handleRegisterClick = (event) => {
-    const isFull =
-      event.max_teams > 0 &&
-      event.registered_teams_count >= event.max_teams;
+    const maxTeams = event.max_participants ?? event.max_teams ?? 30;
+    const isFull = maxTeams > 0 && event.registered_teams_count >= maxTeams;
     if (event.is_registration_open && !isFull) {
       hideFloatingButton();
       setSelectedEvent(event);
@@ -141,17 +155,44 @@ export function UpcomingEvents() {
     // Button stays hidden until the success screen is also closed (handled by onClose)
   };
 
+  const openWinnersPopup = async (event) => {
+    setWinnersPopupEvent(event);
+    setWinnersPopupOpen(true);
+    setLoadingWinners(true);
+    setWinnersData(null);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiUrl}/api/events/${event.id}/result`);
+      if (res.ok) {
+        const data = await res.json();
+        setWinnersData(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch winners:", e);
+    } finally {
+      setLoadingWinners(false);
+    }
+  };
+
   // ── Build display list ──
-  // Slot 0: real Bug Hunt (or fallback)
-  // Slot 1: TEST_EVENT (hardcoded, always shown)
-  // Slots 2-3: remaining real events or Coming Soon fillers
-  let liveEvents = [...events];
-  if (liveEvents.length === 0) {
-    liveEvents = [BUG_HUNT_FALLBACK];
+  let displayEvents = [...events].sort((a, b) => {
+    const isEventCompleted = (e) => e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
+    const aCompleted = isEventCompleted(a);
+    const bCompleted = isEventCompleted(b);
+    if (aCompleted && !bCompleted) return 1; // a is completed, put it after b
+    if (!aCompleted && bCompleted) return -1; // b is completed, put it after a
+    
+    // Both are either completed or not completed, sort by created_at DESC
+    const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+    const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+    return dateB - dateA;
+  });
+  
+  if (displayEvents.length === 0) {
+    displayEvents = [BUG_HUNT_FALLBACK];
   }
 
-  // Insert TEST_EVENT at index 1
-  const displayEvents = [liveEvents[0], TEST_EVENT, ...liveEvents.slice(1)];
+  // Pad with fillers to make it look nice if there are very few events
   while (displayEvents.length < 4) {
     displayEvents.push({ id: `filler-${displayEvents.length}`, isFiller: true });
   }
@@ -213,60 +254,23 @@ export function UpcomingEvents() {
               );
             }
 
-            // ── Test Event card ──
-            if (event.isTestEvent) {
-              return (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: index * 0.2 }}
-                  className="relative p-[1px] rounded-[28px] overflow-hidden group h-full flex"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/50 via-blue-500/50 to-purple-500/50 opacity-100 group-hover:animate-[spin_4s_linear_infinite] transition-all duration-500" />
-                  <div className="relative w-full h-full bg-[#0B0B0B]/90 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:bg-[#111111] transition-colors duration-500">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mb-4">
-                      <span className="text-xl">🧪</span>
-                    </div>
-                    <h4 className="font-sans text-xl font-bold text-white mb-1 leading-tight">{event.title}</h4>
-                    <p className="font-sans text-xs font-semibold text-purple-400 uppercase tracking-widest mb-3">{event.subtitle}</p>
-                    <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-3">{event.description}</p>
-                    <div className="space-y-2 mb-6 text-sm text-gray-300">
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-                          🔥 Registration Open
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users size={14} className="text-purple-400" />
-                        <span>Individual Participation</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-400">✅</span>
-                        <span>Free — No Registration Fee</span>
-                      </div>
-                    </div>
-                    <div className="mt-auto pt-4 border-t border-white/10">
-                      <button
-                        id="register-btn-test-event"
-                        onClick={() => { hideFloatingButton(); setTestModalOpen(true); }}
-                        className="w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-                      >
-                        Register Now
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            }
 
-            // ── Real event card ──
-            const isFull =
-              event.max_teams > 0 &&
-              event.registered_teams_count >= event.max_teams;
-            const isOpen = event.is_registration_open && !isFull;
-            const seatsLeft = Math.max(0, event.max_teams - event.registered_teams_count);
+            // ✨ Real event card ✨
+            const maxTeams = event.max_participants ?? event.max_teams ?? 0;
+            const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - (event.registered_teams_count || 0));
+            const isFull = maxTeams > 0 && seatsLeft <= 0;
+            
+            const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
+            const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
+            
+            const isOpen = event.is_registration_open && !isFull && !isResultAnnounced;
+            const isResultScheduled = !isOpen && !isResultAnnounced && event.announcement_date && new Date() < new Date(event.announcement_date);
+            
+            const formatAnnouncementDate = (d) => {
+              try {
+                return new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+              } catch { return d; }
+            };
 
             return (
               <motion.div
@@ -286,14 +290,21 @@ export function UpcomingEvents() {
                 )}
 
                 <div className="relative w-full h-full bg-[#0B0B0B]/90 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:bg-[#111111] transition-colors duration-500">
-                  {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-                    <span className="text-xl">🐞</span>
-                  </div>
+                  {/* Icon / Banner */}
+                  {event.banner ? (
+                    <div className="w-full h-32 rounded-xl mb-4 overflow-hidden bg-white/5 border border-white/10">
+                      <img src={event.banner} alt={event.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
+                      <span className="text-xl">🐞</span>
+                    </div>
+                  )}
 
                   {/* Title */}
                   <h4 className="font-sans text-xl font-bold text-white mb-2 leading-tight">{event.title}</h4>
-                  <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-3">{event.description}</p>
+                  {event.subtitle && <p className="font-sans text-xs font-semibold text-blue-400 uppercase tracking-widest mb-3">{event.subtitle}</p>}
+                  <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-3">{event.short_description || event.description}</p>
 
                   {/* Badges & meta */}
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
@@ -313,8 +324,20 @@ export function UpcomingEvents() {
                       )}
                     </div>
 
+                    {(event.date || event.time) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-400">📅</span>
+                        <span>{event.date}{event.date && event.time ? ' | ' : ''}{event.time}</span>
+                      </div>
+                    )}
+                    {event.venue && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-400">📍</span>
+                        <span className="truncate">{event.venue}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 font-medium">Maximum Teams: {event.max_teams}</span>
+                      <span className="text-gray-400 font-medium">Seats Left: {seatsLeft} / {maxTeams}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-blue-400" />
@@ -326,36 +349,56 @@ export function UpcomingEvents() {
                         <span>Registration Fee: <span className="text-white font-semibold">₹{event.fee ?? event.registration_fee}</span></span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-purple-400">🏆</span>
-                      <span className="text-gray-400 text-xs">Winners by accuracy &amp; completion time</span>
-                    </div>
+                    {event.eligibility && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-pink-400">🎓</span>
+                        <span className="text-gray-300 text-sm">Eligibility: {event.eligibility}</span>
+                      </div>
+                    )}
+                    {(event.prizes || event.prize_pool) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">🏆</span>
+                        <span className="text-gray-300 text-sm truncate">{event.prizes || event.prize_pool}</span>
+                      </div>
+                    )}
+                    {event.whatsapp_link && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-500">💬</span>
+                        <a href={event.whatsapp_link} target="_blank" rel="noopener noreferrer" className="text-green-400 text-sm hover:underline hover:text-green-300 transition-colors">
+                          Join WhatsApp Group
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   {/* Seat Tracker */}
                   <div className="mt-auto pt-4 border-t border-white/10">
 
 
-                    {isFull ? (
+                    {isResultAnnounced ? (
                       <div
                         className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
-                        onClick={() => setWinnersPopupOpen(true)}
+                        onClick={() => openWinnersPopup(event)}
                       >
                         🎉 The Result Has Been Officially Announced!
                       </div>
-                    ) : (
+                    ) : isResultScheduled ? (
+                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                        ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
+                      </div>
+                    ) : isOpen ? (
                       <button
                         id={`register-btn-${event.id}`}
                         onClick={() => handleRegisterClick(event)}
-                        disabled={!isOpen}
-                        className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center ${
-                          isOpen
-                            ? "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-                            : "bg-white/5 text-red-400 cursor-not-allowed border border-red-500/30"
-                        }`}
+                        className="w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]"
                       >
-                        {isOpen ? "Register Now" : "Registration Closed"}
+                        Register Now
                       </button>
+                    ) : (
+                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
+                        <span>🔒</span>
+                        <span>Registration Has Closed</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -420,62 +463,29 @@ export function UpcomingEvents() {
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🏆</div>
-              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.05em', margin: 0 }}>
-                BUG HUNT – DEBUG THE WEB 2026
+              <h2 style={{ color: '#fff', fontWeight: 700, fontSize: '1.2rem', letterSpacing: '0.05em', margin: 0, textTransform: 'uppercase' }}>
+                {winnersPopupEvent?.title || "EVENT RESULTS"}
               </h2>
               <p style={{ color: '#f59e0b', fontWeight: 600, margin: '4px 0 8px', fontSize: '1rem' }}>Official Winners</p>
               <p style={{ color: '#9ca3af', fontSize: '0.78rem', margin: 0 }}>
-                Organized by ACES Forum, Department of Computer Engineering
+                Organized by ACES Forum
               </p>
             </div>
-
-            {/* 1st Place */}
-            <div style={{
-              border: '1px solid rgba(251,191,36,0.35)',
-              borderRadius: '14px',
-              padding: '20px',
-              marginBottom: '16px',
-              background: 'rgba(251,191,36,0.05)'
-            }}>
-              <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', marginBottom: '6px' }}>🥇 FIRST PLACE</div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', marginBottom: '12px' }}>Team CODEVIPERS</div>
-              <div style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '4px' }}><span style={{ color: '#9ca3af' }}>Members</span></div>
-              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• Rugved Dhomne</div>
-              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '12px' }}>• Aryan Raut</div>
-              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '2px' }}>Registration ID: <span style={{ color: '#fbbf24' }}>BUG-021</span></div>
-              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>3rd Year</span></div>
-              <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: 0 }}>
-                Congratulations to Team CODEVIPERS on securing First Place in BUG HUNT – DEBUG THE WEB 2026.
-                Your exceptional debugging skills, logical thinking, creativity, and outstanding teamwork made you the top performers of this competition.
-                Your dedication and technical excellence truly set you apart.
-                Wishing you continued success in your future academic and professional journey.
-              </p>
-            </div>
-
-            {/* 2nd Place */}
-            <div style={{
-              border: '1px solid rgba(209,213,219,0.25)',
-              borderRadius: '14px',
-              padding: '20px',
-              marginBottom: '24px',
-              background: 'rgba(209,213,219,0.04)'
-            }}>
-              <div style={{ color: '#d1d5db', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', marginBottom: '6px' }}>🥈 SECOND PLACE</div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', marginBottom: '12px' }}>Team TECHZACK</div>
-              <div style={{ color: '#d1d5db', fontSize: '0.82rem', marginBottom: '4px' }}><span style={{ color: '#9ca3af' }}>Members</span></div>
-              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '2px' }}>• Pranjal Godbole</div>
-              <div style={{ color: '#e5e7eb', fontSize: '0.85rem', marginBottom: '12px' }}>• Rushabh Kamble</div>
-              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '2px' }}>Registration ID: <span style={{ color: '#d1d5db' }}>BUG-029</span></div>
-              <div style={{ color: '#9ca3af', fontSize: '0.78rem', marginBottom: '12px' }}>Year: <span style={{ color: '#e5e7eb' }}>2nd Year</span></div>
-              <p style={{ color: '#d1d5db', fontSize: '0.82rem', lineHeight: '1.6', margin: 0 }}>
-                Congratulations to Team TECHZACK on securing Second Place in BUG HUNT – DEBUG THE WEB 2026.
-                Your strong problem-solving abilities, persistence, and teamwork helped you achieve this remarkable accomplishment.
-                Keep learning, keep innovating, and continue reaching greater heights.
-              </p>
-            </div>
+            
+            {loadingWinners ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
+                Loading results...
+              </div>
+            ) : !winnersData ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#ef4444' }}>
+                Results are not yet available for this event.
+              </div>
+            ) : (
+              <WinnerCards data={winnersData} />
+            )}
 
             {/* Divider + Footer */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px', textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '24px', paddingTop: '20px', textAlign: 'center' }}>
               <div style={{ fontSize: '1.3rem', marginBottom: '8px' }}>🎉</div>
               <p style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.95rem', margin: '0 0 10px' }}>Congratulations to Every Participant!</p>
               <p style={{ color: '#9ca3af', fontSize: '0.8rem', lineHeight: '1.7', margin: '0 0 12px' }}>

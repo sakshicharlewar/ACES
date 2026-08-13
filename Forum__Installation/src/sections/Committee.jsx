@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Link } from "lucide-react";
-import { committeeData } from "../data/committeeData";
+import { Link, Loader2 } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /* ── Leader Card (For President & Vice President) ── */
 function LeaderCard({ memberKey, role, name, image, social }) {
@@ -101,6 +102,9 @@ const SPEED       = 2.5; // px per rAF tick (~150 px/s at 60 fps)
 const PAUSE_MS    = 2000;
 
 export function Committee() {
+  const [committeeData, setCommitteeData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const trackRef        = useRef(null);
   const posRef          = useRef(0);       // current scroll position in px
   const prevPosRef      = useRef(0);
@@ -112,6 +116,20 @@ export function Committee() {
   const timerRef        = useRef(null);
 
   useEffect(() => {
+    fetch(`${BASE_URL}/api/committee`)
+      .then(res => res.json())
+      .then(data => {
+        setCommitteeData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch committee:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (loading || committeeData.length === 0) return;
     const track = trackRef.current;
     if (!track) return;
 
@@ -193,33 +211,45 @@ export function Committee() {
         </div>
 
       <div
-        className="relative w-full flex overflow-hidden"
+        className="relative w-full flex overflow-hidden min-h-[450px]"
         onMouseEnter={() => { hoveredRef.current = true;  }}
         onMouseLeave={() => { hoveredRef.current = false; }}
       >
-        {/* Fade overlays */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+          </div>
+        ) : committeeData.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
+            No committee members found
+          </div>
+        ) : (
+          <>
+            {/* Fade overlays */}
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-        {/* Marquee track — duplicated for seamless loop */}
-        <div
-          ref={trackRef}
-          style={{
-            display: "flex",
-            gap: `${GAP}px`,
-            paddingLeft: `${GAP}px`,
-            willChange: "transform",
-          }}
-        >
-          {/* Set 1 */}
-          {committeeData.map(m => (
-            <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={m.social} />
-          ))}
-          {/* Set 2 — duplicate for seamless loop */}
-          {committeeData.map(m => (
-            <LeaderCard key={`dup-${m.key}`} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={m.social} />
-          ))}
-        </div>
+            {/* Marquee track — duplicated for seamless loop */}
+            <div
+              ref={trackRef}
+              style={{
+                display: "flex",
+                gap: `${GAP}px`,
+                paddingLeft: `${GAP}px`,
+                willChange: "transform",
+              }}
+            >
+              {/* Set 1 */}
+              {committeeData.map(m => (
+                <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
+              ))}
+              {/* Set 2 — duplicate for seamless loop */}
+              {committeeData.map(m => (
+                <LeaderCard key={`dup-${m.key}`} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

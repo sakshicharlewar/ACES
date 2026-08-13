@@ -1,20 +1,42 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X } from "lucide-react";
-import { committeeData } from "../data/committeeData";
+import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X, Loader2 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export function CommitteeProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeCert, setActiveCert] = useState(null);
-
-  const member = committeeData.find(m => m.key === id);
+  
+  const [member, setMember] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/committee`)
+      .then(res => res.json())
+      .then(data => {
+        const found = data.find(m => m.key === id);
+        setMember(found || null);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch committee data:", err);
+        setLoading(false);
+      });
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <p className="text-white/50">Loading profile...</p>
+      </div>
+    );
+  }
 
   if (!member) {
     return (

@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { facultyData } from "../data/facultyData";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -20,6 +22,22 @@ const cardVariants = {
 
 export function FacultyListPage() {
   const navigate = useNavigate();
+  const [faculty, setFaculty] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/faculty`)
+      .then((res) => res.json())
+      .then((data) => {
+        setFaculty(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch faculty:", err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <motion.div
@@ -63,75 +81,81 @@ export function FacultyListPage() {
       </motion.div>
 
       {/* ── Faculty Cards List ── */}
-      <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "32px" }}>
-        {facultyData.map((faculty, index) => (
-          <motion.div
-            key={faculty.id}
-            custom={index + 2}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            variants={cardVariants}
-            whileHover={{
-              y: -6,
-              scale: 1.01,
-              boxShadow: "0 0 36px 4px rgba(59,130,246,0.18)",
-              borderColor: "rgba(59,130,246,0.35)",
-              transition: { duration: 0.3 },
-            }}
-            onClick={() => navigate(`/faculty/${faculty.id}`)}
-            style={{
-              background: "#171717",
-              backdropFilter: "blur(16px)",
-              borderRadius: "28px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              padding: "40px",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: "40px",
-              boxShadow: "0 4px 32px rgba(0,0,0,0.4)",
-              cursor: "pointer",
-            }}
-            className="flex-col md:flex-row text-center md:text-left"
-          >
-            {/* Left: Photo */}
-            <div style={{ flexShrink: 0 }}>
-              <div style={{
-                width: "160px", height: "160px", borderRadius: "50%",
-                padding: "4px", background: "linear-gradient(135deg, rgba(59,130,246,0.5), rgba(96,165,250,0.1))",
-                boxShadow: "0 0 24px rgba(59,130,246,0.2)"
-              }}>
-                <img
-                  src={faculty.image}
-                  alt={faculty.name}
-                  style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
-                />
-              </div>
-            </div>
-
-            {/* Middle: Details */}
-            <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#fff", marginBottom: "8px" }}>
-                {faculty.name}
-              </h2>
-
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "center" }} className="md:justify-start">
-                <div>
-                  <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Qualification</p>
-                  <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{faculty.qualification}</p>
+      <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10 }}>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-white/50">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+            <p>Loading faculty directory...</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+            {faculty.map((facultyMember, index) => (
+              <motion.div
+                key={facultyMember.slug || facultyMember.id}
+                custom={index + 2}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={cardVariants}
+                whileHover={{
+                  y: -6,
+                  scale: 1.01,
+                  boxShadow: "0 0 36px 4px rgba(59,130,246,0.18)",
+                  borderColor: "rgba(59,130,246,0.35)",
+                  transition: { duration: 0.3 },
+                }}
+                onClick={() => navigate(`/faculty/${facultyMember.slug || facultyMember.id}`)}
+                style={{
+                  background: "#171717",
+                  backdropFilter: "blur(16px)",
+                  borderRadius: "28px",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  padding: "40px",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: "40px",
+                  boxShadow: "0 4px 32px rgba(0,0,0,0.4)",
+                  cursor: "pointer",
+                }}
+                className="flex-col md:flex-row text-center md:text-left"
+              >
+                {/* Left: Photo */}
+                <div style={{ flexShrink: 0 }}>
+                  <div style={{
+                    width: "160px", height: "160px", borderRadius: "50%",
+                    padding: "4px", background: "linear-gradient(135deg, rgba(59,130,246,0.5), rgba(96,165,250,0.1))",
+                    boxShadow: "0 0 24px rgba(59,130,246,0.2)"
+                  }}>
+                    <img
+                      src={facultyMember.image}
+                      alt={facultyMember.name}
+                      style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Experience</p>
-                  <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{faculty.experience}</p>
+
+                {/* Middle: Details */}
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#fff", marginBottom: "8px" }}>
+                    {facultyMember.name}
+                  </h2>
+
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "center" }} className="md:justify-start">
+                    <div>
+                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Qualification</p>
+                      <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{facultyMember.qualification}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Experience</p>
+                      <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{facultyMember.experience}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-
-          </motion.div>
-        ))}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );

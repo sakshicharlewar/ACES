@@ -1,101 +1,15 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
   exit: { opacity: 0, y: -30, transition: { duration: 0.5, ease: "easeIn" } },
 };
-
-const labs = [
-  {
-    id: "lab-1",
-    title: "Object Oriented Programming (OOP) Lab",
-    image: "/Lab1.jpeg",
-    location: "1st Floor, F-33-A",
-    inCharge: "Prof. Mrunali Gajbhiye",
-    equipment: {
-      left: [
-        "Dell Vostro Desktop 3268 (20)",
-        "Intel Core i5 Processor",
-        "Windows 11",
-        "Java JDK 21",
-      ],
-      right: [
-        "Eclipse IDE",
-        "IntelliJ IDEA",
-        "NetBeans IDE",
-        "LAN & Internet Connectivity",
-      ],
-    },
-  },
-  {
-    id: "lab-2",
-    title: "Operating Systems Lab",
-    image: "/Lab2.jpeg",
-    location: "1st Floor, F-33-B",
-    inCharge: "Prof. Utkarsha Gode",
-    equipment: {
-      left: [
-        "Dell Vostro Desktop 3268 (21)",
-        "Intel Core i5 Processor",
-        "Ubuntu Linux",
-        "Windows Dual Boot",
-      ],
-      right: [
-        "VMware Workstation",
-        "VirtualBox",
-        "GCC Compiler",
-        "LAN & Internet Connectivity",
-      ],
-    },
-  },
-  {
-    id: "lab-3",
-    title: "Python Programming & AI Lab",
-    image: "/Lab3.jpeg",
-    location: "1st Floor, F-33-C",
-    inCharge: "Prof. Jayshree Gorakh",
-    equipment: {
-      left: [
-        "Dell Vostro Desktop 3268 (20)",
-        "Windows 11",
-        "Python 3.x",
-        "Jupyter Notebook",
-        "VS Code",
-      ],
-      right: [
-        "Anaconda",
-        "NumPy & Pandas",
-        "TensorFlow",
-        "High-Speed Internet",
-      ],
-    },
-  },
-  {
-    id: "lab-4",
-    title: "Web Development & Database Lab",
-    image: "/Lab4.jpeg",
-    location: "1st Floor, F-33-D",
-    inCharge: "Prof. (Faculty Name)",
-    equipment: {
-      left: [
-        "Dell Vostro Desktop 3268 (20)",
-        "Windows 11",
-        "VS Code",
-        "Node.js",
-      ],
-      right: [
-        "React.js",
-        "MongoDB",
-        "MySQL Server",
-        "Git & GitHub",
-        "LAN & Internet Connectivity",
-      ],
-    },
-  },
-];
 
 function EquipmentItem({ text }) {
   return (
@@ -145,7 +59,7 @@ function LabCard({ lab }) {
             <span className="font-semibold text-gray-700">Lab location:</span>{" "}
             {lab.location}.{" "}
             <span className="font-semibold text-gray-700">Lab in-charge:</span>{" "}
-            {lab.inCharge}.
+            {lab.in_charge}.
           </p>
 
           {/* Major Equipment Heading */}
@@ -161,12 +75,12 @@ function LabCard({ lab }) {
           {/* Two-column equipment list */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
             <ul className="space-y-3">
-              {lab.equipment.left.map((item, i) => (
+              {lab.equipment?.left?.map((item, i) => (
                 <EquipmentItem key={i} text={item} />
               ))}
             </ul>
             <ul className="space-y-3">
-              {lab.equipment.right.map((item, i) => (
+              {lab.equipment?.right?.map((item, i) => (
                 <EquipmentItem key={i} text={item} />
               ))}
             </ul>
@@ -179,6 +93,30 @@ function LabCard({ lab }) {
 
 export function LaboratoriesPage() {
   const navigate = useNavigate();
+  const [labs, setLabs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/laboratories`)
+      .then(res => res.json())
+      .then(data => {
+        setLabs(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch labs:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <motion.div

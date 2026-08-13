@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
 import { 
-  ArrowLeft, BookOpen, GraduationCap, Briefcase, Award, 
-  Link, FileText, CheckCircle, Image as ImageIcon, ZoomIn, X, 
-  ChevronRight
+  ArrowLeft, BookOpen, GraduationCap, Briefcase, 
+  Link, FileText, ChevronRight, X, Loader2
 } from "lucide-react";
-import { facultyData } from "../data/facultyData";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -37,14 +37,38 @@ export function FacultyProfilePage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [activeImg, setActiveImg] = useState(null);
+  const [faculty, setFaculty] = useState(null);
+  const [loading, setLoading] = useState(true);
   
-  const faculty = facultyData.find(f => f.id === id);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/faculty`)
+      .then(res => res.json())
+      .then(data => {
+        const found = data.find(f => f.slug === id || f.id === id || f.id.toString() === id);
+        setFaculty(found || null);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch faculty:", err);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <p>Loading Profile...</p>
+      </div>
+    );
+  }
 
   if (!faculty) {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <h2>Faculty not found</h2>
-        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px" }}>Go Back</button>
+        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px", border: "none", color: "#fff", cursor: "pointer" }}>Go Back</button>
       </div>
     );
   }
@@ -57,10 +81,8 @@ export function FacultyProfilePage() {
       exit="exit"
       style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
     >
-      {/* Background glow */}
       <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
-      {/* ── Top Nav ── */}
       <div style={{ padding: "24px", position: "relative", zIndex: 50, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
         <motion.button
           onClick={() => navigate("/faculty")}
@@ -82,7 +104,6 @@ export function FacultyProfilePage() {
 
       <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10, marginTop: "20px", display: "flex", flexDirection: "column", gap: "48px" }}>
         
-        {/* ── Profile Section (Hero) ── */}
         <motion.div
           initial="hidden" animate="visible" variants={fadeUpVariants} custom={1}
           style={{
@@ -99,7 +120,6 @@ export function FacultyProfilePage() {
           }}
           className="flex-col md:flex-row text-center md:text-left"
         >
-          {/* Left: Square Photo */}
           <div style={{ flexShrink: 0 }}>
             <div style={{
               width: "260px", height: "260px", borderRadius: "24px",
@@ -114,7 +134,6 @@ export function FacultyProfilePage() {
             </div>
           </div>
 
-          {/* Right: Quick Info */}
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: "clamp(2rem, 4vw, 2.8rem)", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.02em" }}>
               {faculty.name}
@@ -147,7 +166,6 @@ export function FacultyProfilePage() {
               </div>
             </div>
             
-            {/* Contact / Social Links */}
             <div style={{ marginTop: "32px", display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }} className="md:justify-start">
               {faculty.linkedin && (
                 <a href={faculty.linkedin} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 20px", borderRadius: "12px", color: "#fff", textDecoration: "none", fontSize: "0.95rem", transition: "all 0.3s" }}
@@ -160,20 +178,14 @@ export function FacultyProfilePage() {
           </div>
         </motion.div>
 
-        {/* ── About & Achievements ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
           <SectionHeading title="About" />
-          
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            
-            {/* Left Side: About Text (60%) */}
             <div className="w-full lg:w-[60%]" style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", boxShadow: "0 4px 32px rgba(0,0,0,0.3)" }}>
               <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
                 {faculty.professionalSummary}
               </p>
             </div>
-
-            {/* Right Side: Achievements Grid (40%) */}
             {faculty.achievementImages && faculty.achievementImages.length > 0 && (
               <div className="w-full lg:w-[40%]" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", alignContent: "start" }}>
                 {faculty.achievementImages.map((ach, i) => (
@@ -190,13 +202,12 @@ export function FacultyProfilePage() {
                     onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
                     onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
                   >
-                    <img src={ach.src} alt={ach.title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} className="img-hover" />
+                    <img src={ach.src} alt={ach.title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} />
                     <div className="overlay" style={{
                       position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
                       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                       opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
                     }}>
-                      <ZoomIn className="w-8 h-8 text-white mb-2" />
                       <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{ach.title}</p>
                       {ach.year && <p style={{ color: "#B5B5B5", fontSize: "0.9rem", marginTop: "4px" }}>{ach.year}</p>}
                     </div>
@@ -204,13 +215,10 @@ export function FacultyProfilePage() {
                 ))}
               </div>
             )}
-
           </div>
         </motion.div>
 
-        {/* ── Academic Qualifications & Research Interests ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "40px" }}>
-          
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
             <SectionHeading title="Academic Qualifications" />
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -240,34 +248,26 @@ export function FacultyProfilePage() {
               </div>
             </div>
           </motion.div>
-
         </div>
 
-        {/* ── Professional Information ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
           <SectionHeading title="Professional Information" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
-            
-            {/* Subjects */}
-            <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                <BookOpen className="w-5 h-5 text-blue-400" />
-                <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
-              </div>
-              <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {faculty.subjectsTaught && faculty.subjectsTaught.map((sub, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
-                    <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
-                    <span>{sub}</span>
-                  </li>
-                ))}
-              </ul>
+          <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+              <BookOpen className="w-5 h-5 text-blue-400" />
+              <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
             </div>
-
+            <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {faculty.subjectsTaught && faculty.subjectsTaught.map((sub, i) => (
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
+                  <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
+                  <span>{sub}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </motion.div>
 
-        {/* ── Publications ── */}
         {faculty.publications && faculty.publications.length > 0 && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={6}>
             <SectionHeading title="Publications" />
@@ -280,46 +280,13 @@ export function FacultyProfilePage() {
                   </div>
                   <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "12px", lineHeight: "1.4" }}>{pub.title}</h4>
                   <p style={{ color: "#999", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{pub.journal}</p>
-
                 </div>
               ))}
             </div>
           </motion.div>
         )}
-
-        {/* ── Photo Gallery ── */}
-        {faculty.gallery && faculty.gallery.length > 0 && (
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={8}>
-            <SectionHeading title="Gallery" />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
-              {faculty.gallery.map((imgSrc, i) => (
-                <div
-                  key={i}
-                  onClick={() => setActiveImg(imgSrc)}
-                  style={{
-                    borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
-                    background: "#111", cursor: "pointer", aspectRatio: "1", position: "relative",
-                  }}
-                  onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
-                  onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
-                >
-                  <img src={imgSrc} alt="Gallery" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <div className="overlay" style={{
-                    position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    opacity: 0, transition: "opacity 0.3s"
-                  }}>
-                    <ZoomIn className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
       </div>
 
-      {/* ── Lightbox Modal ── */}
       <AnimatePresence>
         {activeImg && (
           <motion.div
@@ -344,8 +311,6 @@ export function FacultyProfilePage() {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all 0.3s"
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
             >
               <X className="w-6 h-6" />
             </button>

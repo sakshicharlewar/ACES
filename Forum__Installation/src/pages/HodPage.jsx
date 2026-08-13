@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Award, BookOpen, GraduationCap, Briefcase, Lightbulb, Users, X, ZoomIn, Building2 } from "lucide-react";
+import { ArrowLeft, Award, BookOpen, GraduationCap, Briefcase, Lightbulb, Users, X, ZoomIn, Building2, Loader2 } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /* ═══════════════════════════════════════════════════════
    Page transition variants
@@ -29,52 +31,6 @@ const fadeLeftVariants = {
     transition: { duration: 0.6, delay: i * 0.1, ease: "easeOut" },
   }),
 };
-
-/* ═══════════════════════════════════════════════════════
-   Data
-═══════════════════════════════════════════════════════ */
-const qualifications = [
-  {
-    icon: <Award className="w-5 h-5 text-blue-400" />,
-    title: "Post Doctoral",
-    desc: "Lincoln University College, Malaysia – 2026",
-  },
-  {
-    icon: <GraduationCap className="w-5 h-5 text-blue-400" />,
-    title: "Ph.D.",
-    desc: "Computer Science & Engineering – 2024",
-  },
-  {
-    icon: <BookOpen className="w-5 h-5 text-blue-400" />,
-    title: "M.Tech",
-    desc: "Computer Science & Engineering",
-  },
-  {
-    icon: <BookOpen className="w-5 h-5 text-blue-400" />,
-    title: "B.E.",
-    desc: "Information Technology",
-  },
-  {
-    icon: <BookOpen className="w-5 h-5 text-blue-400" />,
-    title: "Diploma",
-    desc: "Information Technology",
-  },
-];
-
-const highlights = [
-  { icon: <Briefcase className="w-5 h-5 text-blue-400" />, title: "14+ Years Experience" },
-  { icon: <Building2 className="w-5 h-5 text-blue-400" />, title: "Head of Department" },
-  { icon: <GraduationCap className="w-5 h-5 text-blue-400" />, title: "Ph.D. Completed" },
-  { icon: <Award className="w-5 h-5 text-blue-400" />, title: "Post Doctoral (2026)" },
-  { icon: <Users className="w-5 h-5 text-blue-400" />, title: "Student Mentor" },
-  { icon: <Lightbulb className="w-5 h-5 text-blue-400" />, title: "Research & Innovation" },
-  { icon: <Briefcase className="w-5 h-5 text-blue-400" />, title: "Academic Leadership" },
-  { icon: <Users className="w-5 h-5 text-blue-400" />, title: "Industry Collaboration" },
-];
-
-const achievementImages = [
-  { src: "/HOD_Achievements.jpeg", label: "Achievement Certificate" },
-];
 
 /* ═══════════════════════════════════════════════════════
    Components
@@ -128,6 +84,42 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
 export function HodPage() {
   const navigate = useNavigate();
   const [activeImg, setActiveImg] = useState(null);
+  const [hod, setHod] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/hod`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          setHod(data);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch HOD data:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <p>Loading Profile...</p>
+      </div>
+    );
+  }
+
+  if (!hod) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <h2>HOD Profile not found</h2>
+        <button onClick={() => navigate("/department")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px", border: "none", color: "#fff", cursor: "pointer" }}>Go Back</button>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -166,7 +158,7 @@ export function HodPage() {
         style={{ textAlign: "center", padding: "40px 24px 60px", position: "relative", zIndex: 10 }}
       >
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.02em" }}>
-          Head of Department
+          {hod.designation}
         </h1>
       </motion.div>
 
@@ -198,8 +190,8 @@ export function HodPage() {
                 style={{ width: "100%", height: "500px", borderRadius: "16px", overflow: "hidden" }}
               >
                 <img
-                  src="/HODSIR1.jpeg"
-                  alt="Dr. Lowlesh Yadav"
+                  src={hod.image}
+                  alt={hod.name}
                   style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                 />
               </motion.div>
@@ -227,7 +219,7 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <p style={{ color: "#B5B5B5", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 300 }}>
-                Dr. Lowlesh Yadav is the Head of the Department of Computer Engineering at Suryodaya College of Engineering &amp; Technology (SCET). He has over 14 years of experience in teaching, research, academic administration, and student mentoring. His leadership focuses on innovation, practical learning, industry collaboration, research excellence, and preparing students for successful careers in modern technology.
+                {hod.professional_summary}
               </p>
             </div>
 
@@ -239,8 +231,8 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gap: "16px" }}>
-                {qualifications.map((q, i) => (
-                  <GlassCard key={i} icon={q.icon} title={q.title} desc={q.desc} delayIndex={i + 4} />
+                {hod.academic_qualifications && hod.academic_qualifications.map((q, i) => (
+                  <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-blue-400" />} title={q.title} desc={q.desc} delayIndex={i + 4} />
                 ))}
               </div>
             </div>
@@ -253,8 +245,8 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
-                {highlights.map((h, i) => (
-                  <GlassCard key={i} icon={h.icon} title={h.title} delayIndex={i + 6} isSmall />
+                {hod.professional_highlights && hod.professional_highlights.map((h, i) => (
+                  <GlassCard key={i} icon={<Award className="w-5 h-5 text-blue-400" />} title={h.title} delayIndex={i + 6} isSmall />
                 ))}
               </div>
             </div>
@@ -267,7 +259,7 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
-                {achievementImages.map((item, i) => (
+                {hod.achievement_images && hod.achievement_images.map((item, i) => (
                   <motion.div
                     key={i}
                     custom={i + 8}

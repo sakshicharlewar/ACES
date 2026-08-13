@@ -1,20 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, User, Users, Monitor, Award, Image as ImageIcon, X } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /* ═══════════════════════════════════════════════════════
    Data
 ═══════════════════════════════════════════════════════ */
-const cards = [
-  {
-    id: "hod",
-    icon: <User className="w-7 h-7 text-blue-400" />,
-    title: "Head of Department",
-    shortDesc: "Academic leadership driving excellence and innovation.",
-    detail: `The Head of Department brings decades of academic and industry experience. Under their leadership, the department has achieved NBA accreditation, introduced cutting-edge curriculum updates, and established strong industry partnerships. The HOD actively mentors students for higher studies, research, and career excellence, fostering a culture of innovation, discipline, and continuous learning.`,
-    image: "/HODSIR1.jpeg"
-  },
+const staticCards = [
   {
     id: "faculty",
     icon: <Users className="w-7 h-7 text-blue-400" />,
@@ -158,6 +152,31 @@ function Modal({ card, onClose }) {
 export function DepartmentPage() {
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState(null);
+  const [hod, setHod] = useState(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetch(`${BASE_URL}/api/hod`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          setHod(data);
+        }
+      })
+      .catch(err => console.error("Failed to fetch HOD data:", err));
+  }, []);
+
+  const cards = [
+    {
+      id: "hod",
+      icon: <User className="w-7 h-7 text-blue-400" />,
+      title: "Head of Department",
+      shortDesc: "Academic leadership driving excellence and innovation.",
+      detail: hod ? (hod.professional_summary?.substring(0, 250) + "...") : "Loading HOD Profile...",
+      image: hod?.image || "/HODSIR1.jpeg"
+    },
+    ...staticCards
+  ];
 
   return (
     <motion.div
