@@ -14,6 +14,7 @@ import { UpcomingEvents } from "./sections/UpcomingEvents";
 import { CompletedEvents } from "./sections/CompletedEvents";
 import { VisionMission } from "./sections/VisionMission";
 import { Committee } from "./sections/Committee";
+import { NSDC } from "./sections/NSDC";
 import { AcademicToppers } from "./sections/AcademicToppers";
 import { ComplaintForm } from "./sections/ComplaintForm";
 import { ContactUs } from "./sections/ContactUs";
@@ -83,6 +84,9 @@ function HomePage() {
       <AcesLogo />
       <div id="committee-section">
         <Committee />
+      </div>
+      <div id="nsdc-section">
+        <NSDC />
       </div>
       <div id="events-section">
         <CompletedEvents />
