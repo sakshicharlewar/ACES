@@ -65,7 +65,7 @@ function ScrollBar() {
 /* ── Homepage ── */
 function HomePage() {
   return (
-    <main className="bg-background min-h-screen text-text-primary selection:bg-accent selection:text-white">
+    <main className="min-h-screen text-text-primary selection:bg-accent selection:text-white">
       <Navbar />
       <ScrollBar />
       <div id="hero-section">

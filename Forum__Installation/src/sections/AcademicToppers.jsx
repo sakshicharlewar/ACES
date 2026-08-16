@@ -73,7 +73,7 @@ export function AcademicToppers() {
   const secondYearToppers = toppers.filter(t => t.year_group === "second_year");
 
   return (
-    <section id="academic-toppers" className="py-24 px-6 md:px-12 lg:px-24 bg-[#000000] relative overflow-hidden">
+    <section id="academic-toppers" className="py-24 px-6 md:px-12 lg:px-24 bg-transparent relative overflow-hidden">
       <div className="container mx-auto">
         {/* Top Heading */}
         <motion.div
@@ -99,7 +99,7 @@ export function AcademicToppers() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="bg-[#111111] rounded-[18px] border border-[rgba(255,255,255,0.08)] p-6 lg:p-10"
+            className="bg-transparent rounded-[18px] border border-[rgba(255,255,255,0.08)] p-6 lg:p-10"
           >
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">

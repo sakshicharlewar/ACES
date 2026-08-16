@@ -105,16 +105,6 @@ export function Committee() {
   const [committeeData, setCommitteeData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const trackRef        = useRef(null);
-  const posRef          = useRef(0);       // current scroll position in px
-  const prevPosRef      = useRef(0);
-  const pausedRef       = useRef(false);
-  const hoveredRef      = useRef(false);
-  const lastGroupRef    = useRef(-1);      // last group index we paused at
-  const halfWidthRef    = useRef(0);       // width of one card-set (for looping)
-  const rafRef          = useRef(null);
-  const timerRef        = useRef(null);
-
   useEffect(() => {
     fetch(`${BASE_URL}/api/committee`)
       .then(res => res.json())
@@ -126,63 +116,6 @@ export function Committee() {
         console.error("Failed to fetch committee:", err);
         setLoading(false);
       });
-  }, []);
-
-  useEffect(() => {
-    if (loading || committeeData.length === 0) return;
-    const track = trackRef.current;
-    if (!track) return;
-
-    // Always reset to position 0 on mount — ensures marquee starts from President card
-    posRef.current        = 0;
-    prevPosRef.current    = 0;
-    lastGroupRef.current  = -1;
-    track.style.transform = "translateX(0px)";
-
-    requestAnimationFrame(() => {
-      halfWidthRef.current = track.scrollWidth / 2;
-    });
-
-    const tick = () => {
-      if (!pausedRef.current && !hoveredRef.current) {
-        posRef.current += SPEED;
-
-        // ── Detect group boundary crossing ──────────────────────────────
-        const prevGroup = Math.floor(prevPosRef.current / GROUP_STEP);
-        const currGroup = Math.floor(posRef.current  / GROUP_STEP);
-
-        if (currGroup > prevGroup && currGroup !== lastGroupRef.current) {
-          lastGroupRef.current = currGroup;
-          // Snap to exact pixel boundary so no half-card shows
-          posRef.current   = currGroup * GROUP_STEP;
-          prevPosRef.current = posRef.current;
-          pausedRef.current  = true;
-
-          timerRef.current = setTimeout(() => {
-            pausedRef.current = false;
-          }, PAUSE_MS);
-        }
-
-        // ── Seamless loop ──────────────────────────────────────────────
-        if (halfWidthRef.current > 0 && posRef.current >= halfWidthRef.current) {
-          posRef.current    -= halfWidthRef.current;
-          prevPosRef.current = posRef.current;
-          lastGroupRef.current = -1; // reset so first group pauses again
-        }
-
-        prevPosRef.current = posRef.current;
-        track.style.transform = `translateX(-${posRef.current}px)`;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      clearTimeout(timerRef.current);
-    };
   }, []);
 
   return (
@@ -210,11 +143,7 @@ export function Committee() {
           </div>
         </div>
 
-      <div
-        className="relative w-full flex overflow-hidden min-h-[450px]"
-        onMouseEnter={() => { hoveredRef.current = true;  }}
-        onMouseLeave={() => { hoveredRef.current = false; }}
-      >
+      <div className="relative w-full overflow-hidden min-h-[450px]">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
@@ -226,28 +155,23 @@ export function Committee() {
         ) : (
           <>
             {/* Fade overlays */}
-            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
 
-            {/* Marquee track — duplicated for seamless loop */}
-            <div
-              ref={trackRef}
-              style={{
-                display: "flex",
-                gap: `${GAP}px`,
-                paddingLeft: `${GAP}px`,
-                willChange: "transform",
-              }}
+            <marquee
+              behavior="scroll"
+              direction="left"
+              scrollamount="12"
+              onMouseOver={(e) => e.target.stop()}
+              onMouseOut={(e) => e.target.start()}
+              style={{ width: "100%", padding: "20px 0" }}
             >
-              {/* Set 1 */}
-              {committeeData.map(m => (
-                <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
-              ))}
-              {/* Set 2 — duplicate for seamless loop */}
-              {committeeData.map(m => (
-                <LeaderCard key={`dup-${m.key}`} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
-              ))}
-            </div>
+              <div style={{ display: "inline-flex", gap: "24px", paddingLeft: "24px" }}>
+                {committeeData.map(m => (
+                  <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
+                ))}
+              </div>
+            </marquee>
           </>
         )}
       </div>

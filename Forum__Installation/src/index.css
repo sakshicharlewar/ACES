@@ -6,9 +6,15 @@
 @layer base {
   html {
     @apply scroll-smooth;
+    background-color: #0B0B0B;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: 0 0;
+    background-attachment: local;
   }
   body {
-    @apply bg-background text-text-primary font-sans antialiased overflow-x-hidden leading-relaxed;
+    @apply text-text-primary font-sans antialiased overflow-x-hidden leading-relaxed;
+    background: transparent;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply leading-tight tracking-tight;

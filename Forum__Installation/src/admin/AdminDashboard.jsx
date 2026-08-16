@@ -7,6 +7,7 @@ import {
   TrendingUp, ArrowRight, Loader2, AlertCircle, Database, Star,
   Activity, RefreshCw,
 } from "lucide-react";
+import { GlobeSection } from "../components/ui/globe";
 
 function StatCard({ label, value, icon: Icon, color, loading, sub }) {
   return (
@@ -231,6 +232,10 @@ export function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {/* ── Globe Section ── */}
+        <GlobeSection />
+
       </div>
     </AdminLayout>
   );

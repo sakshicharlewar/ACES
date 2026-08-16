@@ -63,7 +63,7 @@ export function AdminLayout({ children }) {
   );
 
   return (
-    <div className="min-h-screen flex bg-[#0B0B0B] text-white font-sans">
+    <div className="min-h-screen flex bg-transparent text-white font-sans">
       {/* ── Sidebar ── */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#111111] border-r border-white/10 flex flex-col transform transition-transform duration-300
