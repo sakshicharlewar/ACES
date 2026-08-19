@@ -7,16 +7,15 @@ from models import Event, TeamRegistration, AcademicTopper, EventStatus, Registr
 
 router = APIRouter()
 
-def parse_dates(d: dict):
-    for k in ["created_at", "updated_at"]:
-        if k in d and isinstance(d[k], str):
-            try:
-                # Handle cases where the string might not have timezone info or might have space instead of T
-                val = d[k].replace(' ', 'T')
-                d[k] = datetime.datetime.fromisoformat(val)
-                # Ensure timezone aware if needed, or leave naive
-            except Exception:
-                del d[k]
+def clean_dict(d: dict):
+    # forcibly remove dates
+    for k in ["created_at", "updated_at", "announcement_date"]:
+        if k in d:
+            del d[k]
+    # some fields might be passed as empty string but expect optional int
+    for k, v in list(d.items()):
+        if v == "":
+            d[k] = None
 
 @router.post("/temp_restore")
 async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
@@ -27,20 +26,38 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
             if "event_status" in e and isinstance(e["event_status"], str): e["event_status"] = EventStatus(e["event_status"])
             if "registration_status" in e and isinstance(e["registration_status"], str): e["registration_status"] = RegistrationStatus(e["registration_status"])
             if "result_status" in e and isinstance(e["result_status"], str): e["result_status"] = ResultStatus(e["result_status"])
-            parse_dates(e)
-            ev = Event(**e)
-            await db.merge(ev)
+            clean_dict(e)
+            
+            # Since merge can be tricky with uninitialized fields, 
+            # let's just do an update if it exists, or add if it doesn't.
+            existing = await db.get(Event, e["id"])
+            if existing:
+                for k, v in e.items():
+                    setattr(existing, k, v)
+            else:
+                ev = Event(**e)
+                db.add(ev)
             
         for r in data.get("registrations", []):
             if "payment_status" in r and isinstance(r["payment_status"], str): r["payment_status"] = PaymentStatus(r["payment_status"])
-            parse_dates(r)
-            reg = TeamRegistration(**r)
-            await db.merge(reg)
+            clean_dict(r)
+            existing = await db.get(TeamRegistration, r["id"])
+            if existing:
+                for k, v in r.items():
+                    setattr(existing, k, v)
+            else:
+                reg = TeamRegistration(**r)
+                db.add(reg)
             
         for t in data.get("toppers", []):
-            parse_dates(t)
-            top = AcademicTopper(**t)
-            await db.merge(top)
+            clean_dict(t)
+            existing = await db.get(AcademicTopper, t["id"])
+            if existing:
+                for k, v in t.items():
+                    setattr(existing, k, v)
+            else:
+                top = AcademicTopper(**t)
+                db.add(top)
             
         await db.commit()
         return {"status": "ok"}
