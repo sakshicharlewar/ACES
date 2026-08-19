@@ -2,8 +2,8 @@ import traceback
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from database import get_db
-from models import Event, TeamRegistration, AcademicTopper
+from database import get_db, engine
+from models import Event, TeamRegistration, AcademicTopper, Base
 
 router = APIRouter()
 
@@ -20,20 +20,13 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
     data = await req.json()
     
     try:
-        # Just in case team_registrations or academic_toppers is missing updated_at
-        try:
-            await db.execute(text("ALTER TABLE team_registrations ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE;"))
-        except:
-            pass
+        # DROP and RECREATE the tables
+        async with engine.begin() as conn:
+            await conn.execute(text("DROP TABLE IF EXISTS team_registrations CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS academic_toppers CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS events CASCADE"))
+            await conn.run_sync(Base.metadata.create_all)
             
-        try:
-            await db.execute(text("ALTER TABLE academic_toppers ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE;"))
-        except:
-            pass
-            
-        # TRUNCATE tables to avoid ID and unique constraint conflicts
-        await db.execute(text("TRUNCATE TABLE team_registrations, events, academic_toppers RESTART IDENTITY CASCADE;"))
-        
         for e in data.get("events", []):
             clean_dict(e)
             ev = Event(**e)
