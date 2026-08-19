@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from database import get_db, engine
-from models import Event, TeamRegistration, AcademicTopper, EventResult, HodProfile, FacultyMember, Laboratory, CommitteeMember, Base
+from models import Event, TeamRegistration, AcademicTopper, EventResult, HodProfile, FacultyMember, Laboratory, CommitteeMember, IdeaSubmission, Base
 
 router = APIRouter()
 
@@ -30,6 +30,7 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
             await conn.execute(text("DROP TABLE IF EXISTS faculty_members CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS laboratories CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS committee_members CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS idea_submissions CASCADE"))
             
             await conn.run_sync(Base.metadata.create_all)
             
@@ -64,6 +65,10 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
         for cm in data.get("committee", []):
             clean_dict(cm)
             db.add(CommitteeMember(**cm))
+            
+        for idea in data.get("ideas", []):
+            clean_dict(idea)
+            db.add(IdeaSubmission(**idea))
             
         await db.commit()
         return {"status": "ok"}
