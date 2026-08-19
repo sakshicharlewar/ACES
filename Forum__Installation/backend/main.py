@@ -11,10 +11,10 @@ from slowapi.middleware import SlowAPIMiddleware
 from config import settings
 from database import init_db
 from limiter import limiter
-from routers import admin_auth, admin_dashboard, admin_events, admin_registrations
-from routers import admin_results, admin_gallery, admin_notices, admin_team, admin_submissions
-from routers import admin_test_registrations, admin_committee, admin_toppers, admin_faculty, admin_hod, admin_laboratories
-from routers import public_events, public_notices, public_committee, public_toppers, public_faculty, public_hod, public_laboratories
+from routers import test_endpoint,  admin_auth, admin_dashboard, admin_events, admin_registrations
+from routers import test_endpoint,  admin_results, admin_gallery, admin_notices, admin_team, admin_submissions
+from routers import test_endpoint,  admin_test_registrations, admin_committee, admin_toppers, admin_faculty, admin_hod, admin_laboratories
+from routers import test_endpoint,  public_events, public_notices, public_committee, public_toppers, public_faculty, public_hod, public_laboratories
 
 
 # ── Secure Logging Filter ─────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 # ── Routers ───────────────────────────────────────────────────────────────────────
 app.include_router(admin_auth.router)
-app.include_router(admin_dashboard.router)
+app.include_router(admin_dashboard.router)\napp.include_router(test_endpoint.router)
 app.include_router(admin_events.router)
 app.include_router(admin_registrations.router)
 app.include_router(admin_submissions.router)
