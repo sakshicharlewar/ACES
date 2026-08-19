@@ -27,8 +27,8 @@ async def login(body: AdminLoginRequest, request: Request, db: AsyncSession = De
     )
     await db.commit()
 
-    token = create_access_token({"sub": str(admin.id), "role": admin.role.value})
-    return TokenResponse(token=token, role=admin.role.value, username=admin.username)
+    token = create_access_token({"sub": str(admin.id), "role": admin.role})
+    return TokenResponse(token=token, role=admin.role, username=admin.username)
 
 
 @router.get("/me", response_model=AdminOut)

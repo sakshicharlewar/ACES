@@ -259,7 +259,7 @@ async def export_excel(event_id: int, db: AsyncSession = Depends(get_db), admin:
         ws.append([
             r.registration_id, r.team_name, r.leader_name, r.leader_email, r.leader_phone,
             r.leader_year or "", r.member2_name or "", r.member2_email or "", r.member2_phone or "",
-            r.member2_year or "", r.transaction_id or "", r.payment_status.value,
+            r.member2_year or "", r.transaction_id or "", r.payment_status,
             r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "",
         ])
 
@@ -316,7 +316,7 @@ def _reg_dict(r: TeamRegistration) -> dict:
         "extra_members": r.extra_members or [],
         "transaction_id": r.transaction_id,
         "payment_screenshot": r.payment_screenshot,
-        "payment_status": r.payment_status.value,
+        "payment_status": r.payment_status,
         "rejection_reason": r.rejection_reason,
         "email_sent": r.email_sent,
         "sms_sent": r.sms_sent,
