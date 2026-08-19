@@ -316,7 +316,7 @@ def _reg_dict(r: TeamRegistration) -> dict:
         "extra_members": r.extra_members or [],
         "transaction_id": r.transaction_id,
         "payment_screenshot": r.payment_screenshot,
-        "payment_status": r.payment_status,
+        "payment_status": r.payment_status.value if r.payment_status else None,
         "rejection_reason": r.rejection_reason,
         "email_sent": r.email_sent,
         "sms_sent": r.sms_sent,
