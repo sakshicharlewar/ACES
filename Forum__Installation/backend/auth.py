@@ -50,10 +50,16 @@ async def get_current_admin(
     if not credentials:
         raise HTTPException(status_code=401, detail="Authentication required")
     payload = decode_token(credentials.credentials)
-    admin_id: Optional[int] = payload.get("sub")
+    admin_id = payload.get("sub")
     if admin_id is None:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-    result = await db.execute(select(Admin).where(Admin.id == int(admin_id), Admin.is_active == True))
+    
+    try:
+        admin_id_int = int(admin_id)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="Expired legacy token")
+        
+    result = await db.execute(select(Admin).where(Admin.id == admin_id_int, Admin.is_active == True))
     admin = result.scalar_one_or_none()
     if not admin:
         raise HTTPException(status_code=401, detail="Admin not found or inactive")
