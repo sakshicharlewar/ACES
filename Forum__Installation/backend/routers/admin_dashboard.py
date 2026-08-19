@@ -11,10 +11,12 @@ router = APIRouter(prefix="/admin/api", tags=["Admin Dashboard"])
 
 @router.get("/stats", response_model=DashboardStats)
 async def get_dashboard_stats(
+
     db: AsyncSession = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    # Event counts
+    try:
+        # Event counts
     total_events = (await db.execute(select(func.count(Event.id)))).scalar() or 0
     upcoming = (await db.execute(select(func.count(Event.id)).where(Event.event_status == EventStatus.upcoming))).scalar() or 0
     ongoing = (await db.execute(select(func.count(Event.id)).where(Event.event_status == EventStatus.ongoing))).scalar() or 0
@@ -67,6 +69,9 @@ async def get_dashboard_stats(
         for e in recent_events_result.scalars().all()
     ]
 
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
     return DashboardStats(
         total_events=total_events,
         upcoming_events=upcoming,
