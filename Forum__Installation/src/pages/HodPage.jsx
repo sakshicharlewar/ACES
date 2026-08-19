@@ -231,7 +231,7 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gap: "16px" }}>
-                {hod.academic_qualifications && hod.academic_qualifications.map((q, i) => (
+                {(hod.academic_qualifications || []).map((q, i) => (
                   <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-blue-400" />} title={q.title} desc={q.desc} delayIndex={i + 4} />
                 ))}
               </div>
@@ -245,7 +245,7 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
-                {hod.professional_highlights && hod.professional_highlights.map((h, i) => (
+                {(hod.professional_highlights || []).map((h, i) => (
                   <GlassCard key={i} icon={<Award className="w-5 h-5 text-blue-400" />} title={h.title} delayIndex={i + 6} isSmall />
                 ))}
               </div>
@@ -259,7 +259,7 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
-                {hod.achievement_images && hod.achievement_images.map((item, i) => (
+                {(hod.achievement_images || []).map((item, i) => (
                   <motion.div
                     key={i}
                     custom={i + 8}
