@@ -56,10 +56,10 @@ def event_to_dict(e: Event) -> dict:
         "rules": e.rules,
         "prizes": e.prizes,
         "tags": e.tags,
-        "registration_status": e.registration_status.value,
+        "registration_status": e.registration_status,
         "is_registration_open": e.registration_status == RegistrationStatus.open,
-        "result_status": e.result_status.value,
-        "event_status": e.event_status.value,
+        "result_status": e.result_status,
+        "event_status": e.event_status,
         "is_featured": e.is_featured,
         "created_at": e.created_at.isoformat(),
     }
