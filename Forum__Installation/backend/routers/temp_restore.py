@@ -16,7 +16,7 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
         if "registration_status" in e and e["registration_status"]: e["registration_status"] = RegistrationStatus(e["registration_status"])
         if "result_status" in e and e["result_status"]: e["result_status"] = ResultStatus(e["result_status"])
         ev = Event(**e)
-        db.add(ev)
+        await db.merge(ev)
         
     # 2. Restore Registrations
     for r in data.get("registrations", []):
@@ -25,12 +25,12 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
             try: r["created_at"] = datetime.datetime.fromisoformat(r["created_at"])
             except: del r["created_at"]
         reg = TeamRegistration(**r)
-        db.add(reg)
+        await db.merge(reg)
         
     # 3. Restore Toppers
     for t in data.get("toppers", []):
         top = AcademicTopper(**t)
-        db.add(top)
+        await db.merge(top)
         
     await db.commit()
     return {"status": "ok"}
