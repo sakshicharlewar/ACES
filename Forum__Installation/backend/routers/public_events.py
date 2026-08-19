@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Form, UploadFile, File, HTTPException
+from fastapi import APIRouter, Query, Form, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -150,6 +150,7 @@ async def submit_innovation(
     idea_description: str = Form(..., alias="Idea Description"),
     expected_outcome: Optional[str] = Form(None, alias="Expected Outcome"),
     attachment: Optional[UploadFile] = File(None),
+    background_tasks: BackgroundTasks = None,
     db: AsyncSession = Depends(get_db)
 ):
     import base64
@@ -184,4 +185,12 @@ async def submit_innovation(
     
     db.add(new_submission)
     await db.commit()
+
+    if background_tasks:
+        try:
+            from email_utils import notify_admin_new_idea
+            background_tasks.add_task(notify_admin_new_idea, idea_title, full_name)
+        except Exception:
+            pass
+
     return {"message": "Idea submitted successfully", "idea_id": idea_id}

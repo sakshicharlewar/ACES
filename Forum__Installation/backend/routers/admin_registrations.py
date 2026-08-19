@@ -105,6 +105,13 @@ async def team_register(
     )
     await db.commit()
 
+    # Trigger async email notification to admin
+    try:
+        from email_utils import notify_admin_new_registration
+        background_tasks.add_task(notify_admin_new_registration, event.title, body.leader_name, body.leader_email)
+    except Exception:
+        pass
+
     return TeamRegisterOut(registration_id=reg_id, message="Registration successful! Payment will be verified shortly.")
 
 
@@ -154,7 +161,12 @@ async def get_registration(reg_id: int, db: AsyncSession = Depends(get_db), admi
 
 
 @router.patch("/admin/api/team-registrations/{reg_id}/approve")
-async def approve_registration(reg_id: int, db: AsyncSession = Depends(get_db), admin: Admin = Depends(get_current_admin)):
+async def approve_registration(
+    reg_id: int,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    admin: Admin = Depends(get_current_admin)
+):
     result = await db.execute(select(TeamRegistration).where(TeamRegistration.id == reg_id))
     reg = result.scalar_one_or_none()
     if not reg:
@@ -164,6 +176,10 @@ async def approve_registration(reg_id: int, db: AsyncSession = Depends(get_db), 
     reg.payment_status = PaymentStatus.approved
     reg.email_sent = True
 
+    ev_result = await db.execute(select(Event).where(Event.id == reg.event_id))
+    ev = ev_result.scalar_one_or_none()
+    event_title = ev.title if ev else "Event"
+
     if not was_approved:
         # Increment approved_count atomically
         await db.execute(
@@ -172,12 +188,18 @@ async def approve_registration(reg_id: int, db: AsyncSession = Depends(get_db), 
             )
         )
         # Refresh event and auto-close if seats full
-        ev_result = await db.execute(select(Event).where(Event.id == reg.event_id))
-        ev = ev_result.scalar_one_or_none()
         if ev and ev.approved_count >= ev.max_participants:
             ev.registration_status = RegistrationStatus.closed
 
     await db.commit()
+
+    # Send email to user
+    try:
+        from email_utils import notify_user_registration_approved
+        background_tasks.add_task(notify_user_registration_approved, reg.leader_email, reg.leader_name, event_title)
+    except Exception:
+        pass
+
     return {"success": True, "message": "Registration approved"}
 
 
