@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from database import get_db, engine
-from models import Event, TeamRegistration, AcademicTopper, Base
+from models import Event, TeamRegistration, AcademicTopper, EventResult, Base
 
 router = APIRouter()
 
@@ -24,6 +24,7 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
         async with engine.begin() as conn:
             await conn.execute(text("DROP TABLE IF EXISTS team_registrations CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS academic_toppers CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS event_results CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS events CASCADE"))
             
             # Explicitly drop lingering indexes if they exist
@@ -49,6 +50,11 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
             clean_dict(t)
             top = AcademicTopper(**t)
             db.add(top)
+            
+        for er in data.get("results", []):
+            clean_dict(er)
+            result_obj = EventResult(**er)
+            db.add(result_obj)
             
         await db.commit()
         return {"status": "ok"}
