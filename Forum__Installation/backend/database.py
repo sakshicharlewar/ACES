@@ -11,9 +11,9 @@ engine_kwargs = {
 }
 
 if "sqlite" not in settings.DATABASE_URL:
-    engine_kwargs["pool_size"] = 50
-    engine_kwargs["max_overflow"] = 100
-    engine_kwargs["pool_timeout"] = 30
+    engine_kwargs["pool_size"] = 20
+    engine_kwargs["max_overflow"] = 30
+    engine_kwargs["pool_timeout"] = 60
     engine_kwargs["pool_recycle"] = 1800
 else:
     engine_kwargs["connect_args"] = {"timeout": 30}
