@@ -20,6 +20,17 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
     data = await req.json()
     
     try:
+        # Just in case team_registrations or academic_toppers is missing updated_at
+        try:
+            await db.execute(text("ALTER TABLE team_registrations ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE;"))
+        except:
+            pass
+            
+        try:
+            await db.execute(text("ALTER TABLE academic_toppers ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE;"))
+        except:
+            pass
+            
         # TRUNCATE tables to avoid ID and unique constraint conflicts
         await db.execute(text("TRUNCATE TABLE team_registrations, events, academic_toppers RESTART IDENTITY CASCADE;"))
         
