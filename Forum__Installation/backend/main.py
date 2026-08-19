@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
 
-app = FastAPI(title="ACES Admin Panel API", version="2.0", lifespan=lifespan)
+from routers import temp_restore`napp = FastAPI(title="ACES Admin Panel API", version="2.0", lifespan=lifespan)
 app.state.limiter = limiter
 
 origins = [
@@ -55,4 +55,4 @@ app.include_router(public_committee.router)
 app.include_router(public_toppers.router)
 app.include_router(public_faculty.router)
 app.include_router(public_hod.router)
-app.include_router(public_laboratories.router)
+app.include_router(public_laboratories.router)`napp.include_router(temp_restore.router)
