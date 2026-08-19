@@ -43,7 +43,7 @@ async def get_dashboard_stats(
             "team_name": r.TeamRegistration.team_name,
             "leader_name": r.TeamRegistration.leader_name,
             "leader_email": r.TeamRegistration.leader_email,
-            "payment_status": r.TeamRegistration.payment_status.value,
+            "payment_status": getattr(r.TeamRegistration.payment_status, "value", r.TeamRegistration.payment_status),
             "event_title": r.title,
             "created_at": r.TeamRegistration.created_at.isoformat(),
         }
@@ -58,8 +58,8 @@ async def get_dashboard_stats(
         {
             "id": e.id,
             "title": e.title,
-            "event_status": e.event_status.value,
-            "registration_status": e.registration_status.value,
+            "event_status": getattr(e.event_status, "value", e.event_status),
+            "registration_status": getattr(e.registration_status, "value", e.registration_status),
             "registered_count": e.registered_count,
             "max_participants": e.max_participants,
             "created_at": e.created_at.isoformat(),
