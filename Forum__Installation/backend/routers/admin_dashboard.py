@@ -9,7 +9,7 @@ from auth import get_current_admin
 router = APIRouter(prefix="/admin/api", tags=["Admin Dashboard"])
 
 
-@router.get("/stats", response_model=DashboardStats)
+@router.get("/stats", )
 async def get_dashboard_stats(
 
     db: AsyncSession = Depends(get_db),
