@@ -25,6 +25,14 @@ async def restore_data(req: Request, db: AsyncSession = Depends(get_db)):
             await conn.execute(text("DROP TABLE IF EXISTS team_registrations CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS academic_toppers CASCADE"))
             await conn.execute(text("DROP TABLE IF EXISTS events CASCADE"))
+            
+            # Explicitly drop lingering indexes if they exist
+            await conn.execute(text("DROP INDEX IF EXISTS ix_reg_event_email CASCADE"))
+            await conn.execute(text("DROP INDEX IF EXISTS ix_events_slug CASCADE"))
+            await conn.execute(text("DROP INDEX IF EXISTS ix_events_created_at CASCADE"))
+            await conn.execute(text("DROP INDEX IF EXISTS ix_team_registrations_created_at CASCADE"))
+            await conn.execute(text("DROP INDEX IF EXISTS ix_academic_toppers_created_at CASCADE"))
+            
             await conn.run_sync(Base.metadata.create_all)
             
         for e in data.get("events", []):
