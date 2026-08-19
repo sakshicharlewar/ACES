@@ -183,12 +183,12 @@ export function FacultyProfilePage() {
           <div className="flex flex-col lg:flex-row gap-8 items-start">
             <div className="w-full lg:w-[60%]" style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", boxShadow: "0 4px 32px rgba(0,0,0,0.3)" }}>
               <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
-                {faculty.professionalSummary}
+                {faculty.professional_summary}
               </p>
             </div>
-            {faculty.achievementImages && faculty.achievementImages.length > 0 && (
+            {faculty.achievement_images && faculty.achievement_images.length > 0 && (
               <div className="w-full lg:w-[40%]" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", alignContent: "start" }}>
-                {(faculty.achievementImages || []).map((ach, i) => (
+                {(faculty.achievement_images || []).map((ach, i) => (
                   <div
                     key={i}
                     onClick={() => setActiveImg(ach.src)}
@@ -222,7 +222,7 @@ export function FacultyProfilePage() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
             <SectionHeading title="Academic Qualifications" />
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {(faculty.academicQualifications || []).map((qual, i) => (
+              {(faculty.academic_qualifications || []).map((qual, i) => (
                 <div key={i} style={{ background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
                   <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <GraduationCap className="w-5 h-5 text-blue-400" />
@@ -240,7 +240,7 @@ export function FacultyProfilePage() {
             <SectionHeading title="Research Interests" />
             <div style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", height: "100%" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                {(faculty.researchInterests || []).map((interest, i) => (
+                {(faculty.research_interests || []).map((interest, i) => (
                   <span key={i} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93C5FD", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
                     {interest}
                   </span>
@@ -258,7 +258,7 @@ export function FacultyProfilePage() {
               <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
             </div>
             <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {(faculty.subjectsTaught || []).map((sub, i) => (
+              {(faculty.subjects_taught || []).map((sub, i) => (
                 <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
                   <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
                   <span>{sub}</span>
