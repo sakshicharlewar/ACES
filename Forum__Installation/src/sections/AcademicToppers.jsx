@@ -59,7 +59,7 @@ export function AcademicToppers() {
     fetch(`${BASE_URL}/api/toppers`)
       .then(res => res.json())
       .then(data => {
-        setToppers(data);
+        setToppers(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {

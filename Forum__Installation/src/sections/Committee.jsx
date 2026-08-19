@@ -109,7 +109,7 @@ export function Committee() {
     fetch(`${BASE_URL}/api/committee`)
       .then(res => res.json())
       .then(data => {
-        setCommitteeData(data);
+        setCommitteeData(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
