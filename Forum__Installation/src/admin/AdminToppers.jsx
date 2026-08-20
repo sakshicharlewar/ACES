@@ -4,7 +4,7 @@ import {
   Plus, Trash2, Edit, Loader2, X, Save, AlertCircle, CheckCircle2, Award, Camera
 } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 function getToken() {
   return localStorage.getItem("aces_admin_token");

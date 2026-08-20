@@ -67,7 +67,7 @@ export default function ResultModal({ isOpen, onClose, eventDetails }) {
     
     async function loadResult() {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
         const res = await fetch(`${apiUrl}/api/events/${eventDetails.id}/result`);
         if (res.ok) {
           const data = await res.json();

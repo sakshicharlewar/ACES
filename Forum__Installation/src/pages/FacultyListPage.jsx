@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },

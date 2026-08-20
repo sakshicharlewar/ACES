@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Trophy, Loader2 } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 function TopperCard({ topper }) {
   return (

@@ -161,7 +161,7 @@ export function UpcomingEvents() {
     setLoadingWinners(true);
     setWinnersData(null);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
       const res = await fetch(`${apiUrl}/api/events/${event.id}/result`);
       if (res.ok) {
         const data = await res.json();

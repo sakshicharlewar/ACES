@@ -6,7 +6,7 @@ import {
   Link, FileText, ChevronRight, X, Loader2
 } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -45,7 +45,14 @@ export function FacultyProfilePage() {
     fetch(`${BASE_URL}/api/faculty`)
       .then(res => res.json())
       .then(data => {
-        const found = data.find(f => f.slug === id || f.id === id || f.id.toString() === id);
+        const clean = str => String(str || "").toLowerCase().trim();
+        const targetId = clean(id);
+        const found = data.find(f => {
+          const fSlug = clean(f.slug);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        });
         setFaculty(found || null);
         setLoading(false);
       })

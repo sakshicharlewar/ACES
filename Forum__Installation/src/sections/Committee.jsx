@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link, Loader2 } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 /* ── Leader Card (For President & Vice President) ── */
 function LeaderCard({ memberKey, role, name, image, social }) {

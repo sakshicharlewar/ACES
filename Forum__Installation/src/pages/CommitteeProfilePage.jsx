@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X, Loader2 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 function ensureArray(val) {
   if (!val) return [];

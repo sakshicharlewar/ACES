@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Loader2, Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle2, Monitor } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 function getToken() {
   return localStorage.getItem("aces_admin_token");
