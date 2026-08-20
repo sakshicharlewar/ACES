@@ -151,26 +151,25 @@ export function CommitteeProfilePage() {
             </motion.div>
 
             {/* Skills */}
-            <motion.div variants={itemVariants}>
-              <GlassCard className="p-8">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Code className="w-5 h-5 text-accent" /> Skills & Expertise
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {(() => {
-                    const skills = Array.isArray(member.skills) ? member.skills : (typeof member.skills === 'string' ? [member.skills] : []);
-                    return skills.map((skill, index) => (
+            {member.skills && (Array.isArray(member.skills) ? member.skills.length > 0 : typeof member.skills === 'string' && member.skills.trim().length > 0) && (
+              <motion.div variants={itemVariants}>
+                <GlassCard className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Code className="w-5 h-5 text-accent" /> Skills & Expertise
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {ensureArray(member.skills).map((skill, index) => (
                       <span 
                         key={index}
                         className="px-4 py-2 rounded-full text-sm font-medium bg-accent/10 text-accent border border-accent/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
                       >
                         {typeof skill === 'string' ? skill : skill?.title || JSON.stringify(skill)}
                       </span>
-                    ));
-                  })()}
-                </div>
-              </GlassCard>
-            </motion.div>
+                    ))}
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
           </div>
 
           {/* Right Column - Details */}
