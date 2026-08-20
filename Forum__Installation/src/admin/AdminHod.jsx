@@ -39,6 +39,19 @@ function Toast({ message, type, onClose }) {
   );
 }
 
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [{ title: val, desc: "" }];
+  }
+  return [];
+}
+
 export function AdminHod() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,7 +76,12 @@ export function AdminHod() {
       if (!res.ok) throw new Error("Failed to load HOD Profile");
       const data = await res.json();
       if (data && Object.keys(data).length > 0) {
-        setFormData(data);
+        setFormData({
+          ...data,
+          academic_qualifications: ensureArray(data.academic_qualifications),
+          professional_highlights: ensureArray(data.professional_highlights),
+          achievement_images: ensureArray(data.achievement_images)
+        });
       }
     } catch (err) {
       setError(err.message);

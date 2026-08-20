@@ -6,6 +6,19 @@ import { GlassCard } from "../components/ui/GlassCard";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [val];
+  }
+  return [];
+}
+
 export function CommitteeProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,8 +32,19 @@ export function CommitteeProfilePage() {
     fetch(`${BASE_URL}/api/committee`)
       .then(res => res.json())
       .then(data => {
-        const found = data.find(m => m.key === id);
-        setMember(found || null);
+        const found = data.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
+        if (found) {
+          setMember({
+            ...found,
+            skills: ensureArray(found.skills),
+            experience: ensureArray(found.experience),
+            projects: ensureArray(found.projects),
+            achievements: ensureArray(found.achievements),
+            certificates: ensureArray(found.certificates),
+          });
+        } else {
+          setMember(null);
+        }
         setLoading(false);
       })
       .catch(err => {
