@@ -81,6 +81,19 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
   );
 }
 
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [val];
+  }
+  return [];
+}
+
 export function HodPage() {
   const navigate = useNavigate();
   const [activeImg, setActiveImg] = useState(null);
@@ -121,6 +134,10 @@ export function HodPage() {
     );
   }
 
+  const academicQualifications = ensureArray(hod.academic_qualifications);
+  const professionalHighlights = ensureArray(hod.professional_highlights);
+  const achievementImages = ensureArray(hod.achievement_images);
+
   return (
     <motion.div
       variants={pageVariants}
@@ -158,8 +175,11 @@ export function HodPage() {
         style={{ textAlign: "center", padding: "40px 24px 60px", position: "relative", zIndex: 10 }}
       >
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.02em" }}>
-          {hod.designation}
+          {hod.designation || "Head of Department"}
         </h1>
+        <p style={{ color: "#B5B5B5", fontSize: "1.1rem", marginTop: "12px" }}>
+          {hod.department || "Department of Computer Engineering"}
+        </p>
       </motion.div>
 
       {/* ── Two Column Layout ── */}
@@ -231,9 +251,13 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gap: "16px" }}>
-                {(hod.academic_qualifications || []).map((q, i) => (
-                  <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-blue-400" />} title={q.title} desc={q.desc} delayIndex={i + 4} />
-                ))}
+                {academicQualifications.map((q, i) => {
+                  const title = typeof q === "string" ? q : q?.title || "";
+                  const desc = typeof q === "object" ? q?.desc : "";
+                  return (
+                    <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-blue-400" />} title={title} desc={desc} delayIndex={i + 4} />
+                  );
+                })}
               </div>
             </div>
 
@@ -245,61 +269,70 @@ export function HodPage() {
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
-                {(hod.professional_highlights || []).map((h, i) => (
-                  <GlassCard key={i} icon={<Award className="w-5 h-5 text-blue-400" />} title={h.title} delayIndex={i + 6} isSmall />
-                ))}
+                {professionalHighlights.map((h, i) => {
+                  const title = typeof h === "string" ? h : h?.title || "";
+                  return (
+                    <GlassCard key={i} icon={<Award className="w-5 h-5 text-blue-400" />} title={title} delayIndex={i + 6} isSmall />
+                  );
+                })}
               </div>
             </div>
 
-            {/* Achievements — Thumbnail Gallery with Lightbox */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-                <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
-                <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#B5B5B5" }}>Achievements</h3>
-                <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
+            {/* Achievements */}
+            {achievementImages.length > 0 && (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+                  <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
+                  <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#B5B5B5" }}>Achievements</h3>
+                  <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
+                  {achievementImages.map((item, i) => {
+                    const src = typeof item === "string" ? item : item?.src;
+                    const title = typeof item === "object" ? item?.title : "Achievement";
+                    return (
+                      <motion.div
+                        key={i}
+                        custom={i + 8}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={fadeUpVariants}
+                        onClick={() => setActiveImg(src)}
+                        whileHover={{ scale: 1.03, boxShadow: "0 0 24px rgba(59,130,246,0.25)", borderColor: "rgba(59,130,246,0.4)" }}
+                        style={{
+                          borderRadius: "16px",
+                          overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "#111",
+                          cursor: "pointer",
+                          aspectRatio: "4/3",
+                          position: "relative",
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={title}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        {/* Hover overlay */}
+                        <div style={{
+                          position: "absolute", inset: 0,
+                          background: "rgba(0,0,0,0.45)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          opacity: 0, transition: "opacity 0.3s",
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                          onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                        >
+                          <ZoomIn className="w-8 h-8 text-white" />
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
-                {(hod.achievement_images || []).map((item, i) => (
-                  <motion.div
-                    key={i}
-                    custom={i + 8}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={fadeUpVariants}
-                    onClick={() => setActiveImg(item.src)}
-                    whileHover={{ scale: 1.03, boxShadow: "0 0 24px rgba(59,130,246,0.25)", borderColor: "rgba(59,130,246,0.4)" }}
-                    style={{
-                      borderRadius: "16px",
-                      overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      background: "#111",
-                      cursor: "pointer",
-                      aspectRatio: "4/3",
-                      position: "relative",
-                    }}
-                  >
-                    <img
-                      src={item.src}
-                      alt={item.label}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                    {/* Hover overlay */}
-                    <div style={{
-                      position: "absolute", inset: 0,
-                      background: "rgba(0,0,0,0.45)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      opacity: 0, transition: "opacity 0.3s",
-                    }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                      onMouseLeave={e => e.currentTarget.style.opacity = 0}
-                    >
-                      <ZoomIn className="w-8 h-8 text-white" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            )}
 
           </motion.div>
         </div>

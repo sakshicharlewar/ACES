@@ -162,8 +162,8 @@ export function Committee() {
               behavior="scroll"
               direction="left"
               scrollamount="12"
-              onMouseOver={(e) => e.target.stop()}
-              onMouseOut={(e) => e.target.start()}
+              onMouseOver={(e) => e.currentTarget.stop?.()}
+              onMouseOut={(e) => e.currentTarget.start?.()}
               style={{ width: "100%", padding: "20px 0" }}
             >
               <div style={{ display: "inline-flex", gap: "24px", paddingLeft: "24px" }}>

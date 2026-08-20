@@ -73,18 +73,29 @@ function LabCard({ lab }) {
           </div>
 
           {/* Two-column equipment list */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-            <ul className="space-y-3">
-              {lab.equipment?.left?.map((item, i) => (
-                <EquipmentItem key={i} text={item} />
-              ))}
-            </ul>
-            <ul className="space-y-3">
-              {lab.equipment?.right?.map((item, i) => (
-                <EquipmentItem key={i} text={item} />
-              ))}
-            </ul>
-          </div>
+          {(() => {
+            let eq = lab.equipment;
+            if (typeof eq === "string") {
+              try { eq = JSON.parse(eq); } catch (e) {}
+            }
+            const leftList = Array.isArray(eq?.left) ? eq.left : (Array.isArray(eq) ? eq : []);
+            const rightList = Array.isArray(eq?.right) ? eq.right : [];
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                <ul className="space-y-3">
+                  {leftList.map((item, i) => (
+                    <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
+                  ))}
+                </ul>
+                <ul className="space-y-3">
+                  {rightList.map((item, i) => (
+                    <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </motion.div>
