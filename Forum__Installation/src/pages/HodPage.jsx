@@ -94,6 +94,35 @@ function ensureArray(val) {
   return [];
 }
 
+const fallbackHod = {
+  id: 1,
+  name: "Dr. Lowlesh Yadav",
+  designation: "Head of Department",
+  department: "Computer Engineering",
+  image: "/HODSIR1.jpeg",
+  professional_summary: "Dr. Lowlesh Yadav is the Head of the Department of Computer Engineering at Suryodaya College of Engineering & Technology (SCET). He has over 14 years of experience in teaching, research, academic administration, and student mentoring. His leadership focuses on innovation, practical learning, industry collaboration, research excellence, and preparing students for successful careers in modern technology.",
+  academic_qualifications: [
+    { title: "Post Doctoral", desc: "Lincoln University College, Malaysia (2026)" },
+    { title: "Ph.D.", desc: "Computer Science & Engineering (2024)" },
+    { title: "M.Tech", desc: "Computer Science & Engineering" },
+    { title: "B.E.", desc: "Information Technology" },
+    { title: "Diploma", desc: "Information Technology" }
+  ],
+  professional_highlights: [
+    { title: "14+ Years Experience" },
+    { title: "Head of Department" },
+    { title: "Ph.D. Completed" },
+    { title: "Post Doctoral (2026)" },
+    { title: "Student Mentor" },
+    { title: "Research & Innovation" },
+    { title: "Academic Leadership" },
+    { title: "Industry Collaboration" }
+  ],
+  achievement_images: [
+    { src: "/HOD_Achievements.jpeg", title: "Achievement Certificate" }
+  ]
+};
+
 export function HodPage() {
   const navigate = useNavigate();
   const [activeImg, setActiveImg] = useState(null);
@@ -107,11 +136,14 @@ export function HodPage() {
       .then(data => {
         if (data && Object.keys(data).length > 0) {
           setHod(data);
+        } else {
+          setHod(fallbackHod);
         }
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch HOD data:", err);
+        setHod(fallbackHod);
         setLoading(false);
       });
   }, []);

@@ -6,6 +6,8 @@ import {
   Link, FileText, ChevronRight, X, Loader2
 } from "lucide-react";
 
+import { facultyData as fallbackFaculty } from "../data/facultyData";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 const pageVariants = {
@@ -33,6 +35,19 @@ function SectionHeading({ title }) {
   );
 }
 
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [val];
+  }
+  return [];
+}
+
 export function FacultyProfilePage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -45,10 +60,16 @@ export function FacultyProfilePage() {
     fetch(`${BASE_URL}/api/faculty`)
       .then(res => res.json())
       .then(data => {
+        const list = (Array.isArray(data) && data.length > 0) ? data : fallbackFaculty;
         const clean = str => String(str || "").toLowerCase().trim();
         const targetId = clean(id);
-        const found = data.find(f => {
-          const fSlug = clean(f.slug);
+        const found = list.find(f => {
+          const fSlug = clean(f.slug || f.id);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        }) || fallbackFaculty.find(f => {
+          const fSlug = clean(f.slug || f.id);
           const fId = clean(f.id);
           const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
           return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
@@ -58,6 +79,15 @@ export function FacultyProfilePage() {
       })
       .catch(err => {
         console.error("Failed to fetch faculty:", err);
+        const clean = str => String(str || "").toLowerCase().trim();
+        const targetId = clean(id);
+        const found = fallbackFaculty.find(f => {
+          const fSlug = clean(f.slug || f.id);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        });
+        setFaculty(found || null);
         setLoading(false);
       });
   }, [id]);

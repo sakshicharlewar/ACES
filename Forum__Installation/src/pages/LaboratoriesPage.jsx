@@ -102,6 +102,13 @@ function LabCard({ lab }) {
   );
 }
 
+const fallbackLabs = [
+  { id: 1, title: "Computer Lab 1", location: "First Floor, SCET", in_charge: "Prof. Veena Katankar", display_order: 1, equipment: { left: ["High Performance i7 Workstations", "Gigabit Ethernet Switch", "High-Speed Wi-Fi Routers"], right: ["Oracle DB & MySQL Server", "Visual Studio Code & PyCharm", "Linux Ubuntu OS"] } },
+  { id: 2, title: "Computer Lab 2", location: "First Floor, SCET", in_charge: "Prof. Jayshree Gorakh", display_order: 2, equipment: { left: ["Core i5 Systems", "Network Analyzer Kits", "Cisco Routers & Switches"], right: ["Packet Tracer & Wireshark", "Python & Anaconda Suite", "Java Development Kit"] } },
+  { id: 3, title: "Computer Lab 3", location: "Second Floor, SCET", in_charge: "Prof. Utkarsha Gode", display_order: 3, equipment: { left: ["High End Graphic Workstations", "Smart Projector Screen", "Uninterrupted UPS Power"], right: ["TensorFlow & PyTorch AI Tools", "Android Studio IDE", "Docker & Cloud Tools"] } },
+  { id: 4, title: "Computer Lab 4", location: "Second Floor, SCET", in_charge: "Prof. Mrunali Gajbhiye", display_order: 4, equipment: { left: ["Dual Monitor i7 Systems", "High Speed Fiber LAN", "Digital Logic Trainer Kits"], right: ["Proteus & Matlab Software", "Web Dev Node.js Environment", "Git & GitHub Enterprise"] } }
+];
+
 export function LaboratoriesPage() {
   const navigate = useNavigate();
   const [labs, setLabs] = useState([]);
@@ -112,11 +119,16 @@ export function LaboratoriesPage() {
     fetch(`${BASE_URL}/api/laboratories`)
       .then(res => res.json())
       .then(data => {
-        setLabs(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setLabs(data);
+        } else {
+          setLabs(fallbackLabs);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch labs:", err);
+        setLabs(fallbackLabs);
         setLoading(false);
       });
   }, []);

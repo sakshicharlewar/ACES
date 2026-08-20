@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X, Loader2 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
 
+import { committeeData as fallbackCommittee } from "../data/committeeData";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 function ensureArray(val) {
@@ -32,7 +34,8 @@ export function CommitteeProfilePage() {
     fetch(`${BASE_URL}/api/committee`)
       .then(res => res.json())
       .then(data => {
-        const found = data.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
+        const list = (Array.isArray(data) && data.length > 0) ? data : fallbackCommittee;
+        const found = list.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase()) || fallbackCommittee.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
         if (found) {
           setMember({
             ...found,
@@ -49,6 +52,19 @@ export function CommitteeProfilePage() {
       })
       .catch(err => {
         console.error("Failed to fetch committee data:", err);
+        const found = fallbackCommittee.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
+        if (found) {
+          setMember({
+            ...found,
+            skills: ensureArray(found.skills),
+            experience: ensureArray(found.experience),
+            projects: ensureArray(found.projects),
+            achievements: ensureArray(found.achievements),
+            certificates: ensureArray(found.certificates),
+          });
+        } else {
+          setMember(null);
+        }
         setLoading(false);
       });
   }, [id]);

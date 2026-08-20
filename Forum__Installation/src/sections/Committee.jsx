@@ -101,6 +101,8 @@ const GROUP_STEP  = CARD_STEP * GROUP_CARDS; // 1776 px per group
 const SPEED       = 2.5; // px per rAF tick (~150 px/s at 60 fps)
 const PAUSE_MS    = 2000;
 
+import { committeeData as fallbackCommittee } from "../data/committeeData";
+
 export function Committee() {
   const [committeeData, setCommitteeData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,11 +111,16 @@ export function Committee() {
     fetch(`${BASE_URL}/api/committee`)
       .then(res => res.json())
       .then(data => {
-        setCommitteeData(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setCommitteeData(data);
+        } else {
+          setCommitteeData(fallbackCommittee);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch committee:", err);
+        setCommitteeData(fallbackCommittee);
         setLoading(false);
       });
   }, []);

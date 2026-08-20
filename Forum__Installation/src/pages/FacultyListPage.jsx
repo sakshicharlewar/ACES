@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
+import { facultyData as fallbackFaculty } from "../data/facultyData";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
 const pageVariants = {
@@ -30,11 +32,16 @@ export function FacultyListPage() {
     fetch(`${BASE_URL}/api/faculty`)
       .then((res) => res.json())
       .then((data) => {
-        setFaculty(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setFaculty(data);
+        } else {
+          setFaculty(fallbackFaculty);
+        }
         setLoading(false);
       })
       .catch((err) => {
         console.error("Failed to fetch faculty:", err);
+        setFaculty(fallbackFaculty);
         setLoading(false);
       });
   }, []);
