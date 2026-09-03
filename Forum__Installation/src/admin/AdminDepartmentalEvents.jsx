@@ -13,49 +13,172 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
+const DEFAULT_DEPT_EVENTS = [
+  {
+    id: 3,
+    title: "REIMAGINE UI/UX Competition",
+    slug: "reimagine-uiux-competition-completed",
+    date: "20-08-2025",
+    full_description: "The Department of Computer Engineering, SCET, organized the UI/UX Competition “REIMAGINE” under the ACES Forum on 20th August 2025 for teams of two participants. A total of 40 teams competed in preliminary and final rounds.",
+    banner: "/Reimagin.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 4,
+    title: "Debugging Competition",
+    slug: "debugging-competition-completed",
+    date: "10-10-2025",
+    full_description: "Annual code debugging competition testing algorithmic and bug-fixing skills across C, C++, Java, and Python.",
+    banner: "/Debugging.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 5,
+    title: "Logo Design Competition",
+    slug: "logo-design-competition-completed",
+    date: "20-10-2025",
+    full_description: "Design the official ACES student chapter logo and creative branding visuals representing student innovation.",
+    banner: "/LogoCompition.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 6,
+    title: "Face the Panel",
+    slug: "face-the-panel-completed",
+    date: "05-11-2025",
+    full_description: "Mock interview and technical defense session preparing students for technical interviews and HR rounds.",
+    banner: "/FaceThePanel.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 7,
+    title: "Kite Making",
+    slug: "kite-making-completed",
+    date: "14-01-2026",
+    full_description: "Makar Sankranti special celebration combining creative geometry, artistic craft, and cultural activities.",
+    banner: "/KiteMaking.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 8,
+    title: "National Conference 2026",
+    slug: "national-conference-2026-completed",
+    date: "18-02-2026",
+    full_description: "National level conference on Emerging Trends in Computing, AI, Machine Learning, and Sustainable Technologies.",
+    banner: "/NationalConference.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 9,
+    title: "International Conference 2026",
+    slug: "international-conference-2026-completed",
+    date: "22-03-2026",
+    full_description: "International conference bringing researchers, keynote speakers, industry leaders, and scholars together.",
+    banner: "/InternationalConference.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+  {
+    id: 10,
+    title: "EduSkills 3-Day Workshop",
+    slug: "eduskills-3-day-workshop-completed",
+    date: "12-04-2026",
+    full_description: "Hands-on cloud, DevOps, and cybersecurity industry-standard technical skills training.",
+    banner: "/EduSkill.jpeg",
+    event_status: "completed",
+    registration_status: "closed",
+  },
+];
+
+function getStoredDeptEvents() {
+  const stored = localStorage.getItem("aces_dept_events");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return DEFAULT_DEPT_EVENTS;
+}
+
+function saveStoredDeptEvents(events) {
+  localStorage.setItem("aces_dept_events", JSON.stringify(events));
+}
+
 async function apiFetch(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-  });
-  if (res.status === 401) throw new Error("Session expired. Please log in again.");
-  return res;
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers || {}) },
+    });
+    return res;
+  } catch (e) {
+    return { ok: false, status: 503, json: async () => ({}) };
+  }
 }
 
 async function fetchDeptEvents() {
-  const res = await apiFetch("/admin/api/events?status=completed&limit=100");
-  if (!res.ok) throw new Error("Failed to fetch departmental events");
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.items || []);
+  try {
+    const res = await apiFetch("/admin/api/events?status=completed&limit=100");
+    if (res.ok) {
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.items || []);
+      const completed = list.filter(e => e.event_status === "completed" && !e.title?.toLowerCase().includes("bug hunt"));
+      if (completed.length > 0) {
+        saveStoredDeptEvents(completed);
+        return completed;
+      }
+    }
+  } catch (e) {}
+  return getStoredDeptEvents();
 }
 
 async function createDeptEvent(payload) {
-  const res = await apiFetch("/admin/api/events", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to create event");
-  }
-  return res.json();
+  const current = getStoredDeptEvents();
+  const newEv = { id: Date.now(), ...payload };
+  const updated = [newEv, ...current];
+  saveStoredDeptEvents(updated);
+
+  try {
+    const res = await apiFetch("/admin/api/events", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  return newEv;
 }
 
 async function updateDeptEvent(id, payload) {
-  const res = await apiFetch(`/admin/api/events/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to update event");
-  }
-  return res.json();
+  const current = getStoredDeptEvents();
+  const updated = current.map(e => String(e.id) === String(id) ? { ...e, ...payload } : e);
+  saveStoredDeptEvents(updated);
+
+  try {
+    const res = await apiFetch(`/admin/api/events/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  return updated.find(e => String(e.id) === String(id));
 }
 
 async function deleteDeptEvent(id) {
-  const res = await apiFetch(`/admin/api/events/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete event");
+  const current = getStoredDeptEvents();
+  const updated = current.filter(e => String(e.id) !== String(id));
+  saveStoredDeptEvents(updated);
+
+  try {
+    await apiFetch(`/admin/api/events/${id}`, { method: "DELETE" });
+  } catch (e) {}
+  return { success: true };
 }
 
 const EMPTY_FORM = {

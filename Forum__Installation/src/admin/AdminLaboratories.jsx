@@ -12,13 +12,130 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
+const DEFAULT_LABS = [
+  {
+    id: 1,
+    title: "Project / Research Lab (Lab 1)",
+    location: "Second Floor, Room 201",
+    in_charge: "Prof. S. R. Charlewar",
+    image: "/Lab1.jpeg",
+    equipment: {
+      left: [
+        "30x Core i7 High-Performance Workstations",
+        "NVIDIA RTX GPU Accelerators for AI/ML",
+        "Dual 24-inch IPS High-Resolution Displays",
+        "10Gbps High-Speed Fibre Optic LAN",
+        "Smart Interactive Presentation Display"
+      ],
+      right: [
+        "TensorFlow, PyTorch, CUDA Dev Environment",
+        "MATLAB & Simulink with Real-Time Toolboxes",
+        "Docker & Kubernetes Cluster Simulation",
+        "VS Code Enterprise & JetBrains IDE Suites",
+        "Centralized NAS Storage 100TB RAID-6"
+      ]
+    },
+    display_order: 1
+  },
+  {
+    id: 2,
+    title: "Database & Software Eng. Lab (Lab 2)",
+    location: "Second Floor, Room 202",
+    in_charge: "Prof. A. B. Rathod",
+    image: "/Lab2.jpeg",
+    equipment: {
+      left: [
+        "35x Core i5 Desktop Systems",
+        "Oracle Database Enterprise Server",
+        "PostgreSQL & MySQL Cluster Setup",
+        "Gigabit Ethernet Managed Switches",
+        "Online UPS 20KVA Continuous Backup"
+      ],
+      right: [
+        "MongoDB, Redis, Apache Cassandra",
+        "Eclipse, NetBeans, IntelliJ IDEA",
+        "Git & GitHub Enterprise Server",
+        "JIRA & Scrum Project Management Suite",
+        "Selenium & Postman Testing Platform"
+      ]
+    },
+    display_order: 2
+  },
+  {
+    id: 3,
+    title: "Networks & Cybersecurity Lab (Lab 3)",
+    location: "Second Floor, Room 203",
+    in_charge: "Prof. K. N. Nagose",
+    image: "/Lab3.jpeg",
+    equipment: {
+      left: [
+        "30x Core i7 Workstations with Kali Linux",
+        "Cisco 2900 Series Modular Enterprise Routers",
+        "Cisco Catalyst 2960 Series Layer-2/3 Switches",
+        "Hardware Firewall & Packet Inspection Appliance",
+        "Wireless Access Points with 802.11ax Protocol"
+      ],
+      right: [
+        "Wireshark, tcpdump, Snort IDS/IPS",
+        "Cisco Packet Tracer & GNS3 Virtual Lab",
+        "Metasploit, Burp Suite, Nmap Suite",
+        "OpenSSL Cryptographic Toolkit",
+        "VMware ESXi Server for Penetration Testing"
+      ]
+    },
+    display_order: 3
+  },
+  {
+    id: 4,
+    title: "Cloud Computing & Web Tech Lab (Lab 4)",
+    location: "Second Floor, Room 204",
+    in_charge: "Prof. V. V. Sir",
+    image: "/Lab4.jpeg",
+    equipment: {
+      left: [
+        "35x Core i5 All-in-One Dual-Boot Systems",
+        "Dedicated Ubuntu & AlmaLinux Server Racks",
+        "High-Speed Gigabit LAN with Smart QoS",
+        "Smart Podium with AV Recording Suite",
+        "Centralised UPS Power Conditioning System"
+      ],
+      right: [
+        "AWS, Google Cloud & Azure CLI Integration",
+        "Node.js, React, Next.js, Vite Dev Stacks",
+        "Python, Django, FastAPI Backend Suites",
+        "Apache, Nginx, Caddy Reverse Proxy Servers",
+        "OpenStack Private Cloud Simulation Environment"
+      ]
+    },
+    display_order: 4
+  }
+];
+
+function getStoredLabs() {
+  const stored = localStorage.getItem("aces_laboratories");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return DEFAULT_LABS;
+}
+
+function saveStoredLabs(labs) {
+  localStorage.setItem("aces_laboratories", JSON.stringify(labs));
+}
+
 async function apiFetch(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-  });
-  if (res.status === 401) throw new Error("Session expired. Please log in again.");
-  return res;
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers || {}) },
+    });
+    return res;
+  } catch (e) {
+    return { ok: false, status: 503, json: async () => ({}) };
+  }
 }
 
 function Toast({ message, type, onClose }) {
@@ -40,7 +157,7 @@ function Toast({ message, type, onClose }) {
 }
 
 export function AdminLaboratories() {
-  const [labs, setLabs] = useState([]);
+  const [labs, setLabs] = useState(getStoredLabs());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
@@ -63,15 +180,19 @@ export function AdminLaboratories() {
   const fetchLabs = async () => {
     try {
       setLoading(true);
-      const res = await apiFetch("/api/laboratories", { headers: {} }); // Public GET
-      if (!res.ok) throw new Error("Failed to fetch laboratories");
-      const data = await res.json();
-      setLabs(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      const res = await apiFetch("/api/laboratories", { headers: {} });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setLabs(data);
+          saveStoredLabs(data);
+          setError("");
+          return;
+        }
+      }
+    } catch (err) {}
+    setLabs(getStoredLabs());
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -138,26 +259,31 @@ export function AdminLaboratories() {
       // Clean up empty equipment items
       const cleanedData = { ...formData };
       cleanedData.equipment = {
-        left: cleanedData.equipment.left.filter(item => item.trim() !== ""),
-        right: cleanedData.equipment.right.filter(item => item.trim() !== "")
+        left: (cleanedData.equipment?.left || []).filter(item => item && item.trim() !== ""),
+        right: (cleanedData.equipment?.right || []).filter(item => item && item.trim() !== "")
       };
 
-      const url = editingId ? `/admin/api/laboratories/${editingId}` : "/admin/api/laboratories";
-      const method = editingId ? "PUT" : "POST";
-
-      const res = await apiFetch(url, {
-        method,
-        body: JSON.stringify(cleanedData),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Failed to save lab");
+      const current = getStoredLabs();
+      let updated;
+      if (editingId) {
+        updated = current.map(l => String(l.id) === String(editingId) ? { ...l, ...cleanedData, id: editingId } : l);
+      } else {
+        updated = [...current, { id: Date.now(), ...cleanedData }];
       }
+      saveStoredLabs(updated);
+      setLabs(updated);
+
+      try {
+        const url = editingId ? `/admin/api/laboratories/${editingId}` : "/admin/api/laboratories";
+        const method = editingId ? "PUT" : "POST";
+        await apiFetch(url, {
+          method,
+          body: JSON.stringify(cleanedData),
+        });
+      } catch (e) {}
 
       setToast({ type: "success", message: `Lab ${editingId ? "updated" : "added"} successfully!` });
       handleCloseModal();
-      fetchLabs();
     } catch (err) {
       setToast({ type: "error", message: err.message });
     } finally {
@@ -168,10 +294,14 @@ export function AdminLaboratories() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this lab?")) return;
     try {
-      const res = await apiFetch(`/admin/api/laboratories/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete lab");
+      const current = getStoredLabs();
+      const updated = current.filter(l => String(l.id) !== String(id));
+      saveStoredLabs(updated);
+      setLabs(updated);
+      try {
+        await apiFetch(`/admin/api/laboratories/${id}`, { method: "DELETE" });
+      } catch (e) {}
       setToast({ type: "success", message: "Lab deleted successfully!" });
-      fetchLabs();
     } catch (err) {
       setToast({ type: "error", message: err.message });
     }

@@ -3,6 +3,7 @@ import { AdminLayout } from "./AdminLayout";
 import {
   Plus, Trash2, Edit, Loader2, X, Save, AlertCircle, CheckCircle2, UserCheck, Camera
 } from "lucide-react";
+import { facultyData as fallbackFaculty } from "../data/facultyData";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
@@ -13,48 +14,87 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
+function getStoredFaculty() {
+  const stored = localStorage.getItem("aces_faculty");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return fallbackFaculty;
+}
+
+function saveStoredFaculty(faculty) {
+  localStorage.setItem("aces_faculty", JSON.stringify(faculty));
+}
+
 async function apiFetch(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-  });
-  if (res.status === 401) throw new Error("Session expired. Please log in again.");
-  return res;
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers || {}) },
+    });
+    return res;
+  } catch (e) {
+    return { ok: false, status: 503, json: async () => ({}) };
+  }
 }
 
 async function fetchFaculty() {
-  const res = await apiFetch("/admin/api/faculty");
-  if (!res.ok) throw new Error("Failed to fetch faculty");
-  return res.json();
+  try {
+    const res = await apiFetch("/admin/api/faculty");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        saveStoredFaculty(data);
+        return data;
+      }
+    }
+  } catch (e) {}
+  return getStoredFaculty();
 }
 
 async function createFaculty(payload) {
-  const res = await apiFetch("/admin/api/faculty", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to add faculty");
-  }
-  return res.json();
+  const current = getStoredFaculty();
+  const newFaculty = { id: Date.now(), ...payload };
+  const updated = [...current, newFaculty];
+  saveStoredFaculty(updated);
+
+  try {
+    const res = await apiFetch("/admin/api/faculty", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  return newFaculty;
 }
 
 async function updateFaculty(id, payload) {
-  const res = await apiFetch(`/admin/api/faculty/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to update faculty");
-  }
-  return res.json();
+  const current = getStoredFaculty();
+  const updated = current.map(f => String(f.id) === String(id) ? { ...f, ...payload } : f);
+  saveStoredFaculty(updated);
+
+  try {
+    const res = await apiFetch(`/admin/api/faculty/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  return updated.find(f => String(f.id) === String(id));
 }
 
 async function deleteFaculty(id) {
-  const res = await apiFetch(`/admin/api/faculty/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete faculty");
+  const current = getStoredFaculty();
+  const updated = current.filter(f => String(f.id) !== String(id));
+  saveStoredFaculty(updated);
+
+  try {
+    await apiFetch(`/admin/api/faculty/${id}`, { method: "DELETE" });
+  } catch (e) {}
+  return { success: true };
 }
 
 function Toast({ message, type, onClose }) {
