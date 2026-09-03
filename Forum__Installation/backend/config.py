@@ -1,11 +1,19 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+BACKEND_DIR = Path(__file__).resolve().parent
+DB_FILE = (BACKEND_DIR / "aces_db.sqlite").as_posix()
+DEFAULT_DB_ASYNC = f"sqlite+aiosqlite:///{DB_FILE}"
+DEFAULT_DB_SYNC = f"sqlite:///{DB_FILE}"
+ENV_PATH = (BACKEND_DIR / ".env").as_posix()
 
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost/aces_db"
-    DATABASE_URL_SYNC: str = "postgresql://postgres:password@localhost/aces_db"
+    DATABASE_URL: str = DEFAULT_DB_ASYNC
+    DATABASE_URL_SYNC: str = DEFAULT_DB_SYNC
 
     # JWT
     SECRET_KEY: str = "change-this-to-a-secure-random-secret-key-in-production"
@@ -16,6 +24,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:3000",
         "https://aces-forum.onrender.com",
         "https://aces.example.com",
     ]
@@ -34,7 +45,7 @@ class Settings(BaseSettings):
     ACES_OFFICIAL_EMAIL: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = (ENV_PATH, ".env")
         extra = "ignore"
 
 

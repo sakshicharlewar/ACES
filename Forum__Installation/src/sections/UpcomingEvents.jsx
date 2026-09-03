@@ -7,13 +7,26 @@ import { fetchPublicEvents } from "../admin/adminApi";
 
 
 
-// ── Hardcoded Bug Hunt event (fallback if DB is unreachable) ──
+// ── Hardcoded Bug Hunt event & results (fallback if DB is unreachable) ──
+const BUG_HUNT_RESULT_FALLBACK = {
+  event_id: 1,
+  winner: "Team CODEVIPERS",
+  winner_details: "Members\n- Rugved Dhomne\n- Aryan Raut\n\nRegistration ID: BUG-021\nYear: 3rd Year\n\nCongratulations to Team CODEVIPERS on securing First Place in BUG HUNT - DEBUG THE WEB 2026. Your exceptional debugging skills, logical thinking, creativity, and outstanding teamwork made you the top performers of this competition. Your dedication and technical excellence truly set you apart. Wishing you continued success in your future academic and professional journey.",
+  runner_up: "Team TECHZACK",
+  runner_up_details: "Members\n- Pranjal Godbole\n- Rushabh Kamble\n\nRegistration ID: BUG-029\nYear: 2nd Year\n\nCongratulations to Team TECHZACK on securing Second Place in BUG HUNT - DEBUG THE WEB 2026. Your strong problem-solving abilities, persistence, and teamwork helped you achieve this remarkable accomplishment. Keep learning, keep innovating, and continue reaching greater heights.",
+  second_runner_up: null,
+  second_runner_up_details: null,
+  announcement_date: "2026-08-09T10:00"
+};
+
 const BUG_HUNT_FALLBACK = {
-  id: "bughunt-local",
+  id: 1,
   title: "🐞 Bug Hunt: Debug the Web",
   description:
     "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
   is_registration_open: false,
+  registration_status: "closed",
+  result_status: "announced",
   max_teams: 30,
   team_size: 2,
   fee: 40,
@@ -160,18 +173,47 @@ export function UpcomingEvents() {
     setWinnersPopupOpen(true);
     setLoadingWinners(true);
     setWinnersData(null);
+
+    // 1. Check local storage
+    const stored = localStorage.getItem(`aces_event_result_${event.id}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && (parsed.winner || parsed.runner_up)) {
+          setWinnersData(parsed);
+          setLoadingWinners(false);
+          return;
+        }
+      } catch {}
+    }
+
+    // 2. Try backend
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
-      const res = await fetch(`${apiUrl}/api/events/${event.id}/result`);
+      const res = await fetch(`${apiUrl}/api/events/${event.id}/result`, {
+        signal: AbortSignal.timeout(4000),
+      });
       if (res.ok) {
         const data = await res.json();
-        setWinnersData(data);
+        if (data && (data.winner || data.runner_up)) {
+          setWinnersData(data);
+          setLoadingWinners(false);
+          return;
+        }
       }
     } catch (e) {
-      console.error("Failed to fetch winners:", e);
-    } finally {
-      setLoadingWinners(false);
+      console.warn("Failed to fetch winners from backend:", e.message);
     }
+
+    // 3. Fallback for Bug Hunt
+    const isBug = String(event.id) === "1" || String(event.id) === "8" ||
+                  String(event.id) === "bughunt-local" ||
+                  event.title?.toLowerCase().includes("bug") ||
+                  event.slug?.toLowerCase().includes("bug");
+    if (isBug) {
+      setWinnersData(BUG_HUNT_RESULT_FALLBACK);
+    }
+    setLoadingWinners(false);
   };
 
   // ── Build display list ──

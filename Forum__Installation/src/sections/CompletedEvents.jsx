@@ -10,29 +10,132 @@ import { fetchPublicEvents } from "../admin/adminApi";
 const CARD_WIDTH = 476; // card width + gap
 const VISIBLE_COUNT = 3;
 
+const DEFAULT_COMPLETED_EVENTS = [
+  {
+    id: 1,
+    title: "Bug Hunt: Debug the Web",
+    slug: "bug-hunt-debug-the-web",
+    subtitle: "Find the bugs",
+    date: "11-08-2026",
+    short_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application.",
+    full_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
+    banner: "/Debugging.jpeg",
+    result_status: "announced",
+    event_status: "completed",
+  },
+  {
+    id: 3,
+    title: "REIMAGINE UI/UX Competition",
+    slug: "reimagine-uiux-competition-completed",
+    date: "15-09-2025",
+    short_description: "UI/UX design challenge to redesign college portals.",
+    banner: "/Reimagin.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 4,
+    title: "Debugging Competition",
+    slug: "debugging-competition-completed",
+    date: "10-10-2025",
+    short_description: "Annual code debugging competition.",
+    banner: "/Debugging.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 5,
+    title: "Logo Design Competition",
+    slug: "logo-design-competition-completed",
+    date: "20-10-2025",
+    short_description: "Design the official ACES student chapter logo.",
+    banner: "/LogoCompition.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 6,
+    title: "Face the Panel",
+    slug: "face-the-panel-completed",
+    date: "05-11-2025",
+    short_description: "Mock interview and panel defense session.",
+    banner: "/FaceThePanel.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 7,
+    title: "Kite Making",
+    slug: "kite-making-completed",
+    date: "14-01-2026",
+    short_description: "Makar Sankranti special kite designing.",
+    banner: "/KiteMaking.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 8,
+    title: "National Conference 2026",
+    slug: "national-conference-2026-completed",
+    date: "18-02-2026",
+    short_description: "National level conference on Emerging Trends in Computing.",
+    banner: "/NationalConference.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 9,
+    title: "International Conference 2026",
+    slug: "international-conference-2026-completed",
+    date: "22-03-2026",
+    short_description: "International conference bringing researchers together.",
+    banner: "/InternationalConference.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+  {
+    id: 10,
+    title: "EduSkills 3-Day Workshop",
+    slug: "eduskills-3-day-workshop-completed",
+    date: "12-04-2026",
+    short_description: "Hands-on cloud & cybersecurity skills training.",
+    banner: "/EduSkill.jpeg",
+    result_status: "pending",
+    event_status: "completed",
+  },
+];
+
 export function CompletedEvents() {
   const navigate = useNavigate();
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(DEFAULT_COMPLETED_EVENTS);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeGallery, setActiveGallery] = useState(null);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const dragStartX = useRef(0);
   const containerRef = useRef(null);
   const [maxScrollX, setMaxScrollX] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [selectedResultEvent, setSelectedResultEvent] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     async function loadEvents() {
-      setIsLoading(true);
       try {
         let eventsData = await fetchPublicEvents({ status: "completed" });
         if (!Array.isArray(eventsData)) {
           eventsData = eventsData.items || [];
         }
-        if (!cancelled) setEvents(eventsData);
+        if (!cancelled && eventsData.length > 0) {
+          // Merge with DEFAULT_COMPLETED_EVENTS and ensure Bug Hunt has announced status
+          const merged = eventsData.map(e => {
+            if (String(e.id) === "1" || String(e.id) === "8" || e.title?.toLowerCase().includes("bug")) {
+              return { ...e, result_status: "announced" };
+            }
+            return e;
+          });
+          setEvents(merged);
+        }
       } catch (err) {
         console.error("Failed to load completed events:", err);
       } finally {

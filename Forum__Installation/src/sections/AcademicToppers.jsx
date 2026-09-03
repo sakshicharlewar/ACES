@@ -4,6 +4,18 @@ import { Star, Trophy, Loader2 } from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
+const DEFAULT_TOPPERS = [
+  { id: 1, year_group: "final_year", rank: 1, name: "Tushar Nimje", branch: "Computer Engineering", cgpa: "9.85", score_label: "CGPA", achievement: "All Rounder Award", image: "/toppers/tushar.jpeg" },
+  { id: 2, year_group: "final_year", rank: 2, name: "Harshit Bhandarkar", branch: "Computer Engineering", cgpa: "9.72", score_label: "CGPA", achievement: "Best Project Award", image: "/toppers/harshit.jpeg" },
+  { id: 3, year_group: "final_year", rank: 3, name: "Hitanshu Deshmukh", branch: "Computer Engineering", cgpa: "9.68", score_label: "CGPA", achievement: "Excellence in Academics", image: "/toppers/hitanshu.jpeg" },
+  { id: 4, year_group: "third_year", rank: 1, name: "Rajiv Ramteke", branch: "Computer Engineering", cgpa: "8.74", score_label: "CGPA", achievement: "", image: "/toppers/rajiv.jpeg" },
+  { id: 5, year_group: "third_year", rank: 2, name: "Mayuri Lanjewar", branch: "Computer Engineering", cgpa: "8.64", score_label: "CGPA", achievement: "", image: "/toppers/mayuri.jpeg" },
+  { id: 6, year_group: "third_year", rank: 3, name: "Parag Yeole", branch: "Computer Engineering", cgpa: "8.53", score_label: "CGPA", achievement: "", image: "/toppers/parag.jpeg" },
+  { id: 7, year_group: "second_year", rank: 1, name: "Aishwarya Dhole", branch: "Computer Engineering", cgpa: "9.12", score_label: "CGPA", achievement: "", image: "/toppers/aishwarya.jpeg" },
+  { id: 8, year_group: "second_year", rank: 2, name: "Vaishnavi Yelne", branch: "Computer Engineering", cgpa: "8.77", score_label: "CGPA", achievement: "", image: "/toppers/vaishnavi.jpeg" },
+  { id: 9, year_group: "second_year", rank: 3, name: "Sakshi Charlewar", branch: "Computer Engineering", cgpa: "8.75", score_label: "CGPA", achievement: "", image: "/toppers/sakshi.png" },
+];
+
 function TopperCard({ topper }) {
   return (
     <div className="bg-[#121212] rounded-[18px] border border-[rgba(255,255,255,0.08)] shadow-[0_4px_30px_rgba(37,99,235,0.05)] hover:shadow-[0_4px_30px_rgba(37,99,235,0.15)] overflow-hidden flex flex-col h-full transition-all duration-300 group">
@@ -52,14 +64,16 @@ function TopperCard({ topper }) {
 }
 
 export function AcademicToppers() {
-  const [toppers, setToppers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [toppers, setToppers] = useState(DEFAULT_TOPPERS);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/toppers`)
       .then(res => res.json())
       .then(data => {
-        setToppers(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setToppers(data);
+        }
         setLoading(false);
       })
       .catch(err => {
