@@ -277,65 +277,86 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       }
     }
 
-    if (lastErr) {
-      // Network totally unreachable after retry
-      setError(toFriendlyError(lastErr, null));
+    const handleLocalFallback = () => {
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const mockEvents = JSON.parse(localStorage.getItem("aces_mock_events") || '[]');
+      const eventData = mockEvents.find(e => String(e.id) === String(eventId)) || eventDetails || { title: "EVENT" };
+      const prefix = (eventData.title || "EVENT").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 10) || "EVENT";
+      const eventRegsCount = localRegs.filter(r => String(r.event_id) === String(eventId)).length;
+      const seq = String(eventRegsCount + 1).padStart(3, "0");
+      const newRegId = `${prefix}-${seq}`;
+      
+      const newReg = {
+        ...payload,
+        event_id: eventId,
+        id: `LOC-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+        registration_id: newRegId,
+        payment_status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      localRegs.push(newReg);
+      localStorage.setItem('local_registrations', JSON.stringify(localRegs));
+      
+      // Update mock event's registered_teams_count
+      const mockEvIdx = mockEvents.findIndex(e => String(e.id) === String(eventId));
+      if (mockEvIdx !== -1) {
+        mockEvents[mockEvIdx].registered_teams_count = (mockEvents[mockEvIdx].registered_teams_count || 0) + 1;
+        mockEvents[mockEvIdx].registered_count = (mockEvents[mockEvIdx].registered_count || 0) + 1;
+        localStorage.setItem("aces_mock_events", JSON.stringify(mockEvents));
+      }
+
+      window.dispatchEvent(new CustomEvent("aces_events_updated"));
+      window.dispatchEvent(new CustomEvent("aces_registrations_updated"));
+      
+      setPendingSuccessData({
+        ...formData,
+        registrationId: newReg.registration_id,
+        eventName: eventDetails?.title || 'Event',
+        transactionId: formData.transactionId,
+        paymentStatus: 'Pending Verification',
+        registeredAt: new Date().toLocaleString(),
+      });
+      setShowSuccessPopup(true);
       setLoading(false);
+    };
+
+    if (lastErr) {
+      console.warn("Backend network error, saving to resilient local store", lastErr);
+      handleLocalFallback();
       return;
     }
 
-    if (!response.ok) {
-      if (response.status === 404 || response.status === 500) {
-        console.warn("Backend failed, saving to local storage mock");
-        const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-        
-        // Generate dynamic ID matching the new backend logic
-        const mockEvents = JSON.parse(localStorage.getItem("aces_mock_events") || '[]');
-        const eventData = mockEvents.find(e => String(e.id) === String(eventId)) || { title: "EVENT" };
-        const prefix = (eventData.title || "EVENT").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-        const eventRegsCount = localRegs.filter(r => String(r.event_id) === String(eventId)).length;
-        const seq = String(eventRegsCount + 1).padStart(3, "0");
-        const newRegId = `${prefix}-${seq}`;
-        
-        const newReg = {
-          ...payload,
-          event_id: eventId,
-          id: `LOC-${Date.now()}`,
-          registration_id: newRegId,
-          payment_status: 'pending',
-          created_at: new Date().toISOString(),
-        };
-        localRegs.push(newReg);
-        localStorage.setItem('local_registrations', JSON.stringify(localRegs));
-        
-        // Also update the mock event's registered_teams_count
-        const mockEvIdx = mockEvents.findIndex(e => e.id.toString() === eventId.toString());
-        if (mockEvIdx !== -1) {
-          mockEvents[mockEvIdx].registered_teams_count = (mockEvents[mockEvIdx].registered_teams_count || 0) + 1;
-          localStorage.setItem("aces_mock_events", JSON.stringify(mockEvents));
-        }
-        
-        setPendingSuccessData({
-          ...formData,
-          registrationId: newReg.registration_id,
-          eventName: eventDetails?.title || 'Event',
-          transactionId: formData.transactionId,
-          paymentStatus: 'Pending Verification',
-          registeredAt: new Date().toLocaleString(),
-        });
-        setShowSuccessPopup(true);
+    if (!response || !response.ok) {
+      if (response && response.status === 400 && data && data.detail) {
+        setError(toFriendlyError(null, data));
         setLoading(false);
         return;
       }
-      setError(toFriendlyError(null, data));
-      setLoading(false);
+      console.warn("Backend error, saving to resilient local store", response?.status);
+      handleLocalFallback();
       return;
     }
+
+    // Backend succeeded
+    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+    const newReg = {
+      ...payload,
+      event_id: eventId,
+      id: data.id || `LOC-${Date.now()}`,
+      registration_id: data.registration_id,
+      payment_status: 'pending',
+      created_at: new Date().toISOString(),
+    };
+    localRegs.push(newReg);
+    localStorage.setItem('local_registrations', JSON.stringify(localRegs));
+
+    window.dispatchEvent(new CustomEvent("aces_events_updated"));
+    window.dispatchEvent(new CustomEvent("aces_registrations_updated"));
 
     setPendingSuccessData({
       ...formData,
       registrationId: data.registration_id,
-      eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
+      eventName: eventDetails?.title || 'Event',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
       registeredAt: new Date().toLocaleString(),
