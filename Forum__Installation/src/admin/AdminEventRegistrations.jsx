@@ -52,7 +52,18 @@ export default function AdminEventRegistrations() {
 
   useEffect(() => { 
     fetchEvents(); 
-  }, []);
+    const handleSync = () => {
+      fetchEvents();
+      if (selectedEventId) fetchRegistrations(selectedEventId);
+    };
+    window.addEventListener("aces_registrations_updated", handleSync);
+    window.addEventListener("aces_events_updated", handleSync);
+    return () => {
+      window.removeEventListener("aces_registrations_updated", handleSync);
+      window.removeEventListener("aces_events_updated", handleSync);
+    };
+  }, [selectedEventId]);
+
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
     else setRegistrations([]);
@@ -272,20 +283,29 @@ export default function AdminEventRegistrations() {
       "Leader Email":    r.leader_email,
       "Leader Phone":    r.leader_phone,
       "Leader Year":     r.leader_year,
-      "Member 2 Name":   r.member2_name,
-      "Member 2 Email":  r.member2_email,
-      "Member 2 Phone":  r.member2_phone,
-      "Member 2 Year":   r.member2_year,
+      "Leader Branch":   r.leader_branch || "Computer Engineering",
+      "Member 2 Name":   r.member2_name || "",
+      "Member 2 Email":  r.member2_email || "",
+      "Member 2 Phone":  r.member2_phone || "",
+      "Member 2 Year":   r.member2_year || "",
+      "Member 3 Name":   r.extra_members?.[0]?.name || "",
+      "Member 3 Email":  r.extra_members?.[0]?.email || "",
+      "Member 3 Phone":  r.extra_members?.[0]?.phone || "",
+      "Member 3 Year":   r.extra_members?.[0]?.year || "",
+      "Member 4 Name":   r.extra_members?.[1]?.name || "",
+      "Member 4 Email":  r.extra_members?.[1]?.email || "",
+      "Member 4 Phone":  r.extra_members?.[1]?.phone || "",
+      "Member 4 Year":   r.extra_members?.[1]?.year || "",
       "Approval Status": r.payment_status || "pending",
       "Payment Status":  r.payment_status || "pending",
-      "Registration Fee": r.registration_fee || "₹40",
+      "Registration Fee": r.registration_fee || "₹50",
       "Transaction ID":  r.transaction_id || "",
       "Payment Screenshot": r.payment_screenshot
         ? (r.payment_screenshot.startsWith('data:') ? '[Attached - Download manually from admin panel]' : r.payment_screenshot)
         : 'Not uploaded',
       "Payment Date":    r.payment_time ? new Date(r.payment_time).toLocaleString() : "",
       "Verified At":     r.payment_verified_at ? new Date(r.payment_verified_at).toLocaleString() : "",
-      "Reg Date":        new Date(r.created_at).toLocaleString(),
+      "Reg Date":        r.created_at ? new Date(r.created_at).toLocaleString() : new Date().toLocaleString(),
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Registrations");
