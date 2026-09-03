@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { GlassCard } from "../components/ui/GlassCard";
 import { MagneticButton } from "../components/ui/MagneticButton";
 import { CheckCircle2, ArrowRight, X, Upload, Loader2, Rocket, Monitor, GraduationCap, Globe, Users, Star } from "lucide-react";
+import { getBaseUrl } from "../lib/apiConfig";
 
 const compressImage = async (file) => {
   return new Promise((resolve) => {
@@ -169,7 +170,7 @@ export function ComplaintForm() {
         }
       }
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
+      const apiUrl = getBaseUrl();
       const res = await fetch(`${apiUrl}/api/submit-innovation`, {
         method:  'POST',
         signal:  controller.signal,
@@ -178,111 +179,34 @@ export function ComplaintForm() {
 
       clearTimeout(timeoutId);
 
-      const handleLocalIdeaSave = () => {
-        const stored = localStorage.getItem("aces_idea_submissions");
-        const list = stored ? JSON.parse(stored) : [];
-        const randomDigits = Math.floor(1000 + Math.random() * 9000);
-        const generatedId = `INN-${randomDigits}`;
-        
-        const newIdea = {
-          id: Date.now(),
-          idea_id: generatedId,
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.mobile || "",
-          department: formData.department,
-          year: formData.year,
-          idea_category: formData.category,
-          idea_title: formData.subject,
-          idea_description: formData.description,
-          expected_outcome: formData.expectedOutcome || "",
-          attachment: null,
-          status: "Pending",
-          admin_remarks: null,
-          email_sent: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        list.unshift(newIdea);
-        localStorage.setItem("aces_idea_submissions", JSON.stringify(list));
-        window.dispatchEvent(new CustomEvent("aces_submissions_updated"));
-        
-        setIsSubmitting(false);
-        setIsSubmitted(generatedId);
-        setTimeout(() => {
-          setIsSubmitted(false);
-          closeModal();
-        }, 5000);
-      };
-
       if (res.ok || res.status === 201) {
         const data = await res.json();
-        const ideaId = data.idea_id || `INN-${Math.floor(1000 + Math.random() * 9000)}`;
-        
-        // Cache to local list too
-        const stored = localStorage.getItem("aces_idea_submissions");
-        const list = stored ? JSON.parse(stored) : [];
-        list.unshift({
-          id: data.id || Date.now(),
-          idea_id: ideaId,
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.mobile || "",
-          department: formData.department,
-          year: formData.year,
-          idea_category: formData.category,
-          idea_title: formData.subject,
-          idea_description: formData.description,
-          expected_outcome: formData.expectedOutcome || "",
-          status: "Pending",
-          created_at: new Date().toISOString()
-        });
-        localStorage.setItem("aces_idea_submissions", JSON.stringify(list));
-        window.dispatchEvent(new CustomEvent("aces_submissions_updated"));
-
         setIsSubmitting(false);
-        setIsSubmitted(ideaId);
+        setIsSubmitted(data.idea_id || "INN-XXXX");
         setTimeout(() => {
           setIsSubmitted(false);
           closeModal();
         }, 5000);
       } else {
-        handleLocalIdeaSave();
+        // Non-2xx but server responded
+        console.warn('Backend responded with status:', res.status);
+        let errorMsg = "Failed to submit idea. Please try again.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.message || errData.error || errorMsg;
+        } catch (e) {
+          console.error("Failed to parse error response", e);
+        }
+        setIsSubmitting(false);
+        alert(errorMsg);
       }
     } catch (error) {
       clearTimeout(timeoutId);
-      console.warn('Backend request delayed/failed, persisting idea locally:', error.message);
-      
-      const stored = localStorage.getItem("aces_idea_submissions");
-      const list = stored ? JSON.parse(stored) : [];
-      const randomDigits = Math.floor(1000 + Math.random() * 9000);
-      const generatedId = `INN-${randomDigits}`;
-      
-      list.unshift({
-        id: Date.now(),
-        idea_id: generatedId,
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.mobile || "",
-        department: formData.department,
-        year: formData.year,
-        idea_category: formData.category,
-        idea_title: formData.subject,
-        idea_description: formData.description,
-        expected_outcome: formData.expectedOutcome || "",
-        status: "Pending",
-        created_at: new Date().toISOString()
-      });
-      localStorage.setItem("aces_idea_submissions", JSON.stringify(list));
-      window.dispatchEvent(new CustomEvent("aces_submissions_updated"));
-      
+      console.error('Submission request failed:', error.message);
       setIsSubmitting(false);
-      setIsSubmitted(generatedId);
-      setTimeout(() => {
-        setIsSubmitted(false);
-        closeModal();
-      }, 5000);
+      alert(error.name === 'AbortError' 
+        ? "The server is taking too long to wake up. Please try submitting again!" 
+        : "Network error. Please check your connection and try again.");
     }
   };
 

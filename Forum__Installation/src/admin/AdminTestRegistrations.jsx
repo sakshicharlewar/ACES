@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { fetchTestRegistrations, deleteTestRegistration, exportTestRegistrationsCSV } from "./adminApi";
 import { Search, Download, Trash2, Loader2, AlertCircle, RefreshCw, FlaskConical, FileText } from "lucide-react";
+import { getBaseUrl } from "../lib/apiConfig";
 
 function fmt(d) {
   if (!d) return "—";
   return new Date(d).toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+const API_URL = getBaseUrl();
 
 export default function AdminTestRegistrations() {
   const [data,    setData]    = useState({ results: [], total: 0 });

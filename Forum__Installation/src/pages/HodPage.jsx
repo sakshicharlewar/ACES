@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Award, BookOpen, GraduationCap, Briefcase, Lightbulb, Users, X, ZoomIn, Building2, Loader2 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 /* ═══════════════════════════════════════════════════════
    Page transition variants

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { Loader2, Save, AlertCircle, CheckCircle2, UserCheck, Plus, Trash2 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 function getToken() {
   return localStorage.getItem("aces_admin_token");
@@ -12,53 +11,14 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-const DEFAULT_HOD = {
-  name: "Dr. Vishal V. Sir",
-  designation: "Head of Department & Professor",
-  department: "Computer Engineering",
-  image: "/HOD_Sir.jpeg",
-  professional_summary: "Visionary academician and researcher with extensive experience in Computer Engineering, Artificial Intelligence, Distributed Systems, and Institutional Leadership. Committed to academic excellence, student innovation, and industry collaborations.",
-  academic_qualifications: [
-    { title: "Ph.D. in Computer Science & Engineering", desc: "Specialized in Artificial Intelligence & Machine Learning" },
-    { title: "M.Tech in Computer Engineering", desc: "First Class with Distinction" },
-    { title: "B.E. in Computer Engineering", desc: "First Class" }
-  ],
-  professional_highlights: [
-    { title: "20+ Years Teaching & Research Experience", desc: "Mentored over 500+ undergraduate and postgraduate engineering projects." },
-    { title: "50+ International Journal & Conference Publications", desc: "Published research in IEEE, Springer, and Scopus-indexed conferences." },
-    { title: "Patent & Copyright Holder", desc: "Filed innovative software architecture and IoT patents." }
-  ],
-  achievement_images: [
-    "/HODSIR1.jpeg",
-    "/HOD_Achievements.jpeg"
-  ]
-};
-
-function getStoredHod() {
-  const stored = localStorage.getItem("aces_hod");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (parsed && parsed.name) return parsed;
-    } catch {}
-  }
-  return DEFAULT_HOD;
-}
-
-function saveStoredHod(data) {
-  localStorage.setItem("aces_hod", JSON.stringify(data));
-}
-
 async function apiFetch(path, options = {}) {
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      headers: { ...authHeaders(), ...(options.headers || {}) },
-    });
-    return res;
-  } catch (e) {
-    return { ok: false, status: 503, json: async () => ({}) };
-  }
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) },
+  });
+  if (res.status === 401) throw new Error("Session expired. Please log in again.");
+  return res;
 }
 
 function Toast({ message, type, onClose }) {
@@ -98,30 +58,36 @@ export function AdminHod() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
 
-  const [formData, setFormData] = useState(getStoredHod());
+  const [formData, setFormData] = useState({
+    name: "",
+    designation: "Head of Department",
+    department: "Computer Engineering",
+    image: "",
+    professional_summary: "",
+    academic_qualifications: [],
+    professional_highlights: [],
+    achievement_images: []
+  });
 
   const loadData = async () => {
     try {
       setLoading(true);
       const res = await apiFetch("/admin/api/hod");
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.name) {
-          const formatted = {
-            ...data,
-            academic_qualifications: ensureArray(data.academic_qualifications),
-            professional_highlights: ensureArray(data.professional_highlights),
-            achievement_images: ensureArray(data.achievement_images)
-          };
-          setFormData(formatted);
-          saveStoredHod(formatted);
-          setError("");
-          return;
-        }
+      if (!res.ok) throw new Error("Failed to load HOD Profile");
+      const data = await res.json();
+      if (data && Object.keys(data).length > 0) {
+        setFormData({
+          ...data,
+          academic_qualifications: ensureArray(data.academic_qualifications),
+          professional_highlights: ensureArray(data.professional_highlights),
+          achievement_images: ensureArray(data.achievement_images)
+        });
       }
-    } catch (err) {}
-    setFormData(getStoredHod());
-    setLoading(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -131,13 +97,14 @@ export function AdminHod() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      saveStoredHod(formData);
-      try {
-        await apiFetch("/admin/api/hod", {
-          method: "POST",
-          body: JSON.stringify(formData)
-        });
-      } catch (e) {}
+      const res = await apiFetch("/admin/api/hod", {
+        method: "POST",
+        body: JSON.stringify(formData)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to update HOD profile");
+      }
       setToast({ type: "success", message: "HOD Profile updated successfully!" });
     } catch (err) {
       setToast({ type: "error", message: err.message });

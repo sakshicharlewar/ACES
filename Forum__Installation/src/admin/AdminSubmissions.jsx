@@ -47,12 +47,6 @@ export function AdminSubmissions() {
   useEffect(() => { load(1); setPage(1); }, [search, dept, dateFrom, dateTo]);
   useEffect(() => { load(page); }, [page]);
 
-  useEffect(() => {
-    const onUpdated = () => load(page);
-    window.addEventListener("aces_submissions_updated", onUpdated);
-    return () => window.removeEventListener("aces_submissions_updated", onUpdated);
-  }, [load, page]);
-
   async function handleDelete() {
     if (!delId) return;
     setDelLoading(true);

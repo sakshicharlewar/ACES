@@ -15,49 +15,31 @@ from datetime import date as date_type
 
 
 def _public_event(e: Event) -> dict:
-    approved = getattr(e, "approved_count", 0) or 0
-    max_part = getattr(e, "max_participants", 30) or 30
-    seats_left = max(0, max_part - approved)
+    approved = getattr(e, "approved_count", 0)
+    seats_left = max(0, e.max_participants - approved)
 
     # Determine effective registration open status
-    reg_status = getattr(e, "registration_status", None)
-    is_open = reg_status == RegistrationStatus.open or str(reg_status).lower() == "open"
+    is_open = e.registration_status == RegistrationStatus.open
 
     # Auto-close if end date has passed
     end_date_str = getattr(e, "registration_end_date", None)
     if end_date_str and is_open:
         try:
-            end_d = date_type.fromisoformat(str(end_date_str)[:10])
+            end_d = date_type.fromisoformat(end_date_str[:10])
             if end_d < date_type.today():
                 is_open = False
         except Exception:
             pass
 
     # Auto-close if no seats left
-    if seats_left == 0 and max_part > 0:
+    if seats_left == 0 and e.max_participants > 0:
         is_open = False
 
     gallery_images = []
-    try:
-        if getattr(e, "gallery_albums", None):
-            for album in e.gallery_albums:
-                if getattr(album, "images", None):
-                    gallery_images.extend(album.images)
-    except Exception:
-        pass
-
-    announcement_date = None
-    try:
-        if getattr(e, "result", None) and e.result:
-            announcement_date = getattr(e.result, "announcement_date", None)
-    except Exception:
-        pass
-
-    created_at_str = None
-    try:
-        created_at_str = e.created_at.isoformat() if getattr(e, "created_at", None) else None
-    except Exception:
-        pass
+    if getattr(e, "gallery_albums", None):
+        for album in e.gallery_albums:
+            if getattr(album, "images", None):
+                gallery_images.extend(album.images)
 
     return {
         "id": e.id,
@@ -78,13 +60,13 @@ def _public_event(e: Event) -> dict:
         "registration_deadline": e.registration_deadline,
         "registration_start_date": getattr(e, "registration_start_date", None),
         "registration_end_date": getattr(e, "registration_end_date", None),
-        "registration_fee": getattr(e, "registration_fee", 0.0) or 0.0,
-        "fee": getattr(e, "registration_fee", 0.0) or 0.0,
-        "team_size": getattr(e, "team_size", 2) or 2,
-        "max_participants": max_part,
-        "max_teams": max_part,
-        "registered_count": getattr(e, "registered_count", 0) or 0,
-        "registered_teams_count": getattr(e, "registered_count", 0) or 0,
+        "registration_fee": e.registration_fee,
+        "fee": e.registration_fee,
+        "team_size": e.team_size,
+        "max_participants": e.max_participants,
+        "max_teams": e.max_participants,
+        "registered_count": e.registered_count,
+        "registered_teams_count": e.registered_count,
         "approved_count": approved,
         "seats_left": seats_left,
         "remaining_seats": seats_left,
@@ -93,14 +75,14 @@ def _public_event(e: Event) -> dict:
         "rules": e.rules,
         "prizes": e.prizes,
         "tags": e.tags,
-        "registration_status": str(reg_status.value if hasattr(reg_status, "value") else reg_status) if reg_status else "open",
+        "registration_status": e.registration_status,
         "is_registration_open": is_open,
-        "result_status": str(e.result_status.value if hasattr(e.result_status, "value") else e.result_status),
-        "event_status": str(e.event_status.value if hasattr(e.event_status, "value") else e.event_status),
-        "is_featured": bool(getattr(e, "is_featured", False)),
-        "announcement_date": announcement_date,
+        "result_status": e.result_status,
+        "event_status": e.event_status,
+        "is_featured": e.is_featured,
+        "announcement_date": e.result.announcement_date if e.result else None,
         "gallery_images": gallery_images,
-        "created_at": created_at_str,
+        "created_at": e.created_at.isoformat(),
     }
 
 
@@ -109,25 +91,18 @@ async def public_list_events(
     status: str = Query("upcoming"),
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        q = select(Event)
-        if status == "upcoming":
-            q = q.where(Event.event_status.in_(["upcoming", "ongoing"]))
-        elif status == "completed":
-            q = q.where(Event.event_status == "completed")
-        elif status == "all":
-            pass
-        else:
-            q = q.where(Event.event_status == status)
-        q = q.order_by(Event.created_at.desc())
-        result = await db.execute(q)
-        events = result.scalars().all()
-        return [_public_event(e) for e in events]
-    except Exception as err:
-        print("[Error in public_list_events]", err)
-        result = await db.execute(select(Event))
-        events = result.scalars().all()
-        return [_public_event(e) for e in events]
+    q = select(Event).options(selectinload(Event.result), selectinload(Event.gallery_albums))
+    if status == "upcoming":
+        q = q.where(Event.event_status.in_(["upcoming", "ongoing"]))
+    elif status == "completed":
+        q = q.where(Event.event_status == "completed")
+    elif status == "all":
+        pass
+    else:
+        q = q.where(Event.event_status == status)
+    q = q.order_by(Event.created_at.desc())
+    result = await db.execute(q)
+    return [_public_event(e) for e in result.scalars().all()]
 
 
 @router.get("/events/{slug}")

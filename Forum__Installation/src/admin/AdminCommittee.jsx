@@ -3,9 +3,7 @@ import { AdminLayout } from "./AdminLayout";
 import {
   Plus, Trash2, Edit, Loader2, X, Save, AlertCircle, CheckCircle2, User, Camera, MoreVertical, GripVertical
 } from "lucide-react";
-import { committeeData as fallbackCommittee } from "../data/committeeData";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 function getToken() {
   return localStorage.getItem("aces_admin_token");
@@ -14,87 +12,49 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-function getStoredCommittee() {
-  const stored = localStorage.getItem("aces_committee");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    } catch {}
-  }
-  return fallbackCommittee;
-}
-
-function saveStoredCommittee(members) {
-  localStorage.setItem("aces_committee", JSON.stringify(members));
-}
-
 async function apiFetch(path, options = {}) {
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      headers: { ...authHeaders(), ...(options.headers || {}) },
-    });
-    return res;
-  } catch (e) {
-    return { ok: false, status: 503, json: async () => ({}) };
-  }
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) },
+  });
+  if (res.status === 401) throw new Error("Session expired. Please log in again.");
+  return res;
 }
 
 async function fetchCommittee() {
-  try {
-    const res = await apiFetch("/admin/api/committee");
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        saveStoredCommittee(data);
-        return data;
-      }
-    }
-  } catch (e) {}
-  return getStoredCommittee();
+  const res = await apiFetch("/admin/api/committee");
+  if (!res.ok) throw new Error("Failed to fetch committee");
+  return res.json();
 }
 
 async function createMember(payload) {
-  const current = getStoredCommittee();
-  const newMember = { id: Date.now(), ...payload };
-  const updated = [...current, newMember];
-  saveStoredCommittee(updated);
-
-  try {
-    const res = await apiFetch("/admin/api/committee", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {}
-  return newMember;
+  const res = await apiFetch("/admin/api/committee", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to add member");
+  }
+  return res.json();
 }
 
 async function updateMember(id, payload) {
-  const current = getStoredCommittee();
-  const updated = current.map(m => String(m.id) === String(id) ? { ...m, ...payload } : m);
-  saveStoredCommittee(updated);
-
-  try {
-    const res = await apiFetch(`/admin/api/committee/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {}
-  return updated.find(m => String(m.id) === String(id));
+  const res = await apiFetch(`/admin/api/committee/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update member");
+  }
+  return res.json();
 }
 
 async function deleteMember(id) {
-  const current = getStoredCommittee();
-  const updated = current.filter(m => String(m.id) !== String(id));
-  saveStoredCommittee(updated);
-
-  try {
-    await apiFetch(`/admin/api/committee/${id}`, { method: "DELETE" });
-  } catch (e) {}
-  return { success: true };
+  const res = await apiFetch(`/admin/api/committee/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete member");
 }
 
 function Toast({ message, type, onClose }) {

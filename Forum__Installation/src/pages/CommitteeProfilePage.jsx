@@ -3,10 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X, Loader2 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
-
 import { committeeData as fallbackCommittee } from "../data/committeeData";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 function ensureArray(val) {
   if (!val) return [];
@@ -31,7 +29,8 @@ export function CommitteeProfilePage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${BASE_URL}/api/committee`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/committee`)
       .then(res => res.json())
       .then(data => {
         const list = (Array.isArray(data) && data.length > 0) ? data : fallbackCommittee;

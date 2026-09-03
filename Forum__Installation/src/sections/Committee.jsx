@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link, Loader2 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 /* ── Leader Card (For President & Vice President) ── */
 function LeaderCard({ memberKey, role, name, image, social }) {
@@ -50,6 +49,8 @@ function LeaderCard({ memberKey, role, name, image, social }) {
         <img
           src={image}
           alt={name}
+          loading="lazy"
+          decoding="async"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </div>
@@ -108,7 +109,8 @@ export function Committee() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/committee`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/committee`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {

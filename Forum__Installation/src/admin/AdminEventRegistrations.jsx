@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock, Send } from "lucide-react";
-import * as XLSX from 'xlsx';
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 import { fetchAdminEvents } from "./adminApi";
-import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
+import { getBaseUrl } from "../lib/apiConfig";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+const API_URL = getBaseUrl();
 
 const statusBadge = (status) => {
   const map = {
@@ -52,18 +51,7 @@ export default function AdminEventRegistrations() {
 
   useEffect(() => { 
     fetchEvents(); 
-    const handleSync = () => {
-      fetchEvents();
-      if (selectedEventId) fetchRegistrations(selectedEventId);
-    };
-    window.addEventListener("aces_registrations_updated", handleSync);
-    window.addEventListener("aces_events_updated", handleSync);
-    return () => {
-      window.removeEventListener("aces_registrations_updated", handleSync);
-      window.removeEventListener("aces_events_updated", handleSync);
-    };
-  }, [selectedEventId]);
-
+  }, []);
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
     else setRegistrations([]);
@@ -100,12 +88,7 @@ export default function AdminEventRegistrations() {
         console.warn("Backend fetch failed, using local registrations");
       }
       
-      const stored = localStorage.getItem('local_registrations');
-      const localRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
-      if (!stored) {
-        localStorage.setItem('local_registrations', JSON.stringify(BUG_HUNT_REGISTRATIONS));
-      }
-
+      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
       const eventLocalRegs = localRegs.filter(r => {
         // Match if event_id matches exactly
         if (r.event_id?.toString() === eventId.toString()) return true;
@@ -120,14 +103,15 @@ export default function AdminEventRegistrations() {
       // The user wants to hide the dummy data and show ONLY their data if they have it
       // Let's filter out the seed data if we have real local data
       let finalData = [...backendData, ...uniqueLocalRegs];
-      if (finalData.length === 0 && (String(eventId) === "1" || String(eventId) === "8" || String(eventId) === "bughunt-local")) {
-        finalData = BUG_HUNT_REGISTRATIONS;
+      const hasRealData = finalData.some(r => r.registration_id?.startsWith("BUG-"));
+      if (hasRealData) {
+        // Remove the seeded "BUGHUNT-XXX" dummy data so only their real data shows
+        finalData = finalData.filter(r => !r.registration_id?.startsWith("BUGHUNT-"));
       }
       
       setRegistrations(finalData.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
     } catch (e) { 
         console.error("Failed to fetch registrations:", e);
-        setRegistrations(BUG_HUNT_REGISTRATIONS);
     } finally { 
         setLoading(false); 
     }
@@ -283,29 +267,20 @@ export default function AdminEventRegistrations() {
       "Leader Email":    r.leader_email,
       "Leader Phone":    r.leader_phone,
       "Leader Year":     r.leader_year,
-      "Leader Branch":   r.leader_branch || "Computer Engineering",
-      "Member 2 Name":   r.member2_name || "",
-      "Member 2 Email":  r.member2_email || "",
-      "Member 2 Phone":  r.member2_phone || "",
-      "Member 2 Year":   r.member2_year || "",
-      "Member 3 Name":   r.extra_members?.[0]?.name || "",
-      "Member 3 Email":  r.extra_members?.[0]?.email || "",
-      "Member 3 Phone":  r.extra_members?.[0]?.phone || "",
-      "Member 3 Year":   r.extra_members?.[0]?.year || "",
-      "Member 4 Name":   r.extra_members?.[1]?.name || "",
-      "Member 4 Email":  r.extra_members?.[1]?.email || "",
-      "Member 4 Phone":  r.extra_members?.[1]?.phone || "",
-      "Member 4 Year":   r.extra_members?.[1]?.year || "",
+      "Member 2 Name":   r.member2_name,
+      "Member 2 Email":  r.member2_email,
+      "Member 2 Phone":  r.member2_phone,
+      "Member 2 Year":   r.member2_year,
       "Approval Status": r.payment_status || "pending",
       "Payment Status":  r.payment_status || "pending",
-      "Registration Fee": r.registration_fee || "₹50",
+      "Registration Fee": r.registration_fee || "₹40",
       "Transaction ID":  r.transaction_id || "",
       "Payment Screenshot": r.payment_screenshot
         ? (r.payment_screenshot.startsWith('data:') ? '[Attached - Download manually from admin panel]' : r.payment_screenshot)
         : 'Not uploaded',
       "Payment Date":    r.payment_time ? new Date(r.payment_time).toLocaleString() : "",
       "Verified At":     r.payment_verified_at ? new Date(r.payment_verified_at).toLocaleString() : "",
-      "Reg Date":        r.created_at ? new Date(r.created_at).toLocaleString() : new Date().toLocaleString(),
+      "Reg Date":        new Date(r.created_at).toLocaleString(),
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Registrations");

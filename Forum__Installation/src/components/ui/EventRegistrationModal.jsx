@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Loader2, Copy, Upload, CreditCard, Users } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import RegistrationSuccess from './RegistrationSuccess';
+import { getBaseUrl } from '../../lib/apiConfig';
 
 const DEFAULT_UPI_ID = 'yatharthdonarkar2909@oksbi';
 const DEFAULT_UPI_NAME = 'Yatharth Donarkar';
@@ -131,75 +132,30 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const validateStep2 = () => {
-    // If no extra members needed (solo team)
-    if (formData.members.length === 0) {
-      if (!formData.agreedToRules) {
-        setError('You must agree to the event rules to register.');
-        return false;
-      }
-      return true;
-    }
-
-    // Member 2 (first extra member) is REQUIRED for team events (2-4 members)
-    const member2 = formData.members[0];
-    if (!member2.name?.trim() || !member2.email?.trim() || !member2.phone?.trim()) {
-      setError('Please fill all required fields for Member 2.');
-      return false;
-    }
-    if (member2.phone.trim().length !== 10) {
-      setError('Member 2 phone number must be exactly 10 digits.');
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member2.email.trim())) {
-      setError('Member 2 email is invalid.');
-      return false;
-    }
-    if (member2.email.trim().toLowerCase() === formData.leaderEmail.trim().toLowerCase()) {
-      setError('Member 2 cannot have the same email as the team leader.');
-      return false;
-    }
-    if (member2.phone.trim() === formData.leaderPhone.trim()) {
-      setError('Member 2 cannot have the same phone number as the team leader.');
-      return false;
-    }
-
-    // Members 3 & 4 are OPTIONAL (teams of 2, 3, or 4 members)
-    const seenEmails = new Set([formData.leaderEmail.trim().toLowerCase(), member2.email.trim().toLowerCase()]);
-    const seenPhones = new Set([formData.leaderPhone.trim(), member2.phone.trim()]);
-
-    for (let i = 1; i < formData.members.length; i++) {
+    for (let i = 0; i < formData.members.length; i++) {
       const m = formData.members[i];
       const num = i + 2;
-      const hasAnyField = (m.name && m.name.trim()) || (m.email && m.email.trim()) || (m.phone && m.phone.trim()) || m.year;
-
-      if (hasAnyField) {
-        if (!m.name || !m.name.trim()) {
-          setError(`Please enter the name for Member ${num}, or leave Member ${num} completely blank.`);
-          return false;
-        }
-        if (!m.phone || m.phone.trim().length !== 10) {
-          setError(`Member ${num} phone number must be exactly 10 digits.`);
-          return false;
-        }
-        if (!m.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email.trim())) {
-          setError(`Member ${num} email is invalid.`);
-          return false;
-        }
-        const mEmail = m.email.trim().toLowerCase();
-        const mPhone = m.phone.trim();
-        if (seenEmails.has(mEmail)) {
-          setError(`Member ${num} has an email address that is already used by another team member.`);
-          return false;
-        }
-        if (seenPhones.has(mPhone)) {
-          setError(`Member ${num} has a phone number that is already used by another team member.`);
-          return false;
-        }
-        seenEmails.add(mEmail);
-        seenPhones.add(mPhone);
+      if (!m.name.trim() || !m.email.trim() || !m.phone.trim()) {
+        setError(`Please fill all required fields for Member ${num}.`);
+        return false;
+      }
+      if (m.phone.length !== 10) {
+        setError(`Member ${num} phone number must be exactly 10 digits.`);
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) {
+        setError(`Member ${num} email is invalid.`);
+        return false;
+      }
+      if (m.email === formData.leaderEmail) {
+        setError(`Member ${num} cannot have the same email as the leader.`);
+        return false;
+      }
+      if (m.phone === formData.leaderPhone) {
+        setError(`Member ${num} cannot have the same phone as the leader.`);
+        return false;
       }
     }
-
     if (!formData.agreedToRules) {
       setError('You must agree to the event rules to register.');
       return false;
@@ -273,32 +229,28 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setLoading(true);
     setError(null);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
+    const apiUrl = getBaseUrl();
     const eventId = eventDetails?.id || 1;
 
     // Build member fields: member2 goes as flat fields, members 3+ go as extra_members array
     const firstMember = formData.members[0] || {};
-    const extraMembers = formData.members
-      .slice(1)
-      .filter(m => m.name && m.name.trim())
-      .map(m => ({
-        name: m.name.trim(),
-        email: m.email?.trim() || null,
-        phone: m.phone?.trim() || null,
-        year: m.year || null,
-      }));
-
+    const extraMembers = formData.members.slice(1).map(m => ({
+      name: m.name,
+      email: m.email,
+      phone: m.phone,
+      year: m.year,
+    }));
     const payload = {
       event_id: eventId,
-      team_name: formData.teamName.trim(),
-      leader_name: formData.leaderName.trim(),
-      leader_email: formData.leaderEmail.trim(),
-      leader_phone: formData.leaderPhone.trim(),
-      leader_year: formData.leaderYear || null,
-      leader_branch: formData.leaderBranch || "Computer Engineering",
-      member2_name: firstMember.name?.trim() || null,
-      member2_email: firstMember.email?.trim() || null,
-      member2_phone: firstMember.phone?.trim() || null,
+      team_name: formData.teamName,
+      leader_name: formData.leaderName,
+      leader_email: formData.leaderEmail,
+      leader_phone: formData.leaderPhone,
+      leader_year: formData.leaderYear,
+      leader_branch: formData.leaderBranch,
+      member2_name: firstMember.name || null,
+      member2_email: firstMember.email || null,
+      member2_phone: firstMember.phone || null,
       member2_year: firstMember.year || null,
       extra_members: extraMembers.length > 0 ? extraMembers : null,
       transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
@@ -326,86 +278,65 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       }
     }
 
-    const handleLocalFallback = () => {
-      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-      const mockEvents = JSON.parse(localStorage.getItem("aces_mock_events") || '[]');
-      const eventData = mockEvents.find(e => String(e.id) === String(eventId)) || eventDetails || { title: "EVENT" };
-      const prefix = (eventData.title || "EVENT").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 10) || "EVENT";
-      const eventRegsCount = localRegs.filter(r => String(r.event_id) === String(eventId)).length;
-      const seq = String(eventRegsCount + 1).padStart(3, "0");
-      const newRegId = `${prefix}-${seq}`;
-      
-      const newReg = {
-        ...payload,
-        event_id: eventId,
-        id: `LOC-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-        registration_id: newRegId,
-        payment_status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-      localRegs.push(newReg);
-      localStorage.setItem('local_registrations', JSON.stringify(localRegs));
-      
-      // Update mock event's registered_teams_count
-      const mockEvIdx = mockEvents.findIndex(e => String(e.id) === String(eventId));
-      if (mockEvIdx !== -1) {
-        mockEvents[mockEvIdx].registered_teams_count = (mockEvents[mockEvIdx].registered_teams_count || 0) + 1;
-        mockEvents[mockEvIdx].registered_count = (mockEvents[mockEvIdx].registered_count || 0) + 1;
-        localStorage.setItem("aces_mock_events", JSON.stringify(mockEvents));
-      }
-
-      window.dispatchEvent(new CustomEvent("aces_events_updated"));
-      window.dispatchEvent(new CustomEvent("aces_registrations_updated"));
-      
-      setPendingSuccessData({
-        ...formData,
-        registrationId: newReg.registration_id,
-        eventName: eventDetails?.title || 'Event',
-        transactionId: formData.transactionId,
-        paymentStatus: 'Pending Verification',
-        registeredAt: new Date().toLocaleString(),
-      });
-      setShowSuccessPopup(true);
-      setLoading(false);
-    };
-
     if (lastErr) {
-      console.warn("Backend network error, saving to resilient local store", lastErr);
-      handleLocalFallback();
+      // Network totally unreachable after retry
+      setError(toFriendlyError(lastErr, null));
+      setLoading(false);
       return;
     }
 
-    if (!response || !response.ok) {
-      if (response && response.status === 400 && data && data.detail) {
-        setError(toFriendlyError(null, data));
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 500) {
+        console.warn("Backend failed, saving to local storage mock");
+        const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+        
+        // Generate dynamic ID matching the new backend logic
+        const mockEvents = JSON.parse(localStorage.getItem("aces_mock_events") || '[]');
+        const eventData = mockEvents.find(e => String(e.id) === String(eventId)) || { title: "EVENT" };
+        const prefix = (eventData.title || "EVENT").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+        const eventRegsCount = localRegs.filter(r => String(r.event_id) === String(eventId)).length;
+        const seq = String(eventRegsCount + 1).padStart(3, "0");
+        const newRegId = `${prefix}-${seq}`;
+        
+        const newReg = {
+          ...payload,
+          event_id: eventId,
+          id: `LOC-${Date.now()}`,
+          registration_id: newRegId,
+          payment_status: 'pending',
+          created_at: new Date().toISOString(),
+        };
+        localRegs.push(newReg);
+        localStorage.setItem('local_registrations', JSON.stringify(localRegs));
+        
+        // Also update the mock event's registered_teams_count
+        const mockEvIdx = mockEvents.findIndex(e => e.id.toString() === eventId.toString());
+        if (mockEvIdx !== -1) {
+          mockEvents[mockEvIdx].registered_teams_count = (mockEvents[mockEvIdx].registered_teams_count || 0) + 1;
+          localStorage.setItem("aces_mock_events", JSON.stringify(mockEvents));
+        }
+        
+        setPendingSuccessData({
+          ...formData,
+          registrationId: newReg.registration_id,
+          eventName: eventDetails?.title || 'Event',
+          transactionId: formData.transactionId,
+          paymentStatus: 'Pending Verification',
+          registeredAt: new Date().toLocaleString(),
+        });
+        setShowSuccessPopup(true);
         setLoading(false);
         return;
       }
-      console.warn("Backend error, saving to resilient local store", response?.status);
-      handleLocalFallback();
+      setError(toFriendlyError(null, data));
+      setLoading(false);
       return;
     }
-
-    // Backend succeeded
-    const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-    const newReg = {
-      ...payload,
-      event_id: eventId,
-      id: data.id || `LOC-${Date.now()}`,
-      registration_id: data.registration_id,
-      payment_status: 'pending',
-      created_at: new Date().toISOString(),
-    };
-    localRegs.push(newReg);
-    localStorage.setItem('local_registrations', JSON.stringify(localRegs));
-
-    window.dispatchEvent(new CustomEvent("aces_events_updated"));
-    window.dispatchEvent(new CustomEvent("aces_registrations_updated"));
 
     setPendingSuccessData({
       ...formData,
       registrationId: data.registration_id,
-      eventName: eventDetails?.title || 'Event',
+      eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
       registeredAt: new Date().toLocaleString(),
@@ -573,7 +504,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             <div>
               <h2 className="text-xl font-bold text-white">{eventName} Registration</h2>
               <p className="text-sm text-gray-400 mt-1">
-                Team Registration ({teamSize > 2 ? `2 - ${teamSize}` : teamSize} Members) •{' '}
+                Team Registration ({eventDetails?.team_size || 2} Members) •{' '}
                 <span className="text-blue-400">Step {step} of 3</span>
               </p>
             </div>
@@ -597,11 +528,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
           {/* Step Labels */}
           <div className="flex justify-between px-6 pt-3 pb-1">
-            {[
-              'Leader Info',
-              teamSize > 2 ? `Members (2-${teamSize})` : 'Member 2',
-              '💳 Payment'
-            ].map((label, i) => (
+            {['Leader Info', 'Member 2', '💳 Payment'].map((label, i) => (
               <span key={i} className={`text-xs font-medium ${step === i + 1 ? 'text-blue-400' : step > i + 1 ? 'text-green-400' : 'text-gray-600'}`}>
                 {step > i + 1 ? '✓ ' : ''}{label}
               </span>
@@ -632,40 +559,29 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       <h4 className="text-white font-semibold text-sm tracking-wide uppercase">Event Details</h4>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                      {eventDetails?.date && (
-                        <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
-                          <span className="text-gray-400 block mb-0.5">Date</span>
-                          <span className="text-white font-medium">{eventDetails.date}</span>
-                        </div>
+                    <p className="text-gray-200 text-sm leading-relaxed mb-3">
+                      <span className="text-white font-semibold">{eventDetails?.title || "Event"}</span> - {eventDetails?.description || eventDetails?.short_description || "A technical event."}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-medium">
+                        👥 Team of {eventDetails?.team_size || 2}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-500/25 text-yellow-300 text-xs font-medium">
+                        💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/25 text-purple-300 text-xs font-medium">
+                        🏆 Maximum {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 30} Teams
+                      </span>
+                      {(eventDetails?.venue || eventDetails?.time) && (
+                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 text-green-300 text-xs font-medium">
+                           📍 {eventDetails.venue}{eventDetails.venue && eventDetails.time ? ' | ' : ''}{eventDetails.time}
+                         </span>
                       )}
-                      {eventDetails?.time && (
-                        <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
-                          <span className="text-gray-400 block mb-0.5">Time</span>
-                          <span className="text-white font-medium">{eventDetails.time}</span>
-                        </div>
-                      )}
-                      {eventDetails?.venue && (
-                        <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 col-span-2 sm:col-span-1">
-                          <span className="text-gray-400 block mb-0.5">Venue</span>
-                          <span className="text-white font-medium truncate block">{eventDetails.venue}</span>
-                        </div>
-                      )}
-                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
-                        <span className="text-gray-400 block mb-0.5">Fee</span>
-                        <span className="text-green-400 font-bold">
-                          {Number(eventDetails?.fee ?? eventDetails?.registration_fee ?? 0) === 0 ? 'FREE' : `₹${eventDetails?.fee ?? eventDetails?.registration_fee}`}
-                        </span>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
-                        <span className="text-gray-400 block mb-0.5">Team Size</span>
-                        <span className="text-blue-400 font-medium">{teamSize > 2 ? `2 - ${teamSize}` : teamSize} Members</span>
-                      </div>
                       {eventDetails?.eligibility && (
-                        <div className="bg-white/5 rounded-xl p-2.5 border border-white/5">
-                          <span className="text-gray-400 block mb-0.5">Eligibility</span>
-                          <span className="text-purple-400 font-medium truncate block">{eventDetails.eligibility}</span>
-                        </div>
+                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-xs font-medium">
+                           🎓 Eligibility: {eventDetails.eligibility}
+                         </span>
                       )}
                     </div>
                   </div>
@@ -673,21 +589,23 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               )}
 
               {/* ── STEP 1: LEADER ── */}
-              <div className={step === 1 ? 'block pt-2' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm">👑</span>
-                  Team Leader Details
+              <div className={step === 1 ? 'block pt-4' : 'hidden'}>
+                <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm">1</span>
+                  Team &amp; Leader Details
                 </h3>
-                <div className="space-y-4">
+
+                <div className="space-y-5">
                   <div>
                     <label className="block text-sm text-gray-300 mb-2">Team Name *</label>
                     <input
                       type="text" name="teamName" value={formData.teamName} onChange={handleChange}
-                      placeholder="e.g. Code Warriors"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                      placeholder="e.g. Code Breakers"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm text-gray-300 mb-2">Leader Name *</label>
                       <input
@@ -699,12 +617,13 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <div>
                       <label className="block text-sm text-gray-300 mb-2">Leader Phone *</label>
                       <input
-                        type="tel" name="leaderPhone" value={formData.leaderPhone} maxLength="10" onChange={handleChange}
-                        placeholder="10-digit number"
+                        type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleChange}
+                        placeholder="10-digit number" maxLength="10"
                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-300 mb-2">Leader Email *</label>
                     <input
@@ -713,99 +632,79 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Department</label>
-                      <input
-                        type="text" name="leaderBranch" value={formData.leaderBranch} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Year *</label>
-                      <select
-                        name="leaderYear" value={formData.leaderYear} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                      >
-                        <option value="">-- Select Year --</option>
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
-                      </select>
-                    </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-2">Year *</label>
+                    <select
+                      required
+                      name="leaderYear" value={formData.leaderYear} onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                    >
+                      <option value="">-- Select Year --</option>
+                      {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-blue-400 text-lg">🎓</span>
+                    <p className="text-sm text-blue-300 font-medium">Only for Computer Engineering Students</p>
                   </div>
                 </div>
               </div>
 
               {/* ── STEP 2: ALL EXTRA MEMBERS (dynamic) ── */}
               <div className={step === 2 ? 'block pt-4' : 'hidden'}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-                  <h3 className="text-lg font-semibold text-blue-400 flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm"><Users size={14} /></span>
-                    Team Members Details
-                  </h3>
-                  {teamSize > 2 && (
-                    <span className="text-xs text-blue-300/80 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full">
-                      ✓ Teams of 2, 3, or 4 members can register
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm"><Users size={14} /></span>
+                  Team Members Details
+                </h3>
 
                 <div className="space-y-8">
-                  {formData.members.map((member, idx) => {
-                    const isRequired = idx === 0;
-                    const memberNum = idx + 2;
-                    return (
-                      <div key={idx} className="p-4 rounded-xl border border-white/10 bg-white/3 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-blue-300">
-                            Member {memberNum} {isRequired ? <span className="text-red-400">*</span> : <span className="text-xs text-gray-400 font-normal">(Optional — leave blank if team of {memberNum - 1})</span>}
-                          </p>
-                          {!isRequired && (
-                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/5 text-gray-400 border border-white/10">Optional</span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm text-gray-300 mb-2">Name {isRequired && <span className="text-red-400">*</span>}</label>
-                            <input
-                              type="text" value={member.name}
-                              onChange={e => handleMemberChange(idx, 'name', e.target.value)}
-                              placeholder={`Member ${memberNum} Full Name`}
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm text-gray-300 mb-2">Phone {isRequired && <span className="text-red-400">*</span>}</label>
-                            <input
-                              type="tel" value={member.phone} maxLength="10"
-                              onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
-                              placeholder="10-digit number"
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
-                            />
-                          </div>
-                        </div>
+                  {formData.members.map((member, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border border-white/10 bg-white/3 space-y-4">
+                      <p className="text-sm font-semibold text-blue-300">Member {idx + 2}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">Email {isRequired && <span className="text-red-400">*</span>}</label>
+                          <label className="block text-sm text-gray-300 mb-2">Name *</label>
                           <input
-                            type="email" value={member.email}
-                            onChange={e => handleMemberChange(idx, 'email', e.target.value)}
-                            placeholder="Email Address"
+                            type="text" value={member.name}
+                            onChange={e => handleMemberChange(idx, 'name', e.target.value)}
+                            placeholder="Full Name"
                             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">Year {isRequired && <span className="text-red-400">*</span>}</label>
-                          <select
-                            value={member.year}
-                            onChange={e => handleMemberChange(idx, 'year', e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                          >
-                            <option value="">-- Select Year --</option>
-                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                          </select>
+                          <label className="block text-sm text-gray-300 mb-2">Phone *</label>
+                          <input
+                            type="tel" value={member.phone} maxLength="10"
+                            onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
+                            placeholder="10-digit number"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                          />
                         </div>
                       </div>
-                    );
-                  })}
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Email *</label>
+                        <input
+                          type="email" value={member.email}
+                          onChange={e => handleMemberChange(idx, 'email', e.target.value)}
+                          placeholder="Email Address"
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-2">Year *</label>
+                        <select
+                          value={member.year}
+                          onChange={e => handleMemberChange(idx, 'year', e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                        >
+                          <option value="">-- Select Year --</option>
+                          {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
 
                   <div className="pt-4 border-t border-white/10">
                     <label className="flex items-center gap-3 cursor-pointer group">

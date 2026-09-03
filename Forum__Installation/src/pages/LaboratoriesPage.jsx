@@ -2,8 +2,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -116,7 +115,8 @@ export function LaboratoriesPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${BASE_URL}/api/laboratories`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/laboratories`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {

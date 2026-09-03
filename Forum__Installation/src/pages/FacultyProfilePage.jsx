@@ -7,8 +7,7 @@ import {
 } from "lucide-react";
 
 import { facultyData as fallbackFaculty } from "../data/facultyData";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -57,7 +56,8 @@ export function FacultyProfilePage() {
   
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${BASE_URL}/api/faculty`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/faculty`)
       .then(res => res.json())
       .then(data => {
         const list = (Array.isArray(data) && data.length > 0) ? data : fallbackFaculty;

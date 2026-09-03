@@ -2,8 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, User, Users, Monitor, Award, Image as ImageIcon, X } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 /* ═══════════════════════════════════════════════════════
    Data

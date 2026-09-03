@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getBaseUrl } from "../../lib/apiConfig";
 
 function parseWinnerDetails(details) {
   const lines = (details || '').split('\n');
@@ -77,47 +78,22 @@ export default function ResultModal({ isOpen, onClose, eventDetails }) {
     setWinnersData(null);
     
     async function loadResult() {
-      // 1. Check if admin saved custom result in local storage
-      const stored = localStorage.getItem(`aces_event_result_${eventDetails.id}`);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (!cancelled && parsed && (parsed.winner || parsed.runner_up)) {
-            setWinnersData(parsed);
-            setLoadingWinners(false);
-            return;
-          }
-        } catch {}
-      }
-
-      // 2. Try live backend API
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
-        const res = await fetch(`${apiUrl}/api/events/${eventDetails.id}/result`, {
-          signal: AbortSignal.timeout(4000),
-        });
+        const apiUrl = getBaseUrl();
+        const res = await fetch(`${apiUrl}/api/events/${eventDetails.id}/result`);
         if (res.ok) {
           const data = await res.json();
-          if (!cancelled && data && (data.winner || data.runner_up)) {
-            setWinnersData(data);
-            setLoadingWinners(false);
-            return;
-          }
+          if (!cancelled) setWinnersData(data);
+        } else if (String(eventDetails.id) === "1" || eventDetails.title?.toLowerCase().includes("bug hunt")) {
+          if (!cancelled) setWinnersData(BUG_HUNT_RESULT_FALLBACK);
         }
       } catch (e) {
-        console.warn("Backend result fetch failed:", e.message);
-      }
-
-      // 3. Fallback for Bug Hunt
-      const isBugEvent = String(eventDetails.id) === "1" || String(eventDetails.id) === "8" ||
-                         String(eventDetails.id) === "bughunt-local" ||
-                         eventDetails.title?.toLowerCase().includes("bug") ||
-                         eventDetails.slug?.toLowerCase().includes("bug");
-      if (isBugEvent && !cancelled) {
-        setWinnersData(BUG_HUNT_RESULT_FALLBACK);
-      }
-      if (!cancelled) {
-        setLoadingWinners(false);
+        console.error("Failed to fetch winners:", e);
+        if (String(eventDetails.id) === "1" || eventDetails.title?.toLowerCase().includes("bug hunt")) {
+          if (!cancelled) setWinnersData(BUG_HUNT_RESULT_FALLBACK);
+        }
+      } finally {
+        if (!cancelled) setLoadingWinners(false);
       }
     }
     

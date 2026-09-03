@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Trophy, Loader2 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../lib/apiConfig";
 
 const DEFAULT_TOPPERS = [
   { id: 1, year_group: "final_year", rank: 1, name: "Tushar Nimje", branch: "Computer Engineering", cgpa: "9.85", score_label: "CGPA", achievement: "All Rounder Award", image: "/toppers/tushar.jpeg" },
@@ -23,6 +22,8 @@ function TopperCard({ topper }) {
         <img
           src={topper.image}
           alt={topper.name}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
         />
         {/* Top Left Badge */}
@@ -68,7 +69,8 @@ export function AcademicToppers() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/toppers`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/toppers`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {

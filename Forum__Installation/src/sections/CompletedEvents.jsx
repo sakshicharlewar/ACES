@@ -12,100 +12,96 @@ const VISIBLE_COUNT = 3;
 
 const DEFAULT_COMPLETED_EVENTS = [
   {
+    id: 1,
+    title: "Bug Hunt: Debug the Web",
+    slug: "bug-hunt-debug-the-web",
+    subtitle: "Find the bugs",
+    date: "11-08-2026",
+    short_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application.",
+    full_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
+    banner: "/Debugging.jpeg",
+    result_status: "announced",
+    event_status: "completed",
+  },
+  {
     id: 3,
     title: "REIMAGINE UI/UX Competition",
     slug: "reimagine-uiux-competition-completed",
-    subtitle: "UI/UX Redesign Challenge",
-    date: "20-08-2025",
-    short_description: "UI/UX design challenge to redesign college portals with modern design principles and creative interactivity.",
-    full_description: "The Department of Computer Engineering, SCET, organized the UI/UX Competition “REIMAGINE” under the ACES Forum on 20th August 2025 for teams of two participants. A total of 40 teams competed in preliminary and final rounds.",
+    date: "15-09-2025",
+    short_description: "UI/UX design challenge to redesign college portals.",
     banner: "/Reimagin.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 4,
     title: "Debugging Competition",
     slug: "debugging-competition-completed",
-    subtitle: "Code Debugging & Optimization",
     date: "10-10-2025",
-    short_description: "Annual code debugging competition testing algorithmic and bug-fixing skills under time constraints.",
-    full_description: "Annual code debugging competition testing algorithmic and bug-fixing skills across C, C++, Java, and Python.",
+    short_description: "Annual code debugging competition.",
     banner: "/Debugging.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 5,
     title: "Logo Design Competition",
     slug: "logo-design-competition-completed",
-    subtitle: "Creative Identity & Branding",
     date: "20-10-2025",
-    short_description: "Design the official ACES student chapter logo and creative branding visuals.",
-    full_description: "Design the official ACES student chapter logo and creative branding visuals representing student innovation.",
+    short_description: "Design the official ACES student chapter logo.",
     banner: "/LogoCompition.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 6,
     title: "Face the Panel",
     slug: "face-the-panel-completed",
-    subtitle: "Corporate Mock Interviews",
     date: "05-11-2025",
-    short_description: "Mock interview and technical defense session preparing students for corporate placements.",
-    full_description: "Mock interview and technical defense session preparing students for technical interviews and HR rounds.",
+    short_description: "Mock interview and panel defense session.",
     banner: "/FaceThePanel.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 7,
     title: "Kite Making",
     slug: "kite-making-completed",
-    subtitle: "Cultural & Creative Event",
     date: "14-01-2026",
-    short_description: "Makar Sankranti special celebration combining creative geometry and cultural activities.",
-    full_description: "Makar Sankranti special celebration combining creative geometry, artistic craft, and cultural activities.",
+    short_description: "Makar Sankranti special kite designing.",
     banner: "/KiteMaking.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 8,
     title: "National Conference 2026",
     slug: "national-conference-2026-completed",
-    subtitle: "Emerging Trends in Computing",
     date: "18-02-2026",
-    short_description: "National level conference on Emerging Trends in Computing, AI, and Sustainable Technologies.",
-    full_description: "National level conference on Emerging Trends in Computing, AI, Machine Learning, and Sustainable Technologies.",
+    short_description: "National level conference on Emerging Trends in Computing.",
     banner: "/NationalConference.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 9,
     title: "International Conference 2026",
     slug: "international-conference-2026-completed",
-    subtitle: "Global Research Symposium",
     date: "22-03-2026",
-    short_description: "International conference bringing researchers, industry leaders, and scholars together.",
-    full_description: "International conference bringing researchers, keynote speakers, industry leaders, and scholars together.",
+    short_description: "International conference bringing researchers together.",
     banner: "/InternationalConference.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
   {
     id: 10,
     title: "EduSkills 3-Day Workshop",
     slug: "eduskills-3-day-workshop-completed",
-    subtitle: "Cloud & Cybersecurity Training",
     date: "12-04-2026",
-    short_description: "Hands-on cloud, DevOps, and cybersecurity industry-standard technical skills training.",
-    full_description: "Hands-on cloud, DevOps, and cybersecurity industry-standard technical skills training.",
+    short_description: "Hands-on cloud & cybersecurity skills training.",
     banner: "/EduSkill.jpeg",
-    event_status: "completed",
     result_status: "pending",
+    event_status: "completed",
   },
 ];
 
@@ -130,18 +126,8 @@ export function CompletedEvents() {
         if (!Array.isArray(eventsData)) {
           eventsData = eventsData.items || [];
         }
-        // Filter only genuine completed departmental events (excluding upcoming Bug Hunt)
-        const completedOnly = eventsData.filter(e => 
-          e.event_status === "completed" && !e.title?.toLowerCase().includes("bug hunt")
-        );
-        if (!cancelled && completedOnly.length > 0) {
-          // Merge custom backend completed events with the default departmental events
-          const existingIds = new Set(completedOnly.map(e => e.slug || e.title));
-          const combined = [
-            ...completedOnly,
-            ...DEFAULT_COMPLETED_EVENTS.filter(d => !existingIds.has(d.slug) && !existingIds.has(d.title))
-          ];
-          setEvents(combined);
+        if (!cancelled && eventsData.length > 0) {
+          setEvents(eventsData);
         }
       } catch (err) {
         console.error("Failed to load completed events:", err);

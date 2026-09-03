@@ -4,7 +4,8 @@ from routers import (
     admin_auth, admin_dashboard, admin_events, admin_notices, admin_results,
     admin_gallery, admin_submissions, admin_team, admin_faculty, admin_hod, 
     admin_laboratories, admin_committee, admin_toppers, admin_registrations, admin_test_registrations,
-    public_events, public_notices, public_faculty, public_hod, public_laboratories, public_committee, public_toppers
+    public_events, public_notices, public_faculty, public_hod, public_laboratories, public_committee, public_toppers,
+    temp_restore, temp_check
 )
 from database import engine, Base
 import traceback
@@ -42,8 +43,9 @@ app.include_router(public_hod.router)
 app.include_router(public_laboratories.router)
 app.include_router(public_committee.router)
 app.include_router(public_toppers.router)
+app.include_router(temp_restore.router)
+app.include_router(temp_check.router)
 
 @app.get("/")
 def read_root():
     return {"message": "ACES Backend API Running"}
-

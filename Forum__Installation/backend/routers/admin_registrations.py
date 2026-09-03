@@ -25,7 +25,7 @@ def gen_reg_id_sync(event_id: int) -> str:
 
 # ── Public Registration ──────────────────────────────────────────────────────────
 @router.post("/api/events/{event_id}/team-register", response_model=TeamRegisterOut, status_code=201)
-@limiter.limit("50000/minute")
+@limiter.limit("10/minute")
 async def team_register(
     request: Request,
     event_id: int,
@@ -34,7 +34,9 @@ async def team_register(
     db: AsyncSession = Depends(get_db),
 ):
     # Check event exists and is open
-    result = await db.execute(select(Event).where(Event.id == event_id))
+    # Use with_for_update() to prevent race conditions (overselling)
+    # This locks the row until the transaction commits or rolls back
+    result = await db.execute(select(Event).with_for_update().where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")

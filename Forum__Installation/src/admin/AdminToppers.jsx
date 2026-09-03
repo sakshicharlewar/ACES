@@ -3,20 +3,7 @@ import { AdminLayout } from "./AdminLayout";
 import {
   Plus, Trash2, Edit, Loader2, X, Save, AlertCircle, CheckCircle2, Award, Camera
 } from "lucide-react";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
-
-const DEFAULT_TOPPERS = [
-  { id: 1, year_group: "final_year", rank: 1, name: "Tushar Nimje", branch: "Computer Engineering", cgpa: "9.85", score_label: "CGPA", achievement: "All Rounder Award", image: "/toppers/tushar.jpeg" },
-  { id: 2, year_group: "final_year", rank: 2, name: "Harshit Bhandarkar", branch: "Computer Engineering", cgpa: "9.72", score_label: "CGPA", achievement: "Best Project Award", image: "/toppers/harshit.jpeg" },
-  { id: 3, year_group: "final_year", rank: 3, name: "Hitanshu Deshmukh", branch: "Computer Engineering", cgpa: "9.68", score_label: "CGPA", achievement: "Excellence in Academics", image: "/toppers/hitanshu.jpeg" },
-  { id: 4, year_group: "third_year", rank: 1, name: "Rajiv Ramteke", branch: "Computer Engineering", cgpa: "8.74", score_label: "CGPA", achievement: "", image: "/toppers/rajiv.jpeg" },
-  { id: 5, year_group: "third_year", rank: 2, name: "Mayuri Lanjewar", branch: "Computer Engineering", cgpa: "8.64", score_label: "CGPA", achievement: "", image: "/toppers/mayuri.jpeg" },
-  { id: 6, year_group: "third_year", rank: 3, name: "Parag Yeole", branch: "Computer Engineering", cgpa: "8.53", score_label: "CGPA", achievement: "", image: "/toppers/parag.jpeg" },
-  { id: 7, year_group: "second_year", rank: 1, name: "Aishwarya Dhole", branch: "Computer Engineering", cgpa: "9.12", score_label: "CGPA", achievement: "", image: "/toppers/aishwarya.jpeg" },
-  { id: 8, year_group: "second_year", rank: 2, name: "Vaishnavi Yelne", branch: "Computer Engineering", cgpa: "8.77", score_label: "CGPA", achievement: "", image: "/toppers/vaishnavi.jpeg" },
-  { id: 9, year_group: "second_year", rank: 3, name: "Sakshi Charlewar", branch: "Computer Engineering", cgpa: "8.75", score_label: "CGPA", achievement: "", image: "/toppers/sakshi.png" },
-];
+import { getBaseUrl } from "../lib/apiConfig";
 
 function getToken() {
   return localStorage.getItem("aces_admin_token");
@@ -25,87 +12,49 @@ function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
 }
 
-function getStoredToppers() {
-  const stored = localStorage.getItem("aces_toppers");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    } catch {}
-  }
-  return DEFAULT_TOPPERS;
-}
-
-function saveStoredToppers(toppers) {
-  localStorage.setItem("aces_toppers", JSON.stringify(toppers));
-}
-
 async function apiFetch(path, options = {}) {
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      headers: { ...authHeaders(), ...(options.headers || {}) },
-    });
-    return res;
-  } catch (e) {
-    return { ok: false, status: 503, json: async () => ({}) };
-  }
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: { ...authHeaders(), ...(options.headers || {}) },
+  });
+  if (res.status === 401) throw new Error("Session expired. Please log in again.");
+  return res;
 }
 
 async function fetchToppers() {
-  try {
-    const res = await apiFetch("/admin/api/toppers");
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        saveStoredToppers(data);
-        return data;
-      }
-    }
-  } catch (e) {}
-  return getStoredToppers();
+  const res = await apiFetch("/admin/api/toppers");
+  if (!res.ok) throw new Error("Failed to fetch toppers");
+  return res.json();
 }
 
 async function createTopper(payload) {
-  const current = getStoredToppers();
-  const newTopper = { id: Date.now(), ...payload };
-  const updated = [...current, newTopper];
-  saveStoredToppers(updated);
-
-  try {
-    const res = await apiFetch("/admin/api/toppers", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {}
-  return newTopper;
+  const res = await apiFetch("/admin/api/toppers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to add topper");
+  }
+  return res.json();
 }
 
 async function updateTopper(id, payload) {
-  const current = getStoredToppers();
-  const updated = current.map(t => String(t.id) === String(id) ? { ...t, ...payload } : t);
-  saveStoredToppers(updated);
-
-  try {
-    const res = await apiFetch(`/admin/api/toppers/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) return await res.json();
-  } catch (e) {}
-  return updated.find(t => String(t.id) === String(id));
+  const res = await apiFetch(`/admin/api/toppers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update topper");
+  }
+  return res.json();
 }
 
 async function deleteTopper(id) {
-  const current = getStoredToppers();
-  const updated = current.filter(t => String(t.id) !== String(id));
-  saveStoredToppers(updated);
-
-  try {
-    await apiFetch(`/admin/api/toppers/${id}`, { method: "DELETE" });
-  } catch (e) {}
-  return { success: true };
+  const res = await apiFetch(`/admin/api/toppers/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete topper");
 }
 
 function Toast({ message, type, onClose }) {

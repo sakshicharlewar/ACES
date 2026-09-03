@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import EventRegistrationModal from "../components/ui/EventRegistrationModal";
 import TestRegistrationModal from "../components/ui/TestRegistrationModal";
 import { Users } from "lucide-react";
-import { fetchPublicEvents, DEFAULT_EVENTS } from "../admin/adminApi";
+import { fetchPublicEvents } from "../admin/adminApi";
+import { getBaseUrl } from "../lib/apiConfig";
 
 
 
@@ -120,6 +121,7 @@ export function UpcomingEvents() {
   const fetchEvents = async (attempt = 0) => {
     try {
       let eventsData = await fetchPublicEvents({ status: "upcoming" });
+      // Ensure we have an array
       if (!Array.isArray(eventsData)) {
         eventsData = eventsData.items || [];
       }
@@ -128,13 +130,15 @@ export function UpcomingEvents() {
         setEvents(eventsData);
         setLoadFailed(false);
       } else {
-        setEvents(DEFAULT_EVENTS);
+        // Only show fallback if we have no real data yet
+        setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
         setLoadFailed(false);
       }
     } catch (e) {
       console.error("Failed to fetch events", e);
-      setEvents(DEFAULT_EVENTS);
-      setLoadFailed(false);
+      // Only replace with fallback if no real events are loaded yet
+      setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
+      setLoadFailed(true);
     }
     setIsWakingUp(false);
   };
@@ -170,47 +174,23 @@ export function UpcomingEvents() {
     setWinnersPopupOpen(true);
     setLoadingWinners(true);
     setWinnersData(null);
-
-    // 1. Check local storage
-    const stored = localStorage.getItem(`aces_event_result_${event.id}`);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed && (parsed.winner || parsed.runner_up)) {
-          setWinnersData(parsed);
-          setLoadingWinners(false);
-          return;
-        }
-      } catch {}
-    }
-
-    // 2. Try backend
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://aces-backkend.onrender.com';
-      const res = await fetch(`${apiUrl}/api/events/${event.id}/result`, {
-        signal: AbortSignal.timeout(4000),
-      });
+      const apiUrl = getBaseUrl();
+      const res = await fetch(`${apiUrl}/api/events/${event.id}/result`);
       if (res.ok) {
         const data = await res.json();
-        if (data && (data.winner || data.runner_up)) {
-          setWinnersData(data);
-          setLoadingWinners(false);
-          return;
-        }
+        setWinnersData(data);
+      } else if (String(event.id) === "1" || String(event.id) === "bughunt-local" || event.title?.toLowerCase().includes("bug hunt")) {
+        setWinnersData(BUG_HUNT_RESULT_FALLBACK);
       }
     } catch (e) {
-      console.warn("Failed to fetch winners from backend:", e.message);
+      console.error("Failed to fetch winners:", e);
+      if (String(event.id) === "1" || String(event.id) === "bughunt-local" || event.title?.toLowerCase().includes("bug hunt")) {
+        setWinnersData(BUG_HUNT_RESULT_FALLBACK);
+      }
+    } finally {
+      setLoadingWinners(false);
     }
-
-    // 3. Fallback for Bug Hunt
-    const isBug = String(event.id) === "1" || String(event.id) === "8" ||
-                  String(event.id) === "bughunt-local" ||
-                  event.title?.toLowerCase().includes("bug") ||
-                  event.slug?.toLowerCase().includes("bug");
-    if (isBug) {
-      setWinnersData(BUG_HUNT_RESULT_FALLBACK);
-    }
-    setLoadingWinners(false);
   };
 
   // ── Build display list ──
@@ -295,18 +275,12 @@ export function UpcomingEvents() {
 
 
             // ✨ Real event card ✨
-            const maxTeams = Number(event.max_participants ?? event.max_teams ?? 0);
-            const registeredCount = Number(event.registered_count ?? event.registered_teams_count ?? 0);
-            const seatsLeft = event.seats_left !== undefined ? Number(event.seats_left) : Math.max(0, maxTeams - registeredCount);
-            const isFull = maxTeams > 0 && registeredCount >= maxTeams;
+            const maxTeams = event.max_participants ?? event.max_teams ?? 0;
+            const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - (event.registered_teams_count || 0));
+            const isFull = maxTeams > 0 && seatsLeft <= 0;
             
-            const isBugHunt = String(event.id) === "1" || String(event.id) === "8" ||
-                              String(event.id) === "bughunt-local" ||
-                              event.title?.toLowerCase().includes("bug") ||
-                              event.slug?.toLowerCase().includes("bug");
-
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
-            const isResultAnnounced = event.result_status === "announced" || isBugHunt || hasPassedAnnouncement;
+            const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
             
             const isOpen = event.is_registration_open && !isFull && !isResultAnnounced;
             const isResultScheduled = !isOpen && !isResultAnnounced && event.announcement_date && new Date() < new Date(event.announcement_date);
@@ -342,7 +316,7 @@ export function UpcomingEvents() {
                     </div>
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-                      <span className="text-xl">🚀</span>
+                      <span className="text-xl">🐞</span>
                     </div>
                   )}
 
@@ -354,13 +328,9 @@ export function UpcomingEvents() {
                   {/* Badges & meta */}
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
                     <div className="flex items-center justify-between mb-4">
-                      {isResultAnnounced ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold uppercase tracking-wider">
-                          🎉 Result Declared
-                        </span>
-                      ) : isFull ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
-                          🔴 Full ({registeredCount}/{maxTeams})
+                      {isFull ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
+                          🟢 Completed
                         </span>
                       ) : isOpen ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
@@ -386,18 +356,11 @@ export function UpcomingEvents() {
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <span className="text-blue-400 font-medium">👥</span>
-                      <span className="text-white font-medium">Entries: <span className="text-blue-400 font-bold">{registeredCount}</span> / {maxTeams > 0 ? maxTeams : '∞'} Teams</span>
+                      <span className="text-gray-400 font-medium">Seats Left: {seatsLeft} / {maxTeams}</span>
                     </div>
-                    {maxTeams > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 font-medium">🎟️</span>
-                        <span className="text-gray-300">Seats Left: <span className="text-emerald-400 font-bold">{seatsLeft}</span></span>
-                      </div>
-                    )}
                     <div className="flex items-center gap-2">
-                      <Users size={14} className="text-purple-400" />
-                      <span>Team Size: {Number(event.team_size) > 2 ? `2 - ${event.team_size}` : (event.team_size || 2)} Members</span>
+                      <Users size={14} className="text-blue-400" />
+                      <span>Team Size: {event.team_size} Members</span>
                     </div>
                     {(event.fee || event.registration_fee) && (
                       <div className="flex items-center gap-2">
@@ -432,13 +395,12 @@ export function UpcomingEvents() {
 
 
                     {isResultAnnounced ? (
-                      <button
+                      <div
+                        className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
                         onClick={() => openWinnersPopup(event)}
-                        className="w-full py-3.5 rounded-xl font-bold text-center text-sm bg-gradient-to-r from-amber-500/20 via-yellow-500/25 to-amber-500/20 text-amber-300 border border-amber-500/50 hover:border-amber-400 hover:bg-amber-500/35 hover:scale-[1.02] shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <span className="text-base">🏆</span>
-                        <span>View Bug Hunt Results</span>
-                      </button>
+                        🎉 The Result Has Been Officially Announced!
+                      </div>
                     ) : isResultScheduled ? (
                       <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}

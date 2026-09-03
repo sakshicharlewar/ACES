@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, Loader2, AlertCircle, UploadCloud } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
+import { getBaseUrl } from "../../lib/apiConfig";
 const YEAR_OPTIONS = ["First Year", "Second Year", "Third Year", "Final Year"];
 const INITIAL_FORM = {
   full_name: "", email: "", mobile: "",
@@ -73,7 +72,8 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
       formData.append("year", form.year);
       formData.append("document", documentFile);
 
-      const res = await fetch(`${API_URL}/api/test-event/register`, {
+      const apiUrl = getBaseUrl();
+      const res = await fetch(`${apiUrl}/api/test-event/register`, {
         method: "POST",
         body: formData,
       });
