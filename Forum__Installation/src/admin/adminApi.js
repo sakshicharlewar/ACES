@@ -184,23 +184,24 @@ export async function fetchAdminEvents(params = {}) {
 }
 
 export async function fetchPublicEvents(params = {}) {
-  if (isBackendOffline) return getMockEvents();
-
+  const localList = getMockEvents();
   const qs = new URLSearchParams(params).toString();
   try {
     const res = await fetch(`${BASE_URL}/api/events${qs ? "?" + qs : ""}`);
-    if (!res.ok) {
-      if (res.status === 404 || res.status >= 500) isBackendOffline = true;
-      console.log("[ACES] Backend /api/events not available, using local mock data");
-      return getMockEvents();
+    if (res.ok) {
+      const data = await res.json();
+      const backendEvents = Array.isArray(data) ? data : (data.items || []);
+      if (backendEvents.length > 0) {
+        // Merge locally created events that might not exist on backend
+        const backendIds = new Set(backendEvents.map(e => String(e.id)));
+        const extraLocal = localList.filter(e => !backendIds.has(String(e.id)));
+        return [...backendEvents, ...extraLocal];
+      }
     }
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.items || []);
   } catch (err) {
-    isBackendOffline = true;
     console.log("[ACES] Backend unreachable, using local mock data");
-    return getMockEvents();
   }
+  return localList;
 }
 
 export async function fetchAdminEvent(id) {
@@ -736,28 +737,39 @@ export async function exportSubmissionsCSV() {
   URL.revokeObjectURL(url);
 }
 
-// ─── Mock Storage Helpers ─────────────────────────────────────────────────────
-function getMockEvents() {
-  const stored = localStorage.getItem("aces_mock_events");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      // Backfill any missing new fields on stored events
-      return parsed.map(e => ({
-        approved_count: 0,
-        seats_left: Math.max(0, (e.max_participants || 30) - (e.approved_count || 0)),
-        registration_start_date: null,
-        registration_end_date: null,
-        venue: null,
-        time: null,
-        whatsapp_link: null,
-        eligibility: null,
-        payment_link: null,
-        ...e,
-      }));
-    } catch { }
-  }
-  const defaults = [{
+export const DEFAULT_EVENTS = [
+  {
+    id: 12,
+    title: "BuildX - Project Innovation Challenge",
+    slug: "buildx-project-innovation-challenge",
+    subtitle: "Design • Develop • Deploy",
+    short_description: "An intensive project development and innovation challenge where teams of 2 to 4 members create and present cutting-edge software and hardware prototypes.",
+    full_description: "BuildX is the flagship innovation and development event of ACES. Teams of 2 to 4 students collaborate to ideate, build, and demonstrate innovative working solutions across web, mobile, AI, and IoT domains. Mentorship, project evaluation, and exciting prizes await top performing teams.",
+    banner: "/TechInnovation.jpeg",
+    date: "25-09-2026",
+    time: "10:00 AM",
+    venue: "Central Computing Facility & Seminar Hall, SCET",
+    max_participants: 60,
+    max_teams: 60,
+    team_size: 4,
+    registration_fee: 50,
+    fee: 50,
+    registered_count: 0,
+    registered_teams_count: 0,
+    approved_count: 0,
+    seats_left: 60,
+    whatsapp_link: null,
+    eligibility: "All Years (FE, SE, TE, BE)",
+    payment_link: null,
+    registration_start_date: null,
+    registration_end_date: null,
+    registration_status: "open",
+    is_registration_open: true,
+    event_status: "upcoming",
+    result_status: "pending",
+    is_featured: true,
+  },
+  {
     id: 1,
     title: "Bug Hunt: Debug the Web",
     slug: "bug-hunt-debug-the-web",
@@ -787,9 +799,40 @@ function getMockEvents() {
     event_status: "upcoming",
     result_status: "announced",
     is_featured: true,
-  }];
-  localStorage.setItem("aces_mock_events", JSON.stringify(defaults));
-  return defaults;
+  }
+];
+
+// ─── Mock Storage Helpers ─────────────────────────────────────────────────────
+export function getMockEvents() {
+  const stored = localStorage.getItem("aces_mock_events");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure BuildX is present if not in older cached list
+        const hasBuildX = parsed.some(e => String(e.id) === "12" || e.title?.toLowerCase().includes("build"));
+        let merged = parsed;
+        if (!hasBuildX) {
+          merged = [DEFAULT_EVENTS[0], ...parsed];
+          localStorage.setItem("aces_mock_events", JSON.stringify(merged));
+        }
+        return merged.map(e => ({
+          approved_count: e.approved_count || 0,
+          seats_left: e.seats_left !== undefined ? e.seats_left : Math.max(0, (e.max_participants || 30) - (e.registered_count || 0)),
+          registration_start_date: null,
+          registration_end_date: null,
+          venue: null,
+          time: null,
+          whatsapp_link: null,
+          eligibility: null,
+          payment_link: null,
+          ...e,
+        }));
+      }
+    } catch { }
+  }
+  localStorage.setItem("aces_mock_events", JSON.stringify(DEFAULT_EVENTS));
+  return DEFAULT_EVENTS;
 }
 
 function saveMockEvents(events) {

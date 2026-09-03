@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import EventRegistrationModal from "../components/ui/EventRegistrationModal";
 import TestRegistrationModal from "../components/ui/TestRegistrationModal";
 import { Users } from "lucide-react";
-import { fetchPublicEvents } from "../admin/adminApi";
+import { fetchPublicEvents, DEFAULT_EVENTS } from "../admin/adminApi";
 
 
 
@@ -120,7 +120,6 @@ export function UpcomingEvents() {
   const fetchEvents = async (attempt = 0) => {
     try {
       let eventsData = await fetchPublicEvents({ status: "upcoming" });
-      // Ensure we have an array
       if (!Array.isArray(eventsData)) {
         eventsData = eventsData.items || [];
       }
@@ -129,15 +128,13 @@ export function UpcomingEvents() {
         setEvents(eventsData);
         setLoadFailed(false);
       } else {
-        // Only show fallback if we have no real data yet
-        setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
+        setEvents(DEFAULT_EVENTS);
         setLoadFailed(false);
       }
     } catch (e) {
       console.error("Failed to fetch events", e);
-      // Only replace with fallback if no real events are loaded yet
-      setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
-      setLoadFailed(true);
+      setEvents(DEFAULT_EVENTS);
+      setLoadFailed(false);
     }
     setIsWakingUp(false);
   };
