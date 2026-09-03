@@ -15,6 +15,10 @@ function authHeaders() {
   };
 }
 
+function isMockToken(token) {
+  return typeof token === "string" && token.includes("mock_sig");
+}
+
 function handleUnauthorized() {
   localStorage.removeItem("aces_admin_token");
   window.dispatchEvent(new CustomEvent("aces_admin_unauthorized"));
@@ -22,12 +26,15 @@ function handleUnauthorized() {
 
 async function apiFetch(path, options = {}) {
   const baseUrl = getBaseUrl();
+  const token = getToken();
   const res = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: { ...authHeaders(), ...(options.headers || {}) },
   });
   if (res.status === 401) {
-    handleUnauthorized();
+    if (!isMockToken(token)) {
+      handleUnauthorized();
+    }
     throw new Error("Session expired. Please log in again.");
   }
   return res;

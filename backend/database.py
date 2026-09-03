@@ -4,7 +4,6 @@ from sqlalchemy.orm import DeclarativeBase
 from config import settings
 
 from sqlalchemy import event
-from sqlalchemy.engine import Engine
 
 BACKEND_DIR = Path(__file__).resolve().parent
 
@@ -41,13 +40,13 @@ engine = create_async_engine(
 
 @event.listens_for(engine.sync_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    if "sqlite" in settings.DATABASE_URL:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.execute("PRAGMA cache_size=-64000")
-        cursor.execute("PRAGMA busy_timeout=5000")
-        cursor.close()
+    try:
+        if "sqlite" in str(engine.url):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA busy_timeout=5000")
+            cursor.close()
+    except Exception:
+        pass
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
@@ -66,10 +65,3 @@ async def get_db():
             yield session
         finally:
             await session.close()
-
-
-async def init_db():
-    """Create all tables (used on startup if alembic not configured)."""
-    from models import Base as ModelBase  # noqa: F401
-    async with engine.begin() as conn:
-        await conn.run_sync(ModelBase.metadata.create_all)
