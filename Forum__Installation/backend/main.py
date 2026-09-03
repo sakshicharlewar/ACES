@@ -1,17 +1,48 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from database import engine, Base, AsyncSessionLocal
+from models import Admin, AdminRole
+from auth import hash_password
+
 from routers import (
     admin_auth, admin_dashboard, admin_events, admin_notices, admin_results,
     admin_gallery, admin_submissions, admin_team, admin_faculty, admin_hod, 
     admin_laboratories, admin_committee, admin_toppers, admin_registrations, admin_test_registrations,
-    public_events, public_notices, public_faculty, public_hod, public_laboratories, public_committee, public_toppers,
-    temp_restore, temp_check
+    public_events, public_notices, public_faculty, public_hod, public_laboratories, public_committee, public_toppers
 )
-from database import engine, Base
-import traceback
-import sys
 
-app = FastAPI(title="ACES Admin API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure database schema is created
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    # Ensure super admin account exists
+    async with AsyncSessionLocal() as db:
+        admin_res = await db.execute(select(Admin).where(Admin.username == "aces0101"))
+        admin = admin_res.scalar_one_or_none()
+        if not admin:
+            admin = Admin(
+                username="aces0101",
+                password_hash=hash_password("aces@26"),
+                email="aces@scet.ac.in",
+                role=AdminRole.super_admin,
+                is_active=True,
+            )
+            db.add(admin)
+            await db.commit()
+            print("[ACES] Created default super_admin (aces0101).")
+
+    yield
+
+
+app = FastAPI(title="ACES Admin API", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,6 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Admin Routers
 app.include_router(admin_auth.router)
 app.include_router(admin_dashboard.router)
 app.include_router(admin_events.router)
@@ -36,6 +68,7 @@ app.include_router(admin_toppers.router)
 app.include_router(admin_registrations.router)
 app.include_router(admin_test_registrations.router)
 
+# Public Routers
 app.include_router(public_events.router)
 app.include_router(public_notices.router)
 app.include_router(public_faculty.router)
@@ -43,9 +76,8 @@ app.include_router(public_hod.router)
 app.include_router(public_laboratories.router)
 app.include_router(public_committee.router)
 app.include_router(public_toppers.router)
-app.include_router(temp_restore.router)
-app.include_router(temp_check.router)
+
 
 @app.get("/")
 def read_root():
-    return {"message": "ACES Backend API Running"}
+    return {"message": "ACES Backend API Running", "status": "online"}
