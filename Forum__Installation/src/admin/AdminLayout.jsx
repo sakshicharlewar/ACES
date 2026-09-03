@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { adminLogout } from "./adminApi";
+import { adminLogout, fetchAdminEvents } from "./adminApi";
 import {
   LayoutDashboard, Lightbulb, Users, LogOut, Shield, Menu, X,
   Calendar, ChevronDown, ChevronRight, Bell, ImageIcon,
@@ -16,8 +16,14 @@ export function AdminLayout({ children }) {
   const [regsExpanded, setRegsExpanded] = useState(false);
 
   useEffect(() => {
-    // Read events directly from localStorage — no network needed for sidebar list
-    const loadEvents = () => {
+    const loadEvents = async () => {
+      try {
+        const evs = await fetchAdminEvents();
+        if (Array.isArray(evs) && evs.length > 0) {
+          setEvents(evs);
+          return;
+        }
+      } catch {}
       try {
         const stored = localStorage.getItem("aces_mock_events");
         if (stored) setEvents(JSON.parse(stored));

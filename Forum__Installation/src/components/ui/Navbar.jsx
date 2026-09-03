@@ -109,6 +109,12 @@ export function Navbar() {
               Faculty
             </button>
             <button
+              onClick={() => navigate("/admin")}
+              className="text-xs px-3 py-1.5 rounded-full bg-white/10 text-white/80 hover:text-white hover:bg-white/20 transition-all"
+            >
+              Admin
+            </button>
+            <button
               onClick={() => scrollTo("contact-section")}
               className="px-4 py-2 rounded-full border border-blue-500/50 text-blue-400 text-sm font-medium hover:bg-blue-500/10 transition-all duration-300 hover:border-blue-400"
             >
