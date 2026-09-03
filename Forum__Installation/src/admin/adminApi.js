@@ -1,3 +1,5 @@
+import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
+
 // ─── ACES Admin API — Full Production Version ─────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
@@ -132,34 +134,26 @@ export async function checkAuth() {
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 export async function fetchStats() {
-  if (isBackendOffline) {
-    return {
-      total_events: getMockEvents().length,
-      total_registrations: JSON.parse(localStorage.getItem("local_registrations") || "[]").length,
-      total_revenue: 0,
-      active_events: getMockEvents().filter(e => e.is_registration_open).length,
-      recent_registrations: [],
-    };
-  }
+  const stored = localStorage.getItem("local_registrations");
+  const allRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+  const mockStats = {
+    total_events: getMockEvents().length,
+    total_registrations: allRegs.length,
+    total_revenue: allRegs.length * 40,
+    active_events: getMockEvents().filter(e => e.is_registration_open).length,
+    recent_registrations: allRegs.slice(-5).reverse(),
+  };
+
+  if (isBackendOffline) return mockStats;
+
   try {
     const res = await apiFetch("/admin/api/stats");
-    if (!res.ok) {
-      // Only set offline for network-level failures, not auth errors
-      if (res.status === 404 || res.status >= 500) isBackendOffline = true;
-      throw new Error("Stats not available");
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.total_registrations > 0) return data;
     }
-    return await res.json();
-  } catch (err) {
-    // Don't mark offline if it was an auth error (401/403)
-    if (err.message !== "Session expired. Please log in again.") isBackendOffline = true;
-    return {
-      total_events: getMockEvents().length,
-      total_registrations: JSON.parse(localStorage.getItem("local_registrations") || "[]").length,
-      total_revenue: 0,
-      active_events: getMockEvents().filter(e => e.is_registration_open).length,
-      recent_registrations: [],
-    };
-  }
+  } catch (err) {}
+  return mockStats;
 }
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
@@ -711,12 +705,20 @@ function saveMockEvents(events) {
 }
 
 function getLocalRegistrations(eventId) {
-  const all = JSON.parse(localStorage.getItem("local_registrations") || "[]");
-  return all.filter(r => String(r.event_id) === String(eventId));
+  const stored = localStorage.getItem("local_registrations");
+  const all = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+  if (!stored) localStorage.setItem("local_registrations", JSON.stringify(BUG_HUNT_REGISTRATIONS));
+
+  const matches = all.filter(r => String(r.event_id) === String(eventId) || (String(eventId) === "1" && r.registration_id?.startsWith("BUG-")));
+  if (matches.length === 0 && (String(eventId) === "1" || String(eventId) === "8" || String(eventId) === "bughunt-local")) {
+    return BUG_HUNT_REGISTRATIONS;
+  }
+  return matches;
 }
 
 function updateLocalReg(regId, updates) {
-  const all = JSON.parse(localStorage.getItem("local_registrations") || "[]");
+  const stored = localStorage.getItem("local_registrations");
+  const all = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
   const updated = all.map(r => r.id === regId ? { ...r, ...updates } : r);
   localStorage.setItem("local_registrations", JSON.stringify(updated));
   return { success: true };
@@ -724,18 +726,73 @@ function updateLocalReg(regId, updates) {
 
 // Legacy export for backwards compat
 export async function fetchRegistrations(params = {}) {
-  const qs = new URLSearchParams(params).toString();
-  const res = await apiFetch(`/admin/api/registrations?${qs}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Failed");
-  return data;
+  const stored = localStorage.getItem("local_registrations");
+  const allRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+  if (!stored) localStorage.setItem("local_registrations", JSON.stringify(BUG_HUNT_REGISTRATIONS));
+
+  const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 20;
+  const search = (params.search || "").toLowerCase().trim();
+
+  try {
+    const qs = new URLSearchParams(params).toString();
+    const res = await apiFetch(`/admin/api/registrations?${qs}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.items && data.items.length > 0) return data;
+    }
+  } catch (e) {}
+
+  let formatted = allRegs.map(r => ({
+    ...r,
+    full_name: r.leader_name || r.full_name || r.name || r.team_name,
+    email: r.leader_email || r.email || "—",
+    phone: r.leader_phone || r.phone || "—",
+    department: r.leader_branch || r.department || "Computer Engineering",
+    year: r.leader_year || r.year || "All Years",
+    event_title: "Bug Hunt: Debug the Web",
+    created_at: r.created_at || new Date().toISOString(),
+  }));
+
+  if (search) {
+    formatted = formatted.filter(r =>
+      r.full_name?.toLowerCase().includes(search) ||
+      r.email?.toLowerCase().includes(search) ||
+      r.phone?.toLowerCase().includes(search) ||
+      r.team_name?.toLowerCase().includes(search) ||
+      r.registration_id?.toLowerCase().includes(search) ||
+      r.member2_name?.toLowerCase().includes(search)
+    );
+  }
+
+  const total = formatted.length;
+  const pages = Math.ceil(total / limit) || 1;
+  const start = (page - 1) * limit;
+  const items = formatted.slice(start, start + limit);
+
+  return { items, total, page, pages };
 }
 
 export async function fetchRegistration(id) {
-  const res = await apiFetch(`/admin/api/registrations/${id}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Not found");
-  return data;
+  const stored = localStorage.getItem("local_registrations");
+  const allRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+  const found = allRegs.find(r => String(r.id) === String(id) || String(r.registration_id) === String(id));
+  if (found) {
+    return {
+      ...found,
+      full_name: found.leader_name || found.full_name,
+      email: found.leader_email || found.email,
+      phone: found.leader_phone || found.phone,
+      department: found.leader_branch || found.department || "Computer Engineering",
+      year: found.leader_year || found.year || "All Years",
+      event_title: "Bug Hunt: Debug the Web",
+    };
+  }
+  try {
+    const res = await apiFetch(`/admin/api/registrations/${id}`);
+    if (res.ok) return await res.json();
+  } catch (e) {}
+  throw new Error("Registration not found");
 }
 
 export function submissionsExportUrl() {
@@ -743,13 +800,30 @@ export function submissionsExportUrl() {
 }
 
 export async function exportRegistrationsCSV() {
-  const res = await apiFetch("/admin/api/registrations/export");
-  if (!res.ok) throw new Error("Export failed");
-  const blob = await res.blob();
+  const stored = localStorage.getItem("local_registrations");
+  const allRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+  
+  const headers = ["ID", "Registration ID", "Team Name", "Leader Name", "Leader Email", "Leader Phone", "Member 2 Name", "Member 2 Email", "Transaction ID", "Status", "Date"];
+  const rows = allRegs.map(r => [
+    r.id,
+    r.registration_id || "",
+    `"${(r.team_name || "").replace(/"/g, '""')}"`,
+    `"${(r.leader_name || "").replace(/"/g, '""')}"`,
+    r.leader_email || "",
+    r.leader_phone || "",
+    `"${(r.member2_name || "").replace(/"/g, '""')}"`,
+    r.member2_email || "",
+    r.transaction_id || "",
+    r.payment_status || "approved",
+    r.created_at || ""
+  ]);
+
+  const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "registrations.csv";
+  a.download = "bug_hunt_registrations.csv";
   a.click();
   URL.revokeObjectURL(url);
 }

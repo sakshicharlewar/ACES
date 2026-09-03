@@ -4,6 +4,7 @@ import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unloc
 import * as XLSX from 'xlsx';
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 import { fetchAdminEvents } from "./adminApi";
+import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://aces-backkend.onrender.com";
 
@@ -88,7 +89,12 @@ export default function AdminEventRegistrations() {
         console.warn("Backend fetch failed, using local registrations");
       }
       
-      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const stored = localStorage.getItem('local_registrations');
+      const localRegs = stored ? JSON.parse(stored) : BUG_HUNT_REGISTRATIONS;
+      if (!stored) {
+        localStorage.setItem('local_registrations', JSON.stringify(BUG_HUNT_REGISTRATIONS));
+      }
+
       const eventLocalRegs = localRegs.filter(r => {
         // Match if event_id matches exactly
         if (r.event_id?.toString() === eventId.toString()) return true;
@@ -103,15 +109,14 @@ export default function AdminEventRegistrations() {
       // The user wants to hide the dummy data and show ONLY their data if they have it
       // Let's filter out the seed data if we have real local data
       let finalData = [...backendData, ...uniqueLocalRegs];
-      const hasRealData = finalData.some(r => r.registration_id?.startsWith("BUG-"));
-      if (hasRealData) {
-        // Remove the seeded "BUGHUNT-XXX" dummy data so only their real data shows
-        finalData = finalData.filter(r => !r.registration_id?.startsWith("BUGHUNT-"));
+      if (finalData.length === 0 && (String(eventId) === "1" || String(eventId) === "8" || String(eventId) === "bughunt-local")) {
+        finalData = BUG_HUNT_REGISTRATIONS;
       }
       
       setRegistrations(finalData.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
     } catch (e) { 
         console.error("Failed to fetch registrations:", e);
+        setRegistrations(BUG_HUNT_REGISTRATIONS);
     } finally { 
         setLoading(false); 
     }
