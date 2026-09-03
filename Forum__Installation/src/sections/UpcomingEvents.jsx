@@ -298,9 +298,10 @@ export function UpcomingEvents() {
 
 
             // ✨ Real event card ✨
-            const maxTeams = event.max_participants ?? event.max_teams ?? 0;
-            const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - (event.registered_teams_count || 0));
-            const isFull = maxTeams > 0 && seatsLeft <= 0;
+            const maxTeams = Number(event.max_participants ?? event.max_teams ?? 0);
+            const registeredCount = Number(event.registered_count ?? event.registered_teams_count ?? 0);
+            const seatsLeft = event.seats_left !== undefined ? Number(event.seats_left) : Math.max(0, maxTeams - registeredCount);
+            const isFull = maxTeams > 0 && registeredCount >= maxTeams;
             
             const isBugHunt = String(event.id) === "1" || String(event.id) === "8" ||
                               String(event.id) === "bughunt-local" ||
@@ -344,7 +345,7 @@ export function UpcomingEvents() {
                     </div>
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-                      <span className="text-xl">🐞</span>
+                      <span className="text-xl">🚀</span>
                     </div>
                   )}
 
@@ -361,8 +362,8 @@ export function UpcomingEvents() {
                           🎉 Result Declared
                         </span>
                       ) : isFull ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
-                          🟢 Completed
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
+                          🔴 Full ({registeredCount}/{maxTeams})
                         </span>
                       ) : isOpen ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
@@ -388,11 +389,18 @@ export function UpcomingEvents() {
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 font-medium">Seats Left: {seatsLeft} / {maxTeams}</span>
+                      <span className="text-blue-400 font-medium">👥</span>
+                      <span className="text-white font-medium">Entries: <span className="text-blue-400 font-bold">{registeredCount}</span> / {maxTeams > 0 ? maxTeams : '∞'} Teams</span>
                     </div>
+                    {maxTeams > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-400 font-medium">🎟️</span>
+                        <span className="text-gray-300">Seats Left: <span className="text-emerald-400 font-bold">{seatsLeft}</span></span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
-                      <Users size={14} className="text-blue-400" />
-                      <span>Team Size: {event.team_size} Members</span>
+                      <Users size={14} className="text-purple-400" />
+                      <span>Team Size: {Number(event.team_size) > 2 ? `2 - ${event.team_size}` : (event.team_size || 2)} Members</span>
                     </div>
                     {(event.fee || event.registration_fee) && (
                       <div className="flex items-center gap-2">
