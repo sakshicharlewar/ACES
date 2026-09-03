@@ -1,76 +1,75 @@
-import os
-import logging
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+from pathlib import Path
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
+from config import settings
 
-load_dotenv()
-logger = logging.getLogger(__name__)
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
+BACKEND_DIR = Path(__file__).resolve().parent
 
-# Render provides postgres:// but SQLAlchemy requires postgresql://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "echo": False,
+}
 
-if not DATABASE_URL:
-    logger.warning("[DB] DATABASE_URL is not set. Falling back to local SQLite.")
-    engine = create_engine(
-        "sqlite:///./aces_local.db",
-        connect_args={"check_same_thread": False},
-        echo=False,
-    )
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+db_url = settings.DATABASE_URL
+if "sqlite" in db_url:
+    engine_kwargs["connect_args"] = {"timeout": 30}
+    # Resolve relative sqlite paths like sqlite+aiosqlite:///./aces_db.sqlite to backend directory
+    if "///./" in db_url or ":///" not in db_url or db_url.endswith("/aces_db.sqlite") or db_url.endswith("\\aces_db.sqlite"):
+        db_file = (BACKEND_DIR / "aces_db.sqlite").as_posix()
+        if "aiosqlite" in db_url:
+            db_url = f"sqlite+aiosqlite:///{db_file}"
+        else:
+            db_url = f"sqlite:///{db_file}"
 else:
-    try:
-        engine = create_engine(
-            DATABASE_URL,
-            pool_size=50,
-            max_overflow=100,
-            pool_timeout=30,
-            pool_recycle=1800,
-            pool_pre_ping=True,
-            echo=False,
-        )
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        logger.info("[DB] PostgreSQL engine created successfully.")
-    except Exception as e:
-        logger.error(f"[DB] Failed to create PostgreSQL engine: {e}")
-        engine = None
-        SessionLocal = None
+    engine_kwargs["pool_size"] = 20
+    engine_kwargs["max_overflow"] = 30
+    engine_kwargs["pool_timeout"] = 60
+    engine_kwargs["pool_recycle"] = 1800
+    
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-Base = declarative_base()
+engine = create_async_engine(
+    db_url,
+    **engine_kwargs
+)
 
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if "sqlite" in settings.DATABASE_URL:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA cache_size=-64000")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.close()
 
-def get_db():
-    """
-    FastAPI dependency that yields a database session.
-    Gracefully returns None if PostgreSQL is unavailable.
-    """
-    if SessionLocal is None:
-        logger.warning("[DB] No database session available — DATABASE_URL not configured.")
-        yield None
-        return
-    db = SessionLocal()
-    try:
-        yield db
-    except Exception as e:
-        logger.error(f"[DB] Session error: {e}")
-        db.rollback()
-        raise
-    finally:
-        db.close()
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
-def create_tables():
-    """Create all tables if they don't exist. Safe to call repeatedly."""
-    if engine is None:
-        logger.warning("[DB] Cannot create tables — no engine available.")
-        return False
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("[DB] All PostgreSQL tables created/verified.")
-        return True
-    except Exception as e:
-        logger.error(f"[DB] Failed to create tables: {e}")
-        return False
+class Base(DeclarativeBase):
+    pass
+
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+
+async def init_db():
+    """Create all tables (used on startup if alembic not configured)."""
+    from models import Base as ModelBase  # noqa: F401
+    async with engine.begin() as conn:
+        await conn.run_sync(ModelBase.metadata.create_all)
