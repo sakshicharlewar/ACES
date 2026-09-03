@@ -302,8 +302,13 @@ export function UpcomingEvents() {
             const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - (event.registered_teams_count || 0));
             const isFull = maxTeams > 0 && seatsLeft <= 0;
             
+            const isBugHunt = String(event.id) === "1" || String(event.id) === "8" ||
+                              String(event.id) === "bughunt-local" ||
+                              event.title?.toLowerCase().includes("bug") ||
+                              event.slug?.toLowerCase().includes("bug");
+
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
-            const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
+            const isResultAnnounced = event.result_status === "announced" || isBugHunt || hasPassedAnnouncement;
             
             const isOpen = event.is_registration_open && !isFull && !isResultAnnounced;
             const isResultScheduled = !isOpen && !isResultAnnounced && event.announcement_date && new Date() < new Date(event.announcement_date);
@@ -351,7 +356,11 @@ export function UpcomingEvents() {
                   {/* Badges & meta */}
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
                     <div className="flex items-center justify-between mb-4">
-                      {isFull ? (
+                      {isResultAnnounced ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold uppercase tracking-wider">
+                          🎉 Result Declared
+                        </span>
+                      ) : isFull ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
                           🟢 Completed
                         </span>
@@ -418,12 +427,13 @@ export function UpcomingEvents() {
 
 
                     {isResultAnnounced ? (
-                      <div
-                        className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
+                      <button
                         onClick={() => openWinnersPopup(event)}
+                        className="w-full py-3.5 rounded-xl font-bold text-center text-sm bg-gradient-to-r from-amber-500/20 via-yellow-500/25 to-amber-500/20 text-amber-300 border border-amber-500/50 hover:border-amber-400 hover:bg-amber-500/35 hover:scale-[1.02] shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        🎉 The Result Has Been Officially Announced!
-                      </div>
+                        <span className="text-base">🏆</span>
+                        <span>View Bug Hunt Results</span>
+                      </button>
                     ) : isResultScheduled ? (
                       <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
