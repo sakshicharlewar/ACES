@@ -3,10 +3,16 @@ import { useLocation } from "react-router-dom";
 import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock, Send } from "lucide-react";
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 import { fetchAdminEvents } from "./adminApi";
+import { AdminLayout } from "./AdminLayout";
 import { getBaseUrl } from "../lib/apiConfig";
 import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
 
 const API_URL = getBaseUrl();
+
+const DEFAULT_EVENTS = [
+  { id: 1, title: "Bug Hunt: Debug the Web", max_teams: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", result_status: "announced" },
+  { id: 12, title: "BuildX - Project Innovation Challenge", max_teams: 30, registered_teams_count: 0, is_registration_open: true, registration_status: "open", result_status: "pending" }
+];
 
 const statusBadge = (status) => {
   const map = {
@@ -31,11 +37,11 @@ const statusBadge = (status) => {
 export default function AdminEventRegistrations() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialEventId = searchParams.get("event_id") || "";
+  const initialEventId = searchParams.get("event_id") || "1";
 
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [selectedEventId, setSelectedEventId] = useState(initialEventId);
-  const [registrations, setRegistrations] = useState([]);
+  const [registrations, setRegistrations] = useState(initialEventId === "1" ? BUG_HUNT_REGISTRATIONS : []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [screenshotModal, setScreenshotModal] = useState(null);
@@ -53,9 +59,10 @@ export default function AdminEventRegistrations() {
   useEffect(() => { 
     fetchEvents(); 
   }, []);
+
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
-    else setRegistrations([]);
+    else setRegistrations(BUG_HUNT_REGISTRATIONS);
   }, [selectedEventId]);
 
   const fetchEvents = async () => {
@@ -64,12 +71,11 @@ export default function AdminEventRegistrations() {
       if (!Array.isArray(fetchedEvents)) {
         fetchedEvents = fetchedEvents.items || [];
       }
-      setEvents(fetchedEvents);
-      if (fetchedEvents.length > 0 && !initialEventId) {
-        setSelectedEventId(fetchedEvents[0].id.toString());
+      if (fetchedEvents && fetchedEvents.length > 0) {
+        setEvents(fetchedEvents);
       }
     } catch (e) {
-      console.error("Failed to fetch events:", e);
+      console.warn("Using fallback events:", e);
     }
   };
 
@@ -103,21 +109,27 @@ export default function AdminEventRegistrations() {
         return false;
       });
       
-      const backendIds = new Set(backendData.map(d => d.id));
-      const uniqueLocalRegs = eventLocalRegs.filter(r => !backendIds.has(r.id));
+      const backendIds = new Set(backendData.map(d => d.id || d.registration_id));
+      const uniqueLocalRegs = eventLocalRegs.filter(r => !backendIds.has(r.id) && !backendIds.has(r.registration_id));
       
       let finalData = [...backendData, ...uniqueLocalRegs];
-      const hasRealData = finalData.some(r => r.registration_id?.startsWith("BUG-"));
-      if (hasRealData) {
-        finalData = finalData.filter(r => !r.registration_id?.startsWith("BUGHUNT-"));
-      }
-
-      // If viewing Bug Hunt (ID 1) and nothing returned yet, show authentic fallback
-      if (String(eventId) === "1" && finalData.length === 0) {
-        finalData = BUG_HUNT_REGISTRATIONS;
+      
+      // If viewing Bug Hunt (ID 1)
+      if (String(eventId) === "1") {
+        if (finalData.length === 0) {
+          finalData = BUG_HUNT_REGISTRATIONS;
+        } else {
+          // Merge to guarantee all 30 teams are present
+          const existingRegIds = new Set(finalData.map(r => r.registration_id));
+          for (const fallback of BUG_HUNT_REGISTRATIONS) {
+            if (!existingRegIds.has(fallback.registration_id)) {
+              finalData.push(fallback);
+            }
+          }
+        }
       }
       
-      setRegistrations(finalData.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
+      setRegistrations(finalData.sort((a,b) => (a.registration_id || "").localeCompare(b.registration_id || "")));
     } catch (e) { 
         console.error("Failed to fetch registrations:", e);
         if (String(eventId) === "1") {
@@ -309,7 +321,8 @@ export default function AdminEventRegistrations() {
   );
 
   return (
-    <div className="p-6">
+    <AdminLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-end mb-6">
         <div>
@@ -633,6 +646,7 @@ export default function AdminEventRegistrations() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
