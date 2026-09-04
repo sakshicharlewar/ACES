@@ -23,6 +23,10 @@ async def log_action(db: AsyncSession, admin_id: int, action: str, resource: str
 
 
 def event_to_dict(e: Event) -> dict:
+    reg_status = e.registration_status.value if hasattr(e.registration_status, "value") else str(e.registration_status) if e.registration_status else "closed"
+    ev_status = e.event_status.value if hasattr(e.event_status, "value") else str(e.event_status) if e.event_status else "completed"
+    res_status = e.result_status.value if hasattr(e.result_status, "value") else str(e.result_status) if e.result_status else "none"
+    is_open = reg_status == "open"
     return {
         "id": e.id,
         "title": e.title,
@@ -56,12 +60,12 @@ def event_to_dict(e: Event) -> dict:
         "rules": e.rules,
         "prizes": e.prizes,
         "tags": e.tags,
-        "registration_status": e.registration_status,
-        "is_registration_open": e.registration_status == RegistrationStatus.open,
-        "result_status": e.result_status,
-        "event_status": e.event_status,
+        "registration_status": reg_status,
+        "is_registration_open": is_open,
+        "result_status": res_status,
+        "event_status": ev_status,
         "is_featured": e.is_featured,
-        "created_at": e.created_at.isoformat(),
+        "created_at": e.created_at.isoformat() if hasattr(e.created_at, "isoformat") else str(e.created_at) if e.created_at else None,
     }
 
 
