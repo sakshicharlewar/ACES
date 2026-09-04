@@ -598,7 +598,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                         💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
                       </span>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/25 text-purple-300 text-xs font-medium">
-                        🏆 Maximum {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 30} Teams
+                        🏆 Seats: {eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60} Registered
                       </span>
                       {(eventDetails?.venue || eventDetails?.time) && (
                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 text-green-300 text-xs font-medium">
@@ -961,8 +961,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           <div className="px-6 py-4 border-t border-white/10 bg-[#0B0B0B]">
             {step === 3 && (
               <div className="flex justify-between items-center mb-3 px-1 text-xs">
-                <span className="text-gray-500">Registered Teams</span>
-                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 30}</span>
+                <span className="text-gray-400 font-medium">Seats Registered</span>
+                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</span>
               </div>
             )}
             <div className="flex justify-between items-center gap-3">

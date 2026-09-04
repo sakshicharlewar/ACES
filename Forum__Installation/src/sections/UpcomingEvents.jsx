@@ -297,9 +297,10 @@ export function UpcomingEvents() {
 
 
             // ✨ Real event card ✨
-            const maxTeams = event.max_participants ?? event.max_teams ?? 0;
-            const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - (event.registered_teams_count || 0));
-            const isFull = maxTeams > 0 && seatsLeft <= 0;
+            const maxTeams = event.max_participants ?? event.max_teams ?? 60;
+            const registeredTeams = event.registered_teams_count ?? event.registered_count ?? 0;
+            const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - registeredTeams);
+            const isFull = maxTeams > 0 && registeredTeams >= maxTeams;
             
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
             const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
@@ -378,7 +379,15 @@ export function UpcomingEvents() {
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400 font-medium">Seats Left: {seatsLeft} / {maxTeams}</span>
+                      <span className="text-blue-400">🪑</span>
+                      <span className="text-gray-300 font-medium">
+                        Seats Registered: <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
+                        {seatsLeft > 0 ? (
+                          <span className="text-xs text-green-400 ml-1.5 font-normal">({seatsLeft} seats left)</span>
+                        ) : (
+                          <span className="text-xs text-red-400 ml-1.5 font-normal">(Housefull)</span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-blue-400" />
@@ -404,9 +413,31 @@ export function UpcomingEvents() {
                     )}
                   </div>
 
-                  {/* Seat Tracker */}
+                  {/* Seat Tracker & Register Button */}
                   <div className="mt-auto pt-4 border-t border-white/10">
-
+                    {/* Live Progress Bar */}
+                    <div className="mb-3">
+                      <div className="flex justify-between items-center text-xs mb-1.5">
+                        <span className="text-gray-400 font-medium flex items-center gap-1.5">
+                          <span className="text-blue-400">⚡</span> Live Seats: <strong className="text-white font-mono">{registeredTeams}/{maxTeams}</strong>
+                        </span>
+                        <span className="text-green-400 font-semibold text-[11px]">
+                          {seatsLeft} remaining
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isFull 
+                              ? 'bg-red-500' 
+                              : registeredTeams > maxTeams * 0.75 
+                              ? 'bg-amber-500' 
+                              : 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                          }`}
+                          style={{ width: `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
+                        />
+                      </div>
+                    </div>
 
                     {isResultAnnounced ? (
                       <div

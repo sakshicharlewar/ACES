@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from typing import Optional
 import random, string
 from database import get_db
-from models import Event, EventResult, RegistrationStatus, EventStatus, IdeaSubmission
+from models import Event, EventResult, RegistrationStatus, EventStatus, IdeaSubmission, TeamRegistration
 
 router = APIRouter(prefix="/api", tags=["Public"])
 
@@ -14,9 +14,11 @@ router = APIRouter(prefix="/api", tags=["Public"])
 from datetime import date as date_type
 
 
-def _public_event(e: Event) -> dict:
-    approved = getattr(e, "approved_count", 0)
-    seats_left = max(0, e.max_participants - approved)
+def _public_event(e: Event, actual_regs: int = None, actual_approved: int = None) -> dict:
+    registered = actual_regs if actual_regs is not None else getattr(e, "registered_count", 0)
+    approved = actual_approved if actual_approved is not None else getattr(e, "approved_count", 0)
+    max_cap = getattr(e, "max_participants", 60) or 60
+    seats_left = max(0, max_cap - registered)
 
     reg_status = e.registration_status.value if hasattr(e.registration_status, "value") else str(e.registration_status) if e.registration_status else "closed"
     ev_status = e.event_status.value if hasattr(e.event_status, "value") else str(e.event_status) if e.event_status else "completed"
@@ -35,7 +37,7 @@ def _public_event(e: Event) -> dict:
             pass
 
     # Auto-close if no seats left
-    if seats_left == 0 and e.max_participants > 0:
+    if seats_left == 0 and max_cap > 0:
         is_open = False
 
     gallery_images = []
@@ -66,10 +68,10 @@ def _public_event(e: Event) -> dict:
         "registration_fee": e.registration_fee,
         "fee": e.registration_fee,
         "team_size": e.team_size,
-        "max_participants": e.max_participants,
-        "max_teams": e.max_participants,
-        "registered_count": e.registered_count,
-        "registered_teams_count": e.registered_count,
+        "max_participants": max_cap,
+        "max_teams": max_cap,
+        "registered_count": registered,
+        "registered_teams_count": registered,
         "approved_count": approved,
         "seats_left": seats_left,
         "remaining_seats": seats_left,
@@ -105,7 +107,20 @@ async def public_list_events(
         q = q.where(Event.event_status == status)
     q = q.order_by(Event.created_at.desc())
     result = await db.execute(q)
-    return [_public_event(e) for e in result.scalars().all()]
+    events = result.scalars().all()
+
+    # Get live registration counts by event
+    reg_counts = await db.execute(
+        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).group_by(TeamRegistration.event_id)
+    )
+    reg_map = dict(reg_counts.fetchall())
+
+    app_counts = await db.execute(
+        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).where(TeamRegistration.status == "approved").group_by(TeamRegistration.event_id)
+    )
+    app_map = dict(app_counts.fetchall())
+
+    return [_public_event(e, actual_regs=reg_map.get(e.id, e.registered_count), actual_approved=app_map.get(e.id, e.approved_count)) for e in events]
 
 
 @router.get("/events/{slug}")
@@ -117,9 +132,11 @@ async def public_get_event(slug: str, db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Event).options(selectinload(Event.result), selectinload(Event.gallery_albums)).where(Event.id == int(slug)))
         event = result.scalar_one_or_none()
     if not event:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Event not found")
-    return _public_event(event)
+
+    reg_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id))).scalar() or 0
+    app_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id, TeamRegistration.status == "approved"))).scalar() or 0
+    return _public_event(event, actual_regs=reg_count, actual_approved=app_count)
 
 
 @router.get("/events/{event_id}/result")

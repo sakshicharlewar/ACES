@@ -236,7 +236,7 @@ export function AdminEvents() {
                 <tr className="border-b border-white/10 text-white/40 text-xs uppercase tracking-wider">
                   <th className="px-5 py-3.5 text-left font-medium">ID</th>
                   <th className="px-5 py-3.5 text-left font-medium">Title</th>
-                  <th className="px-5 py-3.5 text-left font-medium">Seats Left / Max</th>
+                  <th className="px-5 py-3.5 text-left font-medium">Registrations / Seats</th>
                   <th className="px-5 py-3.5 text-left font-medium">Fee (₹)</th>
                   <th className="px-5 py-3.5 text-left font-medium">Status</th>
                   <th className="px-5 py-3.5 text-left font-medium">Actions</th>
@@ -265,7 +265,8 @@ export function AdminEvents() {
                       <td className="px-5 py-4 text-white/40 font-mono text-xs">{ev.id}</td>
                       <td className="px-5 py-4 text-white font-medium max-w-[200px] truncate">{ev.title}</td>
                       <td className="px-5 py-4 text-white/80">
-                        {ev.seats_left ?? (ev.max_participants ?? ev.max_teams ?? 0)} / {ev.max_participants ?? ev.max_teams ?? 0}
+                        <span className="font-semibold text-white">{ev.registered_teams_count ?? ev.registered_count ?? 0}</span> / {ev.max_participants ?? ev.max_teams ?? 0}
+                        <span className="text-xs text-green-400 block font-normal">({ev.seats_left ?? Math.max(0, (ev.max_participants ?? ev.max_teams ?? 0) - (ev.registered_count ?? 0))} left)</span>
                       </td>
                       <td className="px-5 py-4 text-white/80">
                         {ev.fee ?? ev.registration_fee ?? "Free"}

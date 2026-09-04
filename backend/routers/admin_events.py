@@ -22,7 +22,12 @@ async def log_action(db: AsyncSession, admin_id: int, action: str, resource: str
     db.add(log)
 
 
-def event_to_dict(e: Event) -> dict:
+def event_to_dict(e: Event, actual_regs: int = None, actual_approved: int = None) -> dict:
+    registered = actual_regs if actual_regs is not None else getattr(e, "registered_count", 0)
+    approved = actual_approved if actual_approved is not None else getattr(e, "approved_count", 0)
+    max_cap = getattr(e, "max_participants", 60) or 60
+    seats_left = max(0, max_cap - registered)
+
     reg_status = e.registration_status.value if hasattr(e.registration_status, "value") else str(e.registration_status) if e.registration_status else "closed"
     ev_status = e.event_status.value if hasattr(e.event_status, "value") else str(e.event_status) if e.event_status else "completed"
     res_status = e.result_status.value if hasattr(e.result_status, "value") else str(e.result_status) if e.result_status else "none"
@@ -46,12 +51,12 @@ def event_to_dict(e: Event) -> dict:
         "registration_fee": e.registration_fee,
         "fee": e.registration_fee,
         "team_size": e.team_size,
-        "max_participants": e.max_participants,
-        "max_teams": e.max_participants,
-        "registered_count": e.registered_count,
-        "registered_teams_count": e.registered_count,
-        "approved_count": getattr(e, "approved_count", 0),
-        "seats_left": max(0, e.max_participants - getattr(e, "approved_count", 0)),
+        "max_participants": max_cap,
+        "max_teams": max_cap,
+        "registered_count": registered,
+        "registered_teams_count": registered,
+        "approved_count": approved,
+        "seats_left": seats_left,
         "payment_link": e.payment_link,
         "whatsapp_link": e.whatsapp_link,
         "eligibility": e.eligibility,
@@ -86,7 +91,18 @@ async def list_events(
     q = q.order_by(Event.created_at.desc())
     result = await db.execute(q)
     events = result.scalars().all()
-    return [event_to_dict(e) for e in events]
+
+    reg_counts = await db.execute(
+        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).group_by(TeamRegistration.event_id)
+    )
+    reg_map = dict(reg_counts.fetchall())
+
+    app_counts = await db.execute(
+        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).where(TeamRegistration.status == "approved").group_by(TeamRegistration.event_id)
+    )
+    app_map = dict(app_counts.fetchall())
+
+    return [event_to_dict(e, actual_regs=reg_map.get(e.id, e.registered_count), actual_approved=app_map.get(e.id, e.approved_count)) for e in events]
 
 
 @router.get("/events/{event_id}")
@@ -95,7 +111,10 @@ async def get_event(event_id: int, db: AsyncSession = Depends(get_db), admin: Ad
     event = result.scalar_one_or_none()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    return event_to_dict(event)
+
+    reg_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id))).scalar() or 0
+    app_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id, TeamRegistration.status == "approved"))).scalar() or 0
+    return event_to_dict(event, actual_regs=reg_count, actual_approved=app_count)
 
 
 @router.post("/events", status_code=201)
