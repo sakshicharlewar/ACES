@@ -7,31 +7,14 @@ from sqlalchemy import event
 
 BACKEND_DIR = Path(__file__).resolve().parent
 
+db_file = (BACKEND_DIR / "aces_db.sqlite").as_posix()
+db_url = f"sqlite+aiosqlite:///{db_file}"
+
 engine_kwargs = {
     "pool_pre_ping": True,
     "echo": False,
+    "connect_args": {"timeout": 30},
 }
-
-db_url = settings.DATABASE_URL
-if "sqlite" in db_url:
-    engine_kwargs["connect_args"] = {"timeout": 30}
-    # Resolve relative sqlite paths like sqlite+aiosqlite:///./aces_db.sqlite to backend directory
-    if "///./" in db_url or ":///" not in db_url or db_url.endswith("/aces_db.sqlite") or db_url.endswith("\\aces_db.sqlite"):
-        db_file = (BACKEND_DIR / "aces_db.sqlite").as_posix()
-        if "aiosqlite" in db_url:
-            db_url = f"sqlite+aiosqlite:///{db_file}"
-        else:
-            db_url = f"sqlite:///{db_file}"
-else:
-    engine_kwargs["pool_size"] = 20
-    engine_kwargs["max_overflow"] = 30
-    engine_kwargs["pool_timeout"] = 60
-    engine_kwargs["pool_recycle"] = 1800
-    
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
-elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
-    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(
     db_url,

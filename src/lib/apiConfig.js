@@ -9,11 +9,9 @@ export function getBaseUrl() {
 
     // If accessing from a local network IP (e.g. 192.168.x.x or 10.x.x.x on mobile):
     // Auto-route to the backend running on the same host IP on port 8000
+    const isLocalIp = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname);
     if (
-      hostname !== "localhost" &&
-      hostname !== "127.0.0.1" &&
-      !hostname.includes("onrender.com") &&
-      !hostname.includes("vercel.app") &&
+      isLocalIp &&
       (!envUrl || envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))
     ) {
       return `${protocol}//${hostname}:8000`;

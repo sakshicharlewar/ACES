@@ -31,12 +31,29 @@ desktop.ini
 *.png
 *.jpeg
 
-# Other project folders (keep only Forum__Installation tracked)
+*.docx
+*.pptx
+*.avif
+
+# Other project folders on Desktop
+45DAYS_DSAIntership/
+API/
+Agriflow VN/
+Ai Agent Tutorial/
+CEP/
+CampusVote/
+Forum__Installation - Copy (2)/
+Forum__Installation - Copy/
+MOCKMATE__AI/
+PortfolioSakshi/
+Scanner/
+Technical_Skill_DSA/
+TeleRehabX_Final - Copy/
+agriculture/
+ai agent1/
 portfolio2/
 potfolio/
 portfolioo/
-"ai agent1"/
-backend/
 python/
 
 # IDE

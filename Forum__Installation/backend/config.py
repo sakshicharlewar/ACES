@@ -22,13 +22,18 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [
+        "https://aces.scetngp.com",
+        "http://aces.scetngp.com",
+        "https://www.aces.scetngp.com",
+        "http://www.aces.scetngp.com",
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://localhost:3000",
         "https://aces-forum.onrender.com",
-        "https://aces.example.com",
+        "https://aces-frontend.onrender.com",
+        "https://aces-zbgk.onrender.com",
     ]
 
     # App
