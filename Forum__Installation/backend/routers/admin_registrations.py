@@ -116,9 +116,17 @@ async def team_register(
             )
             db.add(registration)
 
-            # Atomically update registered_count
+            # Atomically update registered_count and auto-close event if capacity reached
             await db.execute(
-                update(Event).where(Event.id == event_id).values(registered_count=Event.registered_count + 1)
+                update(Event)
+                .where(Event.id == event_id)
+                .values(
+                    registered_count=Event.registered_count + 1,
+                    registration_status=func.case(
+                        (Event.registered_count + 1 >= max_cap, RegistrationStatus.closed),
+                        else_=Event.registration_status
+                    )
+                )
             )
             await db.commit()
             committed = True
