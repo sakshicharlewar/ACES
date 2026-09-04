@@ -95,7 +95,7 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "11-08-2026 (3:00 PM)",
     short_description: "Informative session on Smart India Hackathon by Kunal Panche Sir.",
     full_description: "An informative session designed to introduce students to the Smart India Hackathon (SIH), its objectives, problem statements, team formation, idea development, and the overall selection process. The session will guide students on how to identify real-world problems, develop innovative solutions, and prepare effectively for participation in SIH.",
-    banner: "/NationalConference.jpeg",
+    banner: "/SIH_Guest_Lecture.jpeg",
     event_status: "completed",
   },
   {
