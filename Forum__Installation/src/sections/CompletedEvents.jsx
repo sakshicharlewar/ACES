@@ -1,14 +1,11 @@
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
-import ResultModal from "../components/ui/ResultModal";
-
 import { fetchPublicEvents } from "../admin/adminApi";
 
 const CARD_WIDTH = 476; // card width + gap
-const VISIBLE_COUNT = 3;
 
 const DEFAULT_COMPLETED_EVENTS = [
   {
@@ -20,7 +17,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     short_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application.",
     full_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
     banner: "/Debugging.jpeg",
-    result_status: "announced",
     event_status: "completed",
   },
   {
@@ -30,7 +26,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "15-09-2025",
     short_description: "UI/UX design challenge to redesign college portals.",
     banner: "/Reimagin.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -40,7 +35,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "10-10-2025",
     short_description: "Annual code debugging competition.",
     banner: "/Debugging.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -50,7 +44,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "20-10-2025",
     short_description: "Design the official ACES student chapter logo.",
     banner: "/LogoCompition.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -60,7 +53,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "05-11-2025",
     short_description: "Mock interview and panel defense session.",
     banner: "/FaceThePanel.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -70,7 +62,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "14-01-2026",
     short_description: "Makar Sankranti special kite designing.",
     banner: "/KiteMaking.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -80,7 +71,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "18-02-2026",
     short_description: "National level conference on Emerging Trends in Computing.",
     banner: "/NationalConference.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -90,7 +80,6 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "22-03-2026",
     short_description: "International conference bringing researchers together.",
     banner: "/InternationalConference.jpeg",
-    result_status: "pending",
     event_status: "completed",
   },
   {
@@ -100,8 +89,25 @@ const DEFAULT_COMPLETED_EVENTS = [
     date: "12-04-2026",
     short_description: "Hands-on cloud & cybersecurity skills training.",
     banner: "/EduSkill.jpeg",
-    result_status: "pending",
     event_status: "completed",
+  },
+  {
+    id: 11,
+    title: "GUEST LECTURE - Smart India Hackathon",
+    slug: "guest-lecture-sih-completed",
+    date: "11-08-2026",
+    short_description: "Informative session on Smart India Hackathon by Kunal Panche Sir.",
+    banner: "/NationalConference.jpeg",
+    event_status: "completed",
+  },
+  {
+    id: 12,
+    title: "BuildX - Project Innovation Challenge",
+    slug: "buildx-project-innovation-challenge",
+    date: "25-09-2026",
+    short_description: "Flagship project innovation challenge for aspiring engineers.",
+    banner: "/Reimagin.jpeg",
+    event_status: "upcoming",
   },
 ];
 
@@ -115,14 +121,12 @@ export function CompletedEvents() {
   const containerRef = useRef(null);
   const [maxScrollX, setMaxScrollX] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [resultModalOpen, setResultModalOpen] = useState(false);
-  const [selectedResultEvent, setSelectedResultEvent] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     async function loadEvents() {
       try {
-        let eventsData = await fetchPublicEvents({ status: "completed" });
+        let eventsData = await fetchPublicEvents({ status: "all" });
         if (!Array.isArray(eventsData)) {
           eventsData = eventsData.items || [];
         }
@@ -217,6 +221,8 @@ export function CompletedEvents() {
                     <img
                       src={event.banner || "/Reimagin.jpeg"}
                       alt={event.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-contain object-center transition-transform duration-500 p-2"
                     />
                   </div>
@@ -224,14 +230,6 @@ export function CompletedEvents() {
                     <div className="font-label text-xs text-accent mb-2 uppercase tracking-wider">{event.date}</div>
                     <h4 className="font-sans text-xl font-bold text-white mb-3 group-hover:text-accent transition-colors">{event.title}</h4>
                     <p className="font-cambria text-sm text-text-secondary line-clamp-2 flex-1">{event.full_description || event.short_description}</p>
-                    {event.result_status === "announced" && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedResultEvent(event); setResultModalOpen(true); }}
-                        className="mt-4 w-full py-2.5 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Trophy className="w-4 h-4" /> View Results
-                      </button>
-                    )}
                   </div>
                 </GlassCard>
               </div>
@@ -280,50 +278,30 @@ export function CompletedEvents() {
               />
             </div>
 
-            {/* Next/Prev overlay buttons */}
             {activeGallery.gallery_images.length > 1 && (
-              <>
+              <div className="flex items-center gap-4 mt-4">
                 <button
-                  onClick={() => setCurrentImgIndex(i => i === 0 ? activeGallery.gallery_images.length - 1 : i - 1)}
-                  className="absolute left-8 p-3 rounded-full bg-black/50 text-white/80 hover:bg-black/80 hover:text-white transition-all backdrop-blur"
+                  onClick={() => setCurrentImgIndex(i => Math.max(i - 1, 0))}
+                  disabled={currentImgIndex === 0}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-30"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
+                <span className="text-white/60 text-sm">
+                  {currentImgIndex + 1} / {activeGallery.gallery_images.length}
+                </span>
                 <button
-                  onClick={() => setCurrentImgIndex(i => i === activeGallery.gallery_images.length - 1 ? 0 : i + 1)}
-                  className="absolute right-8 p-3 rounded-full bg-black/50 text-white/80 hover:bg-black/80 hover:text-white transition-all backdrop-blur"
+                  onClick={() => setCurrentImgIndex(i => Math.min(i + 1, activeGallery.gallery_images.length - 1))}
+                  disabled={currentImgIndex === activeGallery.gallery_images.length - 1}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-30"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
-              </>
+              </div>
             )}
           </div>
-
-          {/* Thumbnails list */}
-          {activeGallery.gallery_images.length > 1 && (
-            <div className="w-[300px] bg-[#1a1f2e] border-l border-white/10 p-4 overflow-y-auto">
-              <h4 className="font-sans font-medium text-white mb-4">Gallery ({activeGallery.gallery_images.length})</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {activeGallery.gallery_images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentImgIndex(idx)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 ${currentImgIndex === idx ? 'border-accent' : 'border-transparent'}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
-
-      <ResultModal 
-        isOpen={resultModalOpen} 
-        onClose={() => setResultModalOpen(false)} 
-        eventDetails={selectedResultEvent} 
-      />
     </>
   );
 }
