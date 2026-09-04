@@ -29,11 +29,44 @@ const BUG_HUNT_FALLBACK = {
   registration_status: "closed",
   result_status: "announced",
   max_teams: 30,
+  max_participants: 30,
   team_size: 2,
   fee: 40,
   registered_teams_count: 30,
+  registered_count: 30,
   isFallback: true,
 };
+
+const BUILD_X_FALLBACK = {
+  id: 12,
+  title: "BuildX - Project Innovation Challenge",
+  slug: "buildx-project-innovation-challenge",
+  subtitle: "Build the Future with Code & Innovation",
+  description:
+    "Showcase your engineering skills and project innovations. Compete against top teams and present your working prototypes.",
+  short_description:
+    "Showcase your engineering skills and project innovations. Compete against top teams and present your working prototypes.",
+  is_registration_open: true,
+  registration_status: "open",
+  event_status: "upcoming",
+  result_status: "pending",
+  max_teams: 60,
+  max_participants: 60,
+  team_size: 4,
+  fee: 0,
+  registration_fee: 0,
+  registered_teams_count: 0,
+  registered_count: 0,
+  seats_left: 60,
+  eligibility: "All Years",
+  venue: "Lab 3 & Auditorium",
+  date: "Coming Soon",
+  time: "10:00 AM onwards",
+  whatsapp_link: "https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF",
+  isFallback: true,
+};
+
+const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BUG_HUNT_FALLBACK];
 
 // ── Winner Cards Component ─────────────────────────────────────────────────
 function parseWinnerDetails(details) {
@@ -85,7 +118,7 @@ function WinnerCards({ data }) {
 
 export function UpcomingEvents() {
 
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(DEFAULT_FALLBACK_EVENTS);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -152,14 +185,12 @@ export function UpcomingEvents() {
         setEvents(upcomingAndAnnounced);
         setLoadFailed(false);
       } else {
-        // Only show fallback if we have no real data yet
-        setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
+        setEvents(DEFAULT_FALLBACK_EVENTS);
         setLoadFailed(false);
       }
     } catch (e) {
       console.error("Failed to fetch events", e);
-      // Only replace with fallback if no real events are loaded yet
-      setEvents(prev => prev.length > 0 && !prev[0]?.isFallback ? prev : [BUG_HUNT_FALLBACK]);
+      setEvents(DEFAULT_FALLBACK_EVENTS);
       setLoadFailed(true);
     }
     setIsWakingUp(false);

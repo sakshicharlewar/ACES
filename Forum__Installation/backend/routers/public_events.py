@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from typing import Optional
 import random, string
 from database import get_db
-from models import Event, EventResult, RegistrationStatus, EventStatus, IdeaSubmission, TeamRegistration
+from models import Event, EventResult, RegistrationStatus, EventStatus, IdeaSubmission, TeamRegistration, PaymentStatus
 
 router = APIRouter(prefix="/api", tags=["Public"])
 
@@ -116,7 +116,7 @@ async def public_list_events(
     reg_map = dict(reg_counts.fetchall())
 
     app_counts = await db.execute(
-        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).where(TeamRegistration.status == "approved").group_by(TeamRegistration.event_id)
+        select(TeamRegistration.event_id, func.count(TeamRegistration.id)).where(TeamRegistration.payment_status == PaymentStatus.approved).group_by(TeamRegistration.event_id)
     )
     app_map = dict(app_counts.fetchall())
 
@@ -135,7 +135,7 @@ async def public_get_event(slug: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Event not found")
 
     reg_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id))).scalar() or 0
-    app_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id, TeamRegistration.status == "approved"))).scalar() or 0
+    app_count = (await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event.id, TeamRegistration.payment_status == PaymentStatus.approved))).scalar() or 0
     return _public_event(event, actual_regs=reg_count, actual_approved=app_count)
 
 
