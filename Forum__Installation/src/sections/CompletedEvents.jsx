@@ -129,11 +129,12 @@ export function CompletedEvents() {
         if (!Array.isArray(eventsData)) {
           eventsData = eventsData.items || [];
         }
-        // Filter out Bug Hunt and BuildX so only genuine Departmental Events are displayed
+        // Filter out only Bug Hunt and BuildX so all genuine Departmental Events (including Debugging Competition) are displayed
         const completedOnly = eventsData.filter(e => {
           const t = (e.title || "").toLowerCase();
           const s = (e.slug || "").toLowerCase();
-          return !t.includes("bug") && !t.includes("buildx") && !s.includes("bug") && !s.includes("buildx");
+          const isFlagship = e.id === 1 || s.includes("bug-hunt") || s.includes("bughunt") || t.includes("bug hunt") || s.includes("buildx") || t.includes("buildx");
+          return !isFlagship;
         });
         if (!cancelled && completedOnly.length > 0) {
           setEvents(completedOnly);
@@ -145,7 +146,11 @@ export function CompletedEvents() {
       }
     }
     loadEvents();
-    return () => { cancelled = true; };
+    window.addEventListener("aces_events_updated", loadEvents);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("aces_events_updated", loadEvents);
+    };
   }, []);
 
   // Compute the real max scroll so the last card aligns flush — no blank space

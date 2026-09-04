@@ -127,9 +127,23 @@ export function UpcomingEvents() {
       }
       
       const upcomingAndAnnounced = eventsData.filter(e => {
+        const titleLower = (e.title || "").toLowerCase();
+        const slugLower = (e.slug || "").toLowerCase();
+
+        // 1. Explicitly exclude Debugging Competition and any other completed departmental events
+        const isDebuggingComp = titleLower.includes("debugging competition") || slugLower.includes("debugging-competition");
+        if (isDebuggingComp) return false;
+
+        // 2. Identify Flagship events
+        const isBugHunt = e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt");
+        const isBuildX = slugLower.includes("buildx") || titleLower.includes("buildx");
+
+        // 3. Completed departmental events should never appear in Upcoming Events
+        if (e.event_status === "completed" && !isBugHunt && !isBuildX) {
+          return false;
+        }
+
         const isUpcoming = e.event_status === "upcoming" || e.event_status === "ongoing";
-        const isBugHunt = (e.slug || "").includes("bug") || (e.title || "").toLowerCase().includes("bug");
-        const isBuildX = (e.slug || "").includes("buildx") || (e.title || "").toLowerCase().includes("buildx");
         const hasResult = e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
         return isUpcoming || isBugHunt || isBuildX || hasResult;
       });

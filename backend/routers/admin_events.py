@@ -145,6 +145,7 @@ async def create_event(body: EventCreate, db: AsyncSession = Depends(get_db), ad
 
 
 @router.patch("/events/{event_id}")
+@router.put("/events/{event_id}")
 async def update_event(event_id: int, body: EventUpdate, db: AsyncSession = Depends(get_db), admin: Admin = Depends(get_current_admin)):
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
@@ -153,7 +154,23 @@ async def update_event(event_id: int, body: EventUpdate, db: AsyncSession = Depe
 
     update_data = body.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        setattr(event, key, value)
+        if key == "event_status" and value:
+            try:
+                setattr(event, key, EventStatus(value))
+            except Exception:
+                setattr(event, key, value)
+        elif key == "registration_status" and value:
+            try:
+                setattr(event, key, RegistrationStatus(value))
+            except Exception:
+                setattr(event, key, value)
+        elif key == "result_status" and value:
+            try:
+                setattr(event, key, ResultStatus(value))
+            except Exception:
+                setattr(event, key, value)
+        else:
+            setattr(event, key, value)
 
     await db.commit()
     await db.refresh(event)

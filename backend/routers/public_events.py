@@ -18,8 +18,11 @@ def _public_event(e: Event) -> dict:
     approved = getattr(e, "approved_count", 0)
     seats_left = max(0, e.max_participants - approved)
 
-    # Determine effective registration open status
-    is_open = e.registration_status == RegistrationStatus.open
+    reg_status = e.registration_status.value if hasattr(e.registration_status, "value") else str(e.registration_status) if e.registration_status else "closed"
+    ev_status = e.event_status.value if hasattr(e.event_status, "value") else str(e.event_status) if e.event_status else "completed"
+    res_status = e.result_status.value if hasattr(e.result_status, "value") else str(e.result_status) if e.result_status else "none"
+
+    is_open = reg_status == "open"
 
     # Auto-close if end date has passed
     end_date_str = getattr(e, "registration_end_date", None)
@@ -75,14 +78,14 @@ def _public_event(e: Event) -> dict:
         "rules": e.rules,
         "prizes": e.prizes,
         "tags": e.tags,
-        "registration_status": e.registration_status,
+        "registration_status": reg_status,
         "is_registration_open": is_open,
-        "result_status": e.result_status,
-        "event_status": e.event_status,
+        "result_status": res_status,
+        "event_status": ev_status,
         "is_featured": e.is_featured,
         "announcement_date": e.result.announcement_date if e.result else None,
         "gallery_images": gallery_images,
-        "created_at": e.created_at.isoformat(),
+        "created_at": e.created_at.isoformat() if hasattr(e.created_at, "isoformat") else str(e.created_at) if e.created_at else None,
     }
 
 

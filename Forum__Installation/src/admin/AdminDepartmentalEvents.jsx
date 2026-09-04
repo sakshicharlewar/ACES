@@ -144,7 +144,8 @@ async function fetchDeptEvents() {
       const deptList = list.filter(e => {
         const t = (e.title || "").toLowerCase();
         const s = (e.slug || "").toLowerCase();
-        return !t.includes("bug") && !t.includes("buildx") && !s.includes("bug") && !s.includes("buildx");
+        const isFlagship = e.id === 1 || s.includes("bug-hunt") || s.includes("bughunt") || t.includes("bug hunt") || s.includes("buildx") || t.includes("buildx");
+        return !isFlagship;
       });
       if (deptList.length > 0) return deptList;
     }
@@ -163,24 +164,29 @@ async function createDeptEvent(payload) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to create event");
   }
-  return res.json();
+  const data = await res.json();
+  window.dispatchEvent(new CustomEvent("aces_events_updated"));
+  return data;
 }
 
 async function updateDeptEvent(id, payload) {
   const res = await apiFetch(`/admin/api/events/${id}`, {
-    method: "PUT",
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to update event");
   }
-  return res.json();
+  const data = await res.json();
+  window.dispatchEvent(new CustomEvent("aces_events_updated"));
+  return data;
 }
 
 async function deleteDeptEvent(id) {
   const res = await apiFetch(`/admin/api/events/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete event");
+  window.dispatchEvent(new CustomEvent("aces_events_updated"));
 }
 
 const EMPTY_FORM = {
