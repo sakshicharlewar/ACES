@@ -81,7 +81,7 @@ export default function RegistrationSuccess({ data, onClose }) {
             Join the official WhatsApp group for round schedules, seat numbers, and live event updates:
           </p>
           <a 
-            href={data?.whatsapp_link || data?.whatsappLink || "https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF"}
+            href={data?.whatsapp_link || data?.whatsappLink || "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] text-sm"

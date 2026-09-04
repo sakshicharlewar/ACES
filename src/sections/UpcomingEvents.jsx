@@ -62,7 +62,8 @@ const BUILD_X_FALLBACK = {
   venue: "Suryodaya College of Engineering & Technology",
   date: "22-09-2026",
   time: "10:00 AM onwards",
-  whatsapp_link: "https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF",
+  whatsapp_link: "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
+  qr_image: "/BuildXScanner.jpeg",
   isFallback: true,
 };
 

@@ -324,7 +324,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       eventName: eventDetails?.title || 'Event',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
-      whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF',
+      whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir',
       registeredAt: new Date().toLocaleString(),
     });
     setShowSuccessPopup(true);
@@ -409,7 +409,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             {(eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link) && (
               <div className="pt-2">
                 <a 
-                  href={eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link || "https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF"} 
+                  href={eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link || "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:-translate-y-0.5 active:translate-y-0"
@@ -742,7 +742,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   {/* QR Code — Custom or default image */}
                   <div className="bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-3 w-full max-w-[280px]">
                     <img
-                      src={eventDetails?.qr_image || "/YatharthScanner.jpeg"}
+                      src={eventDetails?.qr_image || "/BuildXScanner.jpeg"}
                       alt="Payment QR Code"
                       style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />

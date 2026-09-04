@@ -30,10 +30,19 @@ desktop.ini
 *.jpg
 *.png
 *.jpeg
-
 *.docx
 *.pptx
 *.avif
+
+# Allow project static assets
+!public/**/*
+!public/*
+!src/assets/**/*
+!src/assets/*
+!Forum__Installation/public/**/*
+!Forum__Installation/public/*
+!Forum__Installation/src/assets/**/*
+!Forum__Installation/src/assets/*
 
 # Other project folders on Desktop
 45DAYS_DSAIntership/
