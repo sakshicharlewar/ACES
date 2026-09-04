@@ -26,6 +26,7 @@ import { EventDetailsPage } from "./pages/EventDetailsPage";
 import { LaboratoriesPage } from "./pages/LaboratoriesPage";
 import { CommitteeProfilePage } from "./pages/CommitteeProfilePage";
 import { FloatingEventsButton } from "./components/ui/FloatingEventsButton";
+import EventAnnouncementModal from "./components/ui/EventAnnouncementModal";
 
 /* ── Admin Pages ── */
 import { ProtectedAdminRoute } from "./admin/ProtectedAdminRoute";
@@ -99,6 +100,7 @@ function HomePage() {
       <div id="contact-section">
         <ContactUs />
       </div>
+      <EventAnnouncementModal />
     </main>
   );
 }

@@ -223,6 +223,23 @@ export function UpcomingEvents() {
     // Button stays hidden until the success screen is also closed (handled by onClose)
   };
 
+  // ── Global trigger to open event registration from announcement popup or buttons ──
+  useEffect(() => {
+    const handleOpenEventModal = (e) => {
+      const slug = (e.detail?.slug || "buildx").toLowerCase();
+      const target = (events || []).find(ev => 
+        (ev.slug || "").toLowerCase().includes(slug) || 
+        (ev.title || "").toLowerCase().includes(slug)
+      ) || (events || []).find(ev => ev.is_registration_open) || events[0];
+      
+      if (target) {
+        handleRegisterClick(target);
+      }
+    };
+    window.addEventListener('openEventRegistrationModal', handleOpenEventModal);
+    return () => window.removeEventListener('openEventRegistrationModal', handleOpenEventModal);
+  }, [events]);
+
   const openWinnersPopup = async (event) => {
     setWinnersPopupEvent(event);
     setWinnersPopupOpen(true);
