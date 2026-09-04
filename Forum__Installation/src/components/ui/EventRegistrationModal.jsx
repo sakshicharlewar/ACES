@@ -39,9 +39,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setTimeout(() => setUpiCopied(false), 2500);
     });
   };
-  const teamSize = eventDetails?.team_size || 2;
+  const teamSize = eventDetails?.team_size || 4;
   const makeEmptyMembers = (size) =>
-    Array.from({ length: Math.max(0, size - 1) }, () => ({ name: '', email: '', phone: '', year: '' }));
+    Array.from({ length: Math.max(3, (size || 4) - 1) }, () => ({ name: '', email: '', phone: '', year: '' }));
 
   const [formData, setFormData] = useState({
     teamName: '',
@@ -67,7 +67,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   // Reset form when a different event is opened
   useEffect(() => {
     if (isOpen && eventDetails?.id) {
-      const size = eventDetails.team_size || 2;
+      const size = eventDetails.team_size || 4;
       setFormData({
         teamName: '',
         leaderName: '',
@@ -107,8 +107,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setError(null);
   };
 
-
-
   const copyUPI = () => {
     navigator.clipboard.writeText(UPI_ID);
     setCopied(true);
@@ -132,30 +130,58 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const validateStep2 = () => {
-    for (let i = 0; i < formData.members.length; i++) {
+    // Member 2 (index 0) is required (minimum 2 members in a team)
+    const m2 = formData.members[0];
+    if (!m2 || !m2.name.trim() || !m2.email.trim() || !m2.phone.trim()) {
+      setError('Please fill all required fields for Member 2.');
+      return false;
+    }
+    if (m2.phone.length !== 10) {
+      setError('Member 2 phone number must be exactly 10 digits.');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m2.email)) {
+      setError('Member 2 email is invalid.');
+      return false;
+    }
+    if (m2.email.toLowerCase() === formData.leaderEmail.toLowerCase()) {
+      setError('Member 2 cannot have the same email as the leader.');
+      return false;
+    }
+    if (m2.phone === formData.leaderPhone) {
+      setError('Member 2 cannot have the same phone as the leader.');
+      return false;
+    }
+
+    // Members 3 and 4 are OPTIONAL! Validate ONLY if the student enters info for them
+    for (let i = 1; i < formData.members.length; i++) {
       const m = formData.members[i];
       const num = i + 2;
-      if (!m.name.trim() || !m.email.trim() || !m.phone.trim()) {
-        setError(`Please fill all required fields for Member ${num}.`);
-        return false;
-      }
-      if (m.phone.length !== 10) {
-        setError(`Member ${num} phone number must be exactly 10 digits.`);
-        return false;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) {
-        setError(`Member ${num} email is invalid.`);
-        return false;
-      }
-      if (m.email === formData.leaderEmail) {
-        setError(`Member ${num} cannot have the same email as the leader.`);
-        return false;
-      }
-      if (m.phone === formData.leaderPhone) {
-        setError(`Member ${num} cannot have the same phone as the leader.`);
-        return false;
+      const hasAnyField = (m.name && m.name.trim()) || (m.email && m.email.trim()) || (m.phone && m.phone.trim()) || m.year;
+      if (hasAnyField) {
+        if (!m.name.trim() || !m.email.trim() || !m.phone.trim()) {
+          setError(`Please complete all fields for Member ${num} or clear them if you have a smaller team.`);
+          return false;
+        }
+        if (m.phone.length !== 10) {
+          setError(`Member ${num} phone number must be exactly 10 digits.`);
+          return false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) {
+          setError(`Member ${num} email is invalid.`);
+          return false;
+        }
+        if (m.email.toLowerCase() === formData.leaderEmail.toLowerCase() || m.email.toLowerCase() === m2.email.toLowerCase()) {
+          setError(`Member ${num} cannot have duplicate email.`);
+          return false;
+        }
+        if (m.phone === formData.leaderPhone || m.phone === m2.phone) {
+          setError(`Member ${num} cannot have duplicate phone number.`);
+          return false;
+        }
       }
     }
+
     if (!formData.agreedToRules) {
       setError('You must agree to the event rules to register.');
       return false;
@@ -234,12 +260,14 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
     // Build member fields: member2 goes as flat fields, members 3+ go as extra_members array
     const firstMember = formData.members[0] || {};
-    const extraMembers = formData.members.slice(1).map(m => ({
-      name: m.name,
-      email: m.email,
-      phone: m.phone,
-      year: m.year,
-    }));
+    const extraMembers = formData.members.slice(1)
+      .filter(m => m.name && m.name.trim())
+      .map(m => ({
+        name: m.name.trim(),
+        email: (m.email || '').trim(),
+        phone: (m.phone || '').trim(),
+        year: m.year || '',
+      }));
     const payload = {
       event_id: eventId,
       team_name: formData.teamName,
@@ -248,9 +276,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       leader_phone: formData.leaderPhone,
       leader_year: formData.leaderYear,
       leader_branch: formData.leaderBranch,
-      member2_name: firstMember.name || null,
-      member2_email: firstMember.email || null,
-      member2_phone: firstMember.phone || null,
+      member2_name: firstMember.name ? firstMember.name.trim() : null,
+      member2_email: firstMember.email ? firstMember.email.trim() : null,
+      member2_phone: firstMember.phone ? firstMember.phone.trim() : null,
       member2_year: firstMember.year || null,
       extra_members: extraMembers.length > 0 ? extraMembers : null,
       transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
@@ -322,6 +350,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           eventName: eventDetails?.title || 'Event',
           transactionId: formData.transactionId,
           paymentStatus: 'Pending Verification',
+          whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF',
           registeredAt: new Date().toLocaleString(),
         });
         setShowSuccessPopup(true);
@@ -336,9 +365,10 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setPendingSuccessData({
       ...formData,
       registrationId: data.registration_id,
-      eventName: eventDetails?.title || 'Bug Hunt: Debug the Web',
+      eventName: eventDetails?.title || 'Event',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
+      whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF',
       registeredAt: new Date().toLocaleString(),
     });
     setShowSuccessPopup(true);
@@ -347,28 +377,29 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
   const toFriendlyError = (err, responseData) => {
     // Backend sent a known message (e.g., registration closed, duplicate team)
-    if (responseData?.error) {
-      const msg = responseData.error;
-      if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
-        const limitMatch = msg.match(/limit of (\d+) teams/i);
-        const limitNum = limitMatch ? limitMatch[1] : (eventDetails?.max_teams || 31);
-        return `⚠️ Registration is now closed. The maximum limit of ${limitNum} teams has been reached.`;
-      }
-      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
-        return 'You have already completed your registration.';
-      }
-      if (msg.toLowerCase().includes('transaction id') && msg.toLowerCase().includes('already been used')) {
-        return '⚠️ This Transaction ID has already been used. Please use a unique transaction ID from your UPI payment.';
-      }
-      if (msg.toLowerCase().includes('transaction id') || msg.toLowerCase().includes('payment screenshot')) {
-        return '⚠️ Transaction ID and Payment Screenshot are required to complete registration.';
-      }
-      if (msg.toLowerCase().includes('event not found')) {
-        return 'This event is no longer available. Please refresh the page and try again.';
-      }
-      // Return backend message only if it looks safe (not a stack trace)
-      if (msg.length < 200 && !msg.includes('Traceback') && !msg.includes('Exception')) {
-        return msg;
+    if (responseData?.detail || responseData?.error) {
+      const msg = responseData.detail || responseData.error;
+      if (typeof msg === 'string') {
+        if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
+          const limitMatch = msg.match(/limit of (\d+) teams/i);
+          const limitNum = limitMatch ? limitMatch[1] : (eventDetails?.max_teams || 31);
+          return `⚠️ Registration is now closed. The maximum limit of ${limitNum} teams has been reached.`;
+        }
+        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
+          return 'This email has already been used for registration in this event.';
+        }
+        if (msg.toLowerCase().includes('transaction id') && msg.toLowerCase().includes('already been used')) {
+          return '⚠️ This Transaction ID has already been used. Please use a unique transaction ID from your UPI payment.';
+        }
+        if (msg.toLowerCase().includes('transaction id') || msg.toLowerCase().includes('payment screenshot')) {
+          return '⚠️ Transaction ID and Payment Screenshot are required to complete registration.';
+        }
+        if (msg.toLowerCase().includes('event not found')) {
+          return 'This event is no longer available. Please refresh the page and try again.';
+        }
+        if (msg.length < 200 && !msg.includes('Traceback') && !msg.includes('Exception')) {
+          return msg;
+        }
       }
     }
     // Network / fetch failures
@@ -413,29 +444,25 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             <p className="text-green-200 text-sm font-semibold mb-2">📋 What happens next?</p>
             <div className="flex items-start gap-2 text-xs text-gray-300">
               <span className="text-green-400 mt-0.5 shrink-0">1️⃣</span>
-              <span>Our team will verify your payment screenshot &amp; Transaction ID.</span>
+              <span>Your registration details &amp; team entries are saved in the system.</span>
             </div>
             <div className="flex items-start gap-2 text-xs text-gray-300">
               <span className="text-green-400 mt-0.5 shrink-0">2️⃣</span>
-              <span>Once verified, you will receive an email: <b className="text-green-400">"Your Seat is Confirmed! 🎉"</b></span>
+              <span>Join our official WhatsApp group for round schedules, seat numbers &amp; announcements:</span>
             </div>
-            {eventDetails?.whatsapp_link && (
-              <div className="flex items-start gap-2 text-xs text-gray-300 mt-4 pt-4 border-t border-green-500/20">
-                <span className="text-green-500 mt-0.5 shrink-0">💬</span>
-                <span className="flex-1">
-                  <p className="mb-3 font-medium">Join our WhatsApp Group for updates:</p>
-                  <a 
-                    href={eventDetails.whatsapp_link} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:-translate-y-0.5 active:translate-y-0"
-                  >
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                    Join WhatsApp Group
-                  </a>
-                </span>
+            {(eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link) && (
+              <div className="pt-2">
+                <a 
+                  href={eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link || "https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF"} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  💬 Join Official WhatsApp Group
+                </a>
               </div>
             )}
           </div>
@@ -660,51 +687,71 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </h3>
 
                 <div className="space-y-8">
-                  {formData.members.map((member, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-white/10 bg-white/3 space-y-4">
-                      <p className="text-sm font-semibold text-blue-300">Member {idx + 2}</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {formData.members.map((member, idx) => {
+                    const isOptional = idx > 0;
+                    return (
+                      <div key={idx} className={`p-4 rounded-xl border ${isOptional ? 'border-white/5 bg-white/[0.02]' : 'border-blue-500/20 bg-blue-500/[0.03]'} space-y-4`}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-blue-300">
+                            Member {idx + 2} {isOptional ? <span className="text-xs font-normal text-gray-400">(Optional — Leave blank if not needed)</span> : <span className="text-xs text-red-400 font-semibold">* Required</span>}
+                          </p>
+                          {isOptional && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-400">
+                              Optional
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-2">
+                              Name {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                            </label>
+                            <input
+                              type="text" value={member.name}
+                              onChange={e => handleMemberChange(idx, 'name', e.target.value)}
+                              placeholder={isOptional ? "Full Name (leave blank if not applicable)" : "Full Name"}
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-2">
+                              Phone {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                            </label>
+                            <input
+                              type="tel" value={member.phone} maxLength="10"
+                              onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
+                              placeholder="10-digit number"
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                            />
+                          </div>
+                        </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">Name *</label>
+                          <label className="block text-sm text-gray-300 mb-2">
+                            Email {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                          </label>
                           <input
-                            type="text" value={member.name}
-                            onChange={e => handleMemberChange(idx, 'name', e.target.value)}
-                            placeholder="Full Name"
+                            type="email" value={member.email}
+                            onChange={e => handleMemberChange(idx, 'email', e.target.value)}
+                            placeholder="Email Address"
                             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">Phone *</label>
-                          <input
-                            type="tel" value={member.phone} maxLength="10"
-                            onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
-                            placeholder="10-digit number"
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
-                          />
+                          <label className="block text-sm text-gray-300 mb-2">
+                            Year {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                          </label>
+                          <select
+                            value={member.year}
+                            onChange={e => handleMemberChange(idx, 'year', e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                          >
+                            <option value="">{isOptional ? "-- Select Year (Optional) --" : "-- Select Year --"}</option>
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                          </select>
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-2">Email *</label>
-                        <input
-                          type="email" value={member.email}
-                          onChange={e => handleMemberChange(idx, 'email', e.target.value)}
-                          placeholder="Email Address"
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-2">Year *</label>
-                        <select
-                          value={member.year}
-                          onChange={e => handleMemberChange(idx, 'year', e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                        >
-                          <option value="">-- Select Year --</option>
-                          {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   <div className="pt-4 border-t border-white/10">
                     <label className="flex items-center gap-3 cursor-pointer group">

@@ -402,14 +402,6 @@ export function UpcomingEvents() {
                         <span className="text-gray-300 text-sm truncate">{event.prizes || event.prize_pool}</span>
                       </div>
                     )}
-                    {event.whatsapp_link && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-500">💬</span>
-                        <a href={event.whatsapp_link} target="_blank" rel="noopener noreferrer" className="text-green-400 text-sm hover:underline hover:text-green-300 transition-colors">
-                          Join WhatsApp Group
-                        </a>
-                      </div>
-                    )}
                   </div>
 
                   {/* Seat Tracker */}
