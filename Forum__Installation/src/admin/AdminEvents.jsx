@@ -49,7 +49,7 @@ export function AdminEvents() {
       if (items.length === 0) {
         items = [
           { id: 1, title: "Bug Hunt: Debug the Web", max_participants: 30, max_teams: 30, registered_count: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", event_status: "completed", fee: 40 },
-          { id: 12, title: "BuildX - Project Innovation Challenge", max_participants: 30, max_teams: 30, registered_count: 0, registered_teams_count: 0, is_registration_open: true, registration_status: "open", event_status: "upcoming", fee: 0 },
+          { id: 12, title: "BUILDX - Build. Break. Adapt. Repeat.", max_participants: 60, max_teams: 60, registered_count: 0, registered_teams_count: 0, is_registration_open: true, registration_status: "open", event_status: "upcoming", fee: 200 },
         ];
       }
       setEvents(items);
@@ -57,7 +57,7 @@ export function AdminEvents() {
       setError(e.message);
       setEvents([
         { id: 1, title: "Bug Hunt: Debug the Web", max_participants: 30, max_teams: 30, registered_count: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", event_status: "completed", fee: 40 },
-        { id: 12, title: "BuildX - Project Innovation Challenge", max_participants: 30, max_teams: 30, registered_count: 0, registered_teams_count: 0, is_registration_open: true, registration_status: "open", event_status: "upcoming", fee: 0 },
+        { id: 12, title: "BUILDX - Build. Break. Adapt. Repeat.", max_participants: 60, max_teams: 60, registered_count: 0, registered_teams_count: 0, is_registration_open: true, registration_status: "open", event_status: "upcoming", fee: 200 },
       ]);
     } finally {
       setLoading(false);
