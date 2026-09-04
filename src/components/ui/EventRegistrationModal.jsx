@@ -596,7 +596,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                     <div className="flex flex-wrap gap-2 mt-3">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-medium">
-                        👥 Team of {eventDetails?.team_size || 2}
+                        👥 Team of {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : (eventDetails?.team_size ? `${eventDetails.team_size} Members` : "2 to 4 Members")}
                       </span>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-500/25 text-yellow-300 text-xs font-medium">
                         💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
@@ -604,9 +604,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/25 text-purple-300 text-xs font-medium">
                         🏆 Seats: {eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60} Registered
                       </span>
-                      {(eventDetails?.venue || eventDetails?.time) && (
+                      {eventDetails?.venue && (
                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 text-green-300 text-xs font-medium">
-                           📍 {eventDetails.venue}{eventDetails.venue && eventDetails.time ? ' | ' : ''}{eventDetails.time}
+                           📍 {eventDetails.venue}
                          </span>
                       )}
                       {eventDetails?.eligibility && (
