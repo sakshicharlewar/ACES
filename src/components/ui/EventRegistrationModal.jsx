@@ -1032,7 +1032,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             {step === 3 && (
               <div className="flex justify-between items-center mb-3 px-1 text-xs">
                 <span className="text-gray-400 font-medium">Teams Registered</span>
-                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} {eventDetails?.max_participants && eventDetails.max_participants < 500 ? `/ ${eventDetails.max_participants}` : 'Teams'}</span>
+                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</span>
               </div>
             )}
             <div className="flex justify-between items-center gap-3">

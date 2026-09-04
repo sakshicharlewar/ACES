@@ -42,7 +42,7 @@ async def team_register(
         raise HTTPException(status_code=400, detail="Registration is currently closed for this event.")
 
     # 2. Check capacity (if max_participants is specified and > 0)
-    max_cap = event.max_participants or 5000
+    max_cap = event.max_participants or 60
     if event.registered_count >= max_cap:
         raise HTTPException(status_code=400, detail=f"Registration closed. Maximum limit of {max_cap} teams has been reached.")
 
