@@ -253,15 +253,53 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB');
+    if (file.size > 15 * 1024 * 1024) {
+      setError('File size must be less than 15MB');
       return;
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, paymentScreenshot: reader.result }));
-      setError(null);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const MAX_WIDTH = 1280;
+          const MAX_HEIGHT = 1280;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          setFormData(prev => ({ ...prev, paymentScreenshot: compressedDataUrl }));
+          setError(null);
+        } catch {
+          // Fallback to raw data url if canvas rendering fails
+          setFormData(prev => ({ ...prev, paymentScreenshot: event.target.result }));
+          setError(null);
+        }
+      };
+      img.onerror = () => {
+        setFormData(prev => ({ ...prev, paymentScreenshot: event.target.result }));
+        setError(null);
+      };
+      img.src = event.target.result;
     };
     reader.onerror = () => setError('Failed to read file');
     reader.readAsDataURL(file);
@@ -993,8 +1031,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           <div className="px-6 py-4 border-t border-white/10 bg-[#0B0B0B]">
             {step === 3 && (
               <div className="flex justify-between items-center mb-3 px-1 text-xs">
-                <span className="text-gray-400 font-medium">Seats Registered</span>
-                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</span>
+                <span className="text-gray-400 font-medium">Teams Registered</span>
+                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} {eventDetails?.max_participants && eventDetails.max_participants < 500 ? `/ ${eventDetails.max_participants}` : 'Teams'}</span>
               </div>
             )}
             <div className="flex justify-between items-center gap-3">

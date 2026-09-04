@@ -1,9 +1,12 @@
+import asyncio
 import random
 import string
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 import io
 import openpyxl
@@ -15,8 +18,6 @@ from limiter import limiter
 
 router = APIRouter(tags=["Registrations"])
 
-
-import re
 
 def gen_reg_id_sync(event_id: int) -> str:
     suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -32,99 +33,134 @@ async def team_register(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    # Check event exists and is open
-    # Use with_for_update() to prevent race conditions (overselling)
-    # This locks the row until the transaction commits or rolls back
-    result = await db.execute(select(Event).with_for_update().where(Event.id == event_id))
+    # 1. Check event exists and is open
+    result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     if event.registration_status != RegistrationStatus.open:
-        raise HTTPException(status_code=400, detail="Registration is closed for this event")
+        raise HTTPException(status_code=400, detail="Registration is currently closed for this event.")
 
-    # Check capacity
-    if event.registered_count >= event.max_participants:
-        raise HTTPException(status_code=400, detail=f"Registration closed. Maximum limit of {event.max_participants} teams has been reached.")
+    # 2. Check capacity (if max_participants is specified and > 0)
+    max_cap = event.max_participants or 5000
+    if event.registered_count >= max_cap:
+        raise HTTPException(status_code=400, detail=f"Registration closed. Maximum limit of {max_cap} teams has been reached.")
 
-    # Duplicate checks
+    # 3. Quick duplicate checks before attempting insert
     dup_email = await db.execute(
         select(TeamRegistration).where(
             TeamRegistration.event_id == event_id,
-            TeamRegistration.leader_email == body.leader_email,
+            func.lower(TeamRegistration.leader_email) == body.leader_email.strip().lower(),
         )
     )
     if dup_email.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="This email is already registered for this event.")
 
-    if body.transaction_id:
+    clean_txn = (body.transaction_id or "").strip()
+    if clean_txn and clean_txn.upper() != "FREE":
         dup_txn = await db.execute(
-            select(TeamRegistration).where(TeamRegistration.transaction_id == body.transaction_id)
+            select(TeamRegistration).where(TeamRegistration.transaction_id == clean_txn)
         )
         if dup_txn.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="This Transaction ID has already been used.")
 
-    # Generate Dynamic Registration ID: BUILDX001, BUG-001, etc.
-    count_query = await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event_id))
-    count = count_query.scalar() or 0
-    seq = count + 1
-    
+    # 4. Determine prefix
     title_upper = (event.title or "").upper()
     slug_lower = (event.slug or "").lower()
-    
     if "BUILDX" in title_upper or "buildx" in slug_lower:
         prefix = "BUILDX"
-        reg_id = f"BUILDX{seq:03d}"
     elif "BUG" in title_upper or "bug" in slug_lower:
-        prefix = "BUG"
-        reg_id = f"BUG-{seq:03d}"
+        prefix = "BUG-"
     else:
         clean_words = re.findall(r"[A-Za-z0-9]+", event.title or "")
         prefix = clean_words[0].upper() if clean_words else "EVENT"
-        reg_id = f"{prefix}{seq:03d}"
-    
-    # Ensure unique
-    while (await db.execute(select(TeamRegistration).where(TeamRegistration.registration_id == reg_id))).scalar_one_or_none():
-        seq += 1
-        if "BUILDX" in title_upper or "buildx" in slug_lower:
-            reg_id = f"BUILDX{seq:03d}"
-        elif "BUG" in title_upper or "bug" in slug_lower:
-            reg_id = f"BUG-{seq:03d}"
-        else:
-            reg_id = f"{prefix}{seq:03d}"
 
-    registration = TeamRegistration(
-        registration_id=reg_id,
-        event_id=event_id,
-        team_name=body.team_name,
-        leader_name=body.leader_name,
-        leader_email=body.leader_email,
-        leader_phone=body.leader_phone,
-        leader_year=body.leader_year,
-        leader_branch=body.leader_branch,
-        member2_name=body.member2_name,
-        member2_email=body.member2_email,
-        member2_phone=body.member2_phone,
-        member2_year=body.member2_year,
-        extra_members=body.extra_members,
-        transaction_id=body.transaction_id,
-        payment_screenshot=body.payment_screenshot,
-    )
-    db.add(registration)
+    # 5. Retry loop to handle concurrent write collisions & guarantee unique sequential IDs
+    max_retries = 10
+    committed = False
+    assigned_reg_id = None
 
-    # Increment event counter atomically
-    await db.execute(
-        update(Event).where(Event.id == event_id).values(registered_count=Event.registered_count + 1)
-    )
-    await db.commit()
+    for attempt in range(max_retries):
+        try:
+            # Query all existing registration_ids for this event to pick the exact next sequence
+            existing_ids_q = await db.execute(
+                select(TeamRegistration.registration_id).where(TeamRegistration.event_id == event_id)
+            )
+            existing_ids = set(r[0] for r in existing_ids_q.fetchall())
 
-    # Trigger async email notification to admin
+            # Find next free sequential ID starting from 1
+            seq = 1
+            while True:
+                candidate_id = f"{prefix}{seq:03d}"
+                if candidate_id not in existing_ids:
+                    assigned_reg_id = candidate_id
+                    break
+                seq += 1
+
+            registration = TeamRegistration(
+                registration_id=assigned_reg_id,
+                event_id=event_id,
+                team_name=body.team_name.strip(),
+                leader_name=body.leader_name.strip(),
+                leader_email=body.leader_email.strip().lower(),
+                leader_phone=body.leader_phone.strip(),
+                leader_year=body.leader_year,
+                leader_branch=body.leader_branch,
+                member2_name=body.member2_name.strip() if body.member2_name else None,
+                member2_email=body.member2_email.strip().lower() if body.member2_email else None,
+                member2_phone=body.member2_phone.strip() if body.member2_phone else None,
+                member2_year=body.member2_year,
+                extra_members=body.extra_members,
+                transaction_id=clean_txn if clean_txn else None,
+                payment_screenshot=body.payment_screenshot,
+            )
+            db.add(registration)
+
+            # Atomically update registered_count
+            await db.execute(
+                update(Event).where(Event.id == event_id).values(registered_count=Event.registered_count + 1)
+            )
+            await db.commit()
+            committed = True
+            break
+
+        except IntegrityError as ie:
+            await db.rollback()
+            err_str = str(ie).lower()
+            if "leader_email" in err_str or "ix_reg_event_email" in err_str:
+                raise HTTPException(status_code=400, detail="This email is already registered for this event.")
+            if "transaction_id" in err_str:
+                raise HTTPException(status_code=400, detail="This Transaction ID has already been used.")
+            # If collision happened on registration_id due to race condition, wait brief jitter and retry
+            await asyncio.sleep(0.03 * (attempt + 1) + random.uniform(0.01, 0.04))
+
+        except Exception as e:
+            await db.rollback()
+            err_str = str(e).lower()
+            if "locked" in err_str or "busy" in err_str:
+                # SQLite busy/lock backoff retry
+                await asyncio.sleep(0.05 * (attempt + 1) + random.uniform(0.02, 0.05))
+            else:
+                if attempt == max_retries - 1:
+                    raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
+
+    if not committed:
+        raise HTTPException(
+            status_code=503,
+            detail="Server is currently experiencing high registration traffic. Please try submitting again in a moment."
+        )
+
+    # 6. Trigger async email notification in background
     try:
         from email_utils import notify_admin_new_registration
         background_tasks.add_task(notify_admin_new_registration, event.title, body.leader_name, body.leader_email)
     except Exception:
         pass
 
-    return TeamRegisterOut(registration_id=reg_id, message="Registration successful! Payment will be verified shortly.")
+    return TeamRegisterOut(
+        registration_id=assigned_reg_id,
+        message="Registration successful! Payment will be verified shortly."
+    )
 
 
 # ── Admin: List Registrations ────────────────────────────────────────────────────
