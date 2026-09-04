@@ -285,11 +285,11 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       payment_screenshot: isFree ? null : formData.paymentScreenshot,
     };
 
-    // Retry up to 2 times on network failure
+    // Retry up to 3 times on network failure
     let lastErr = null;
     let response = null;
     let data = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         response = await fetch(`${apiUrl}/api/events/${eventId}/team-register`, {
           method: 'POST',
@@ -301,63 +301,19 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         break; // success — exit retry loop
       } catch (err) {
         lastErr = err;
-        // wait 1.5s before retry
-        if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
+        if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
       }
     }
 
     if (lastErr) {
-      // Network totally unreachable after retry
-      setError(toFriendlyError(lastErr, null));
+      setError("Network connection issue. Please check your internet and tap submit again.");
       setLoading(false);
       return;
     }
 
-    if (!response.ok) {
-      if (response.status === 404 || response.status === 500) {
-        console.warn("Backend failed, saving to local storage mock");
-        const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-        
-        // Generate dynamic ID matching the new backend logic
-        const mockEvents = JSON.parse(localStorage.getItem("aces_mock_events") || '[]');
-        const eventData = mockEvents.find(e => String(e.id) === String(eventId)) || { title: "EVENT" };
-        const prefix = (eventData.title || "EVENT").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-        const eventRegsCount = localRegs.filter(r => String(r.event_id) === String(eventId)).length;
-        const seq = String(eventRegsCount + 1).padStart(3, "0");
-        const newRegId = `${prefix}-${seq}`;
-        
-        const newReg = {
-          ...payload,
-          event_id: eventId,
-          id: `LOC-${Date.now()}`,
-          registration_id: newRegId,
-          payment_status: 'pending',
-          created_at: new Date().toISOString(),
-        };
-        localRegs.push(newReg);
-        localStorage.setItem('local_registrations', JSON.stringify(localRegs));
-        
-        // Also update the mock event's registered_teams_count
-        const mockEvIdx = mockEvents.findIndex(e => e.id.toString() === eventId.toString());
-        if (mockEvIdx !== -1) {
-          mockEvents[mockEvIdx].registered_teams_count = (mockEvents[mockEvIdx].registered_teams_count || 0) + 1;
-          localStorage.setItem("aces_mock_events", JSON.stringify(mockEvents));
-        }
-        
-        setPendingSuccessData({
-          ...formData,
-          registrationId: newReg.registration_id,
-          eventName: eventDetails?.title || 'Event',
-          transactionId: formData.transactionId,
-          paymentStatus: 'Pending Verification',
-          whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/CGfM1W53tQ2A8vT1B0nZzF',
-          registeredAt: new Date().toLocaleString(),
-        });
-        setShowSuccessPopup(true);
-        setLoading(false);
-        return;
-      }
-      setError(toFriendlyError(null, data));
+    if (!response || !response.ok) {
+      const errMsg = (data && (data.detail || data.message || data.error)) || "Failed to submit registration. Please try again.";
+      setError(errMsg);
       setLoading(false);
       return;
     }
