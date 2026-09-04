@@ -295,11 +295,10 @@ async def export_excel(event_id: int, db: AsyncSession = Depends(get_db), admin:
     )
 
 
-# ── Also keep legacy /admin/api/registrations endpoint ──────────────────────────
 @router.get("/admin/api/registrations")
 async def list_all_registrations(
     page: int = Query(1, ge=1),
-    limit: int = Query(20),
+    limit: int = Query(1000, ge=1, le=5000),
     search: str = Query(None),
     event_id: int = Query(0),
     db: AsyncSession = Depends(get_db),

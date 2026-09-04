@@ -92,6 +92,7 @@ export function AdminLayout({ children }) {
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           <NavLink to="/admin/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavLink to="/admin/event-registrations?event_id=1" icon={Users} label="Bug Hunt Registrations" badge="30 Teams" />
           <NavLink to="/admin/submissions" icon={Lightbulb} label="Idea Submissions" />
 
           {/* ── Events section ── */}

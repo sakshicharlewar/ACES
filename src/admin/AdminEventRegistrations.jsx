@@ -16,18 +16,18 @@ const DEFAULT_EVENTS = [
 
 const statusBadge = (status) => {
   const map = {
-    approved: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
-    pending:  "bg-yellow-100 text-yellow-800",
+    approved: "bg-green-500/20 text-green-400 border border-green-500/30",
+    rejected: "bg-red-500/20 text-red-400 border border-red-500/30",
+    pending:  "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
   };
   const icons = {
     approved: <CheckCircle size={12} className="inline mr-1" />,
     rejected: <XCircle size={12} className="inline mr-1" />,
     pending:  <Clock size={12} className="inline mr-1" />,
   };
-  const cls = map[status] || "bg-gray-100 text-gray-800";
+  const cls = map[status] || "bg-white/10 text-white/70 border border-white/10";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${cls}`}>
       {icons[status]}
       {(status || "pending").charAt(0).toUpperCase() + (status || "pending").slice(1)}
     </span>
@@ -323,329 +323,251 @@ export default function AdminEventRegistrations() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Team Registrations</h1>
-          <div className="flex items-center gap-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-1">Event Registrations</h1>
+            <p className="text-white/40 text-sm">View, approve, and manage registered teams and participants</p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
             <select
               value={selectedEventId}
               onChange={e => setSelectedEventId(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+              className="bg-white/5 border border-white/10 text-white text-sm rounded-xl focus:border-blue-500 focus:outline-none px-4 py-2.5"
             >
-              <option value="">Select Event</option>
-              {events.map(ev => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
-            </select>
-            {selectedEvent && (
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedEvent.registered_teams_count >= selectedEvent.max_teams ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}`}>
-                {selectedEvent.registered_teams_count} / {selectedEvent.max_teams} Teams
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          {/* Search — also by Transaction ID */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search name, email, txn ID..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 w-64"
-            />
-          </div>
-          <button
-            onClick={exportToExcel}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            <Download size={16} /> Export Excel
-          </button>
-        </div>
-      </div>
-
-      {/* Event Status Dashboard */}
-      {selectedEvent && (
-        <div className={`mb-6 p-4 rounded-xl border-2 ${
-          selectedEvent.is_registration_open
-            ? 'bg-green-50 border-green-300'
-            : 'bg-red-50 border-red-300'
-        }`}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-700">{selectedEvent.registered_teams_count ?? registrations.length}</p>
-                <p className="text-xs text-blue-600">Total Registered</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-700">
-                  {Math.max(0, (selectedEvent.max_participants ?? selectedEvent.max_teams ?? 30) - (selectedEvent.registered_teams_count ?? registrations.length))}
-                </p>
-                <p className="text-xs text-green-600">Seats Remaining</p>
-              </div>
-              <div className="text-center">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
-                  selectedEvent.is_registration_open
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {selectedEvent.is_registration_open ? '🟢 Open' : '🔴 Closed'}
-                </span>
-                <p className="text-xs text-gray-500 mt-1">Registration Status</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              {selectedEvent.result_status === "announced" ? (
-                <button
-                  disabled
-                  className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium shadow opacity-60 cursor-not-allowed"
-                  title="Results have been announced. No further changes can be made."
-                >
-                  <Lock size={14} /> Registration Locked
-                </button>
-              ) : selectedEvent.is_registration_open ? (
-                <button
-                  onClick={() => handleToggleStatus(selectedEvent.id, false)}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow"
-                >
-                  <Lock size={14} /> Close Registration
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleToggleStatus(selectedEvent.id, true)}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow"
-                >
-                  <Unlock size={14} /> Open Registration
-                </button>
-              )}
-              {selectedEvent.result_status === "announced" && (
-                <p className="text-xs text-amber-600 font-medium">⚠️ Event results are announced. Registration status cannot be changed.</p>
-              )}
-              {!selectedEvent.is_registration_open && selectedEvent.result_status !== "announced" && (
-                <p className="text-xs text-red-600 font-medium">⚠️ Registration is currently closed. Users will see a "Registration Closed" message.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats Row */}
-      {registrations.length > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {[
-            { label: "Total", count: registrations.length, color: "blue" },
-            { label: "Approved", count: registrations.filter(r => r.payment_status === "approved").length, color: "green" },
-            { label: "Pending", count: registrations.filter(r => !r.payment_status || r.payment_status === "pending").length, color: "yellow" },
-          ].map(({ label, count, color }) => (
-            <div key={label} className={`bg-${color}-50 border border-${color}-200 rounded-lg p-4 text-center`}>
-              <p className={`text-2xl font-bold text-${color}-700`}>{count}</p>
-              <p className={`text-sm text-${color}-600`}>{label} Registrations</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reg ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Team</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leader</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Txn ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screenshot</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
-              ) : filteredRegs.length === 0 ? (
-                <tr><td colSpan="9" className="px-6 py-8 text-center text-gray-500">No registrations found.</td></tr>
-              ) : filteredRegs.map(reg => (
-                <tr key={reg.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-sm font-mono font-medium text-gray-900 whitespace-nowrap">{reg.registration_id}</td>
-                  <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{reg.team_name}</td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{reg.leader_name}</div>
-                    <div className="text-xs text-gray-500">{reg.leader_email}</div>
-                    <div className="text-xs text-gray-400">{reg.leader_phone}</div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {/* Member 2 */}
-                    {reg.member2_name && (
-                      <div className="mb-1">
-                        <div className="text-sm text-gray-900 font-medium">M2: {reg.member2_name}</div>
-                        <div className="text-xs text-gray-500">{reg.member2_email}</div>
-                      </div>
-                    )}
-                    {/* Members 3+ from extra_members */}
-                    {reg.extra_members && reg.extra_members.map((m, i) => (
-                      <div key={i} className="mb-1">
-                        <div className="text-sm text-gray-900 font-medium">M{i + 3}: {m.name}</div>
-                        <div className="text-xs text-gray-500">{m.email}</div>
-                      </div>
-                    ))}
-                    {!reg.member2_name && (!reg.extra_members || reg.extra_members.length === 0) && (
-                      <span className="text-gray-400 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {statusBadge(reg.payment_status)}
-                    <div className="flex flex-col gap-1 mt-2">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded w-max ${reg.email_sent ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        Email: {reg.email_sent ? '✅ Sent' : '❌ Pending'}
-                      </span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded w-max ${reg.sms_sent ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        SMS: {reg.sms_sent ? '✅ Sent' : '❌ Pending'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-xs font-mono text-gray-700 max-w-[120px] truncate">
-                    {reg.transaction_id || <span className="text-gray-400">—</span>}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {reg.payment_screenshot ? (
-                      <div className="flex flex-col gap-2">
-                        <div 
-                          className="relative w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 cursor-pointer group bg-gray-100 flex items-center justify-center"
-                          onClick={() => setScreenshotModal(reg.payment_screenshot)}
-                        >
-                          {(reg.payment_screenshot.startsWith("data:application/pdf") || reg.payment_screenshot.toLowerCase().endsWith(".pdf")) ? (
-                            <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-gray-800 transition-colors">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                              <span className="text-[10px] font-medium uppercase">View PDF</span>
-                            </div>
-                          ) : (
-                            <>
-                              <img 
-                                src={reg.payment_screenshot} 
-                                alt="Payment" 
-                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" 
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Eye className="text-white w-6 h-6" />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        {/* Download button */}
-                        <a
-                          href={reg.payment_screenshot}
-                          download={`payment_${reg.registration_id || reg.id}.${reg.payment_screenshot.startsWith("data:application/pdf") ? "pdf" : "jpg"}`}
-                          className="flex items-center justify-center gap-1 w-[120px] py-1 text-[11px] font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg transition-colors"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <Download size={11} /> Download
-                        </a>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-xs text-gray-500 whitespace-nowrap">
-                    {new Date(reg.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {/* Resend Actions if handled */}
-                      {reg.payment_status !== "pending" && (
-                        <>
-                          <button
-                            onClick={() => handleResend(reg.id, "email")}
-                            title="Resend Email"
-                            className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
-                          >
-                            <Send size={15} />
-                          </button>
-                        </>
-                      )}
-                      
-                      {/* Approve */}
-                      {reg.payment_status !== "approved" && (
-                        <button
-                          onClick={() => handleApproveRegistration(reg.id)}
-                          title="Approve Registration"
-                          className="p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
-                        >
-                          <CheckCircle size={15} />
-                        </button>
-                      )}
-                      {/* Reject */}
-                      {reg.payment_status !== "rejected" && (
-                        <button
-                          onClick={() => setRejectionModal({ id: reg.id })}
-                          title="Reject Registration"
-                          className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 transition-colors"
-                        >
-                          <XCircle size={15} />
-                        </button>
-                      )}
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleDelete(reg.id)}
-                        title="Delete Registration"
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-red-600 hover:text-red-900 transition-colors"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id} className="bg-[#0d1426] text-white">
+                  {ev.title} {String(ev.id) === "1" ? "(30 Teams)" : ""}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </select>
 
-      {/* Image Preview Modal */}
-      <ImagePreviewModal
-        isOpen={!!screenshotModal}
-        onClose={() => setScreenshotModal(null)}
-        imageUrl={screenshotModal}
-        altText="Payment Screenshot"
-      />
-
-      {/* Rejection Modal */}
-      {rejectionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Reject Registration</h3>
-            <p className="text-sm text-gray-600 mb-4">Please provide a reason for rejecting this registration. This will be sent to the team leader.</p>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-red-500 focus:border-red-500 resize-none h-24 mb-4"
-              placeholder="e.g. Transaction ID mismatch, Fake screenshot, etc."
-            />
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => { setRejectionModal(null); setRejectionReason(""); }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={submitRejection}
-                disabled={!rejectionReason.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-              >
-                Reject Registration
-              </button>
-            </div>
+            <button
+              onClick={exportToExcel}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-emerald-600/20"
+            >
+              <Download size={16} /> Export Excel
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Search & Stats Banner */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-[#0d1426] border border-white/10 rounded-2xl p-4">
+            <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Total Teams</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{registrations.length}</p>
+            <p className="text-white/30 text-xs mt-0.5">{selectedEvent?.title || "Selected Event"}</p>
+          </div>
+          <div className="bg-[#0d1426] border border-white/10 rounded-2xl p-4">
+            <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Approved</p>
+            <p className="text-2xl font-bold text-green-400 mt-1">
+              {registrations.filter(r => r.payment_status === "approved").length}
+            </p>
+            <p className="text-white/30 text-xs mt-0.5">Verified participants</p>
+          </div>
+          <div className="bg-[#0d1426] border border-white/10 rounded-2xl p-4">
+            <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Pending Verification</p>
+            <p className="text-2xl font-bold text-yellow-400 mt-1">
+              {registrations.filter(r => !r.payment_status || r.payment_status === "pending").length}
+            </p>
+            <p className="text-white/30 text-xs mt-0.5">Awaiting review</p>
+          </div>
+          <div className="bg-[#0d1426] border border-white/10 rounded-2xl p-4">
+            <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Registration Status</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                selectedEvent?.is_registration_open ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+              }`}>
+                {selectedEvent?.is_registration_open ? '🟢 Open' : '🔴 Closed'}
+              </span>
+            </div>
+            <p className="text-white/30 text-xs mt-1">
+              Capacity: {selectedEvent?.max_participants ?? selectedEvent?.max_teams ?? 30} Teams
+            </p>
+          </div>
+        </div>
+
+        {/* Search Filter Bar */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-white/30" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by team name, leader name, email, registration ID, transaction ID..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/30 focus:border-blue-500 focus:outline-none transition-colors"
+          />
+        </div>
+
+        {/* Registrations Table */}
+        <div className="bg-[#0d1426] border border-white/10 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm divide-y divide-white/10">
+              <thead className="bg-white/5 text-white/40 text-xs uppercase tracking-wider font-semibold">
+                <tr>
+                  <th className="px-5 py-3.5">Reg ID</th>
+                  <th className="px-5 py-3.5">Team</th>
+                  <th className="px-5 py-3.5">Leader Details</th>
+                  <th className="px-5 py-3.5">Team Members</th>
+                  <th className="px-5 py-3.5">Status</th>
+                  <th className="px-5 py-3.5">Transaction ID</th>
+                  <th className="px-5 py-3.5">Payment</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-white">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      {Array.from({ length: 8 }).map((_, j) => (
+                        <td key={j} className="px-5 py-4"><div className="h-4 bg-white/10 rounded w-full" /></td>
+                      ))}
+                    </tr>
+                  ))
+                ) : filteredRegs.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-12 text-center text-white/30">
+                      No registrations found.
+                    </td>
+                  </tr>
+                ) : filteredRegs.map(reg => (
+                  <tr key={reg.id || reg.registration_id} className="hover:bg-white/3 transition-colors">
+                    <td className="px-5 py-4 font-mono font-bold text-xs text-blue-400 whitespace-nowrap">
+                      {reg.registration_id}
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-white whitespace-nowrap">
+                      {reg.team_name}
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-white text-sm font-medium">{reg.leader_name}</p>
+                      <p className="text-white/40 text-xs">{reg.leader_email}</p>
+                      <p className="text-white/30 text-xs">{reg.leader_phone}</p>
+                      {(reg.leader_branch || reg.leader_year) && (
+                        <p className="text-blue-400/60 text-[11px] mt-0.5">{reg.leader_branch || ""}{reg.leader_branch && reg.leader_year ? " • " : ""}{reg.leader_year || ""}</p>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {reg.member2_name && (
+                        <div className="mb-1">
+                          <p className="text-white/80 text-xs font-medium">M2: {reg.member2_name}</p>
+                          {reg.member2_email && <p className="text-white/40 text-[11px]">{reg.member2_email}</p>}
+                        </div>
+                      )}
+                      {reg.extra_members && reg.extra_members.map((m, i) => (
+                        <div key={i} className="mb-1">
+                          <p className="text-white/80 text-xs font-medium">M{i + 3}: {m.name}</p>
+                          {m.email && <p className="text-white/40 text-[11px]">{m.email}</p>}
+                        </div>
+                      ))}
+                      {!reg.member2_name && (!reg.extra_members || reg.extra_members.length === 0) && (
+                        <span className="text-white/20 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      {statusBadge(reg.payment_status)}
+                    </td>
+                    <td className="px-5 py-4 text-xs font-mono text-white/60">
+                      {reg.transaction_id || <span className="text-white/20">—</span>}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      {reg.payment_screenshot ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setScreenshotModal(reg.payment_screenshot)}
+                            className="px-2.5 py-1 text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <Eye size={12} /> View
+                          </button>
+                          <a
+                            href={reg.payment_screenshot}
+                            download={`payment_${reg.registration_id || reg.id}.jpg`}
+                            className="p-1 bg-white/5 hover:bg-white/10 text-white/60 rounded-lg transition-colors"
+                            title="Download Receipt"
+                          >
+                            <Download size={12} />
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-white/20 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {reg.payment_status !== "approved" && (
+                          <button
+                            onClick={() => handleApproveRegistration(reg.id)}
+                            title="Approve Registration"
+                            className="p-1.5 rounded-lg bg-green-500/20 hover:bg-green-500/40 text-green-400 transition-colors"
+                          >
+                            <CheckCircle size={15} />
+                          </button>
+                        )}
+                        {reg.payment_status !== "rejected" && (
+                          <button
+                            onClick={() => setRejectionModal({ id: reg.id })}
+                            title="Reject Registration"
+                            className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-colors"
+                          >
+                            <XCircle size={15} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(reg.id)}
+                          title="Delete Registration"
+                          className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Image Preview Modal */}
+        <ImagePreviewModal
+          isOpen={!!screenshotModal}
+          onClose={() => setScreenshotModal(null)}
+          imageUrl={screenshotModal}
+          altText="Payment Screenshot"
+        />
+
+        {/* Rejection Modal */}
+        {rejectionModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+            <div className="bg-[#0d1426] rounded-2xl border border-white/10 p-6 w-full max-w-md shadow-2xl">
+              <h3 className="text-white font-bold text-lg mb-2">Reject Registration</h3>
+              <p className="text-white/50 text-sm mb-4">Please provide a reason for rejecting this registration.</p>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-red-500 resize-none h-24 mb-4"
+                placeholder="e.g. Transaction ID mismatch, payment not received..."
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setRejectionModal(null); setRejectionReason(""); }}
+                  className="px-4 py-2 text-sm text-white/60 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitRejection}
+                  disabled={!rejectionReason.trim()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-xl transition-colors"
+                >
+                  Reject Registration
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
