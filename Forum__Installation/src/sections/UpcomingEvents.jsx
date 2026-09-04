@@ -120,14 +120,22 @@ export function UpcomingEvents() {
 
   const fetchEvents = async (attempt = 0) => {
     try {
-      let eventsData = await fetchPublicEvents({ status: "upcoming" });
+      let eventsData = await fetchPublicEvents({ status: "all" });
       // Ensure we have an array
       if (!Array.isArray(eventsData)) {
         eventsData = eventsData.items || [];
       }
       
-      if (eventsData.length > 0) {
-        setEvents(eventsData);
+      const upcomingAndAnnounced = eventsData.filter(e => {
+        const isUpcoming = e.event_status === "upcoming" || e.event_status === "ongoing";
+        const isBugHunt = (e.slug || "").includes("bug") || (e.title || "").toLowerCase().includes("bug");
+        const isBuildX = (e.slug || "").includes("buildx") || (e.title || "").toLowerCase().includes("buildx");
+        const hasResult = e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
+        return isUpcoming || isBugHunt || isBuildX || hasResult;
+      });
+
+      if (upcomingAndAnnounced.length > 0) {
+        setEvents(upcomingAndAnnounced);
         setLoadFailed(false);
       } else {
         // Only show fallback if we have no real data yet

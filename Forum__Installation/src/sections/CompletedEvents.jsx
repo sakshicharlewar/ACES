@@ -9,22 +9,12 @@ const CARD_WIDTH = 476; // card width + gap
 
 const DEFAULT_COMPLETED_EVENTS = [
   {
-    id: 1,
-    title: "Bug Hunt: Debug the Web",
-    slug: "bug-hunt-debug-the-web",
-    subtitle: "Find the bugs",
-    date: "11-08-2026",
-    short_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application.",
-    full_description: "Challenges teams to identify and fix real HTML, CSS, and JavaScript issues in a web application. Winners are decided by accuracy and completion time.",
-    banner: "/Debugging.jpeg",
-    event_status: "completed",
-  },
-  {
     id: 3,
     title: "REIMAGINE UI/UX Competition",
     slug: "reimagine-uiux-competition-completed",
-    date: "15-09-2025",
+    date: "August 20, 2025",
     short_description: "UI/UX design challenge to redesign college portals.",
+    full_description: "The Department of Computer Engineering, Suryodaya College of Engineering & Technology, organized the UI/UX Competition \"REIMAGINE\" under the ACES Forum on 20th August 2025 at MCA Seminar Hall for teams of two participants. A total of 40 teams (80 participants) competed in preliminary and final rounds.",
     banner: "/Reimagin.jpeg",
     event_status: "completed",
   },
@@ -32,8 +22,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 4,
     title: "Debugging Competition",
     slug: "debugging-competition-completed",
-    date: "10-10-2025",
+    date: "July 15, 2025",
     short_description: "Annual code debugging competition.",
+    full_description: "The Department of Computer Engineering under Forum 'ACES' organized a Debugging Competition on 15th July 2025 at Room No. S-24 and S-30. The competition consisted of preliminary and final rounds for teams of three. A total of 60 teams (180 participants) participated.",
     banner: "/Debugging.jpeg",
     event_status: "completed",
   },
@@ -41,8 +32,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 5,
     title: "Logo Design Competition",
     slug: "logo-design-competition-completed",
-    date: "20-10-2025",
+    date: "August 13, 2025",
     short_description: "Design the official ACES student chapter logo.",
+    full_description: "The Department of Computer Engineering, Suryodaya College of Engineering & Technology, organized a Logo Design Competition on 13th August 2025 at Lab-III. A total of 17 students participated and created logo designs for the ACES forum. The most creative and original design was selected as the official ACES logo.",
     banner: "/LogoCompition.jpeg",
     event_status: "completed",
   },
@@ -50,8 +42,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 6,
     title: "Face the Panel",
     slug: "face-the-panel-completed",
-    date: "05-11-2025",
+    date: "Upcoming Event",
     short_description: "Mock interview and panel defense session.",
+    full_description: "Face the Panel was a career-oriented mock interview event organized by the Department of Computer Engineering under the Students Forum. Participants experienced real interview scenarios, where faculty members assessed their communication, technical knowledge, confidence, and problem-solving skills. The event provided valuable feedback, helping students improve their interview performance, boost confidence, and prepare for placements and future professional opportunities.",
     banner: "/FaceThePanel.jpeg",
     event_status: "completed",
   },
@@ -59,8 +52,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 7,
     title: "Kite Making",
     slug: "kite-making-completed",
-    date: "14-01-2026",
+    date: "Upcoming Event",
     short_description: "Makar Sankranti special kite designing.",
+    full_description: "Kite Making and Flying Competition was a fun-filled event organized by the Department of Computer Engineering to encourage creativity, teamwork, and festive spirit. Students showcased their artistic skills by designing colorful kites and participated enthusiastically in the flying competition, making the event a memorable celebration of innovation, collaboration, and healthy competition.",
     banner: "/KiteMaking.jpeg",
     event_status: "completed",
   },
@@ -68,8 +62,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 8,
     title: "National Conference 2026",
     slug: "national-conference-2026-completed",
-    date: "18-02-2026",
+    date: "February 3, 2026",
     short_description: "National level conference on Emerging Trends in Computing.",
+    full_description: "National Conference 2026 was organized on 03 February 2026 to bring together academicians, researchers, industry experts, and students for knowledge sharing and research discussions. The event featured technical paper presentations, keynote sessions, and interactive discussions, promoting innovation, collaboration, and academic excellence across various disciplines.",
     banner: "/NationalConference.jpeg",
     event_status: "completed",
   },
@@ -77,8 +72,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 9,
     title: "International Conference 2026",
     slug: "international-conference-2026-completed",
-    date: "22-03-2026",
+    date: "April 13, 2026",
     short_description: "International conference bringing researchers together.",
+    full_description: "International Conference 2026 was organized on 13 April 2026 to provide a global platform for researchers, academicians, industry professionals, and students to share innovative research and emerging technologies. The conference featured keynote speeches, technical paper presentations, and interactive sessions, fostering international collaboration, knowledge exchange, and research excellence.",
     banner: "/InternationalConference.jpeg",
     event_status: "completed",
   },
@@ -86,8 +82,9 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 10,
     title: "EduSkills 3-Day Workshop",
     slug: "eduskills-3-day-workshop-completed",
-    date: "12-04-2026",
+    date: "30 July – 1 August 2026",
     short_description: "Hands-on cloud & cybersecurity skills training.",
+    full_description: "The Department of Computer Engineering and Department of CSE (Data Science) at Suryodaya College of Engineering and Technology successfully organised a three-day EduSkills workshop focused on enhancing students' industry-oriented technical skills. The workshop provided students with practical learning, expert guidance and hands-on exposure to emerging technologies.",
     banner: "/EduSkill.jpeg",
     event_status: "completed",
   },
@@ -95,19 +92,11 @@ const DEFAULT_COMPLETED_EVENTS = [
     id: 11,
     title: "GUEST LECTURE - Smart India Hackathon",
     slug: "guest-lecture-sih-completed",
-    date: "11-08-2026",
+    date: "11-08-2026 (3:00 PM)",
     short_description: "Informative session on Smart India Hackathon by Kunal Panche Sir.",
+    full_description: "An informative session designed to introduce students to the Smart India Hackathon (SIH), its objectives, problem statements, team formation, idea development, and the overall selection process. The session will guide students on how to identify real-world problems, develop innovative solutions, and prepare effectively for participation in SIH.",
     banner: "/NationalConference.jpeg",
     event_status: "completed",
-  },
-  {
-    id: 12,
-    title: "BuildX - Project Innovation Challenge",
-    slug: "buildx-project-innovation-challenge",
-    date: "25-09-2026",
-    short_description: "Flagship project innovation challenge for aspiring engineers.",
-    banner: "/Reimagin.jpeg",
-    event_status: "upcoming",
   },
 ];
 
@@ -130,8 +119,14 @@ export function CompletedEvents() {
         if (!Array.isArray(eventsData)) {
           eventsData = eventsData.items || [];
         }
-        if (!cancelled && eventsData.length > 0) {
-          setEvents(eventsData);
+        // Filter out Bug Hunt and BuildX so only genuine Departmental Events are displayed
+        const completedOnly = eventsData.filter(e => {
+          const t = (e.title || "").toLowerCase();
+          const s = (e.slug || "").toLowerCase();
+          return !t.includes("bug") && !t.includes("buildx") && !s.includes("bug") && !s.includes("buildx");
+        });
+        if (!cancelled && completedOnly.length > 0) {
+          setEvents(completedOnly);
         }
       } catch (err) {
         console.error("Failed to load completed events:", err);
