@@ -6,6 +6,7 @@ import {
   toggleEventRegistration, deleteRegistration, approveRegistration,
   rejectRegistration, exportRegistrationsExcel, deleteEvent
 } from "./adminApi";
+import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
 import {
   Users, CheckCircle, XCircle, Clock, Lock, Unlock, Download,
   Trash2, ArrowLeft, Edit, Search, Eye, Send, AlertCircle, Loader2
@@ -21,7 +22,7 @@ export default function AdminEventDashboard() {
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [stats, setStats] = useState(null);
-  const [regs, setRegs] = useState([]);
+  const [regs, setRegs] = useState(String(id) === "1" ? BUG_HUNT_REGISTRATIONS : []);
   const [loading, setLoading] = useState(true);
   const [regsLoading, setRegsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -36,10 +37,23 @@ export default function AdminEventDashboard() {
     setLoading(true);
     setRegsLoading(true);
     try {
-      const [evData, statsData] = await Promise.all([
+      let [evData, statsData] = await Promise.all([
         fetchAdminEvent(id).catch(() => null),
         fetchEventStats(id).catch(() => null),
       ]);
+      if (!evData && String(id) === "1") {
+        evData = {
+          id: 1,
+          title: "Bug Hunt: Debug the Web",
+          max_participants: 30,
+          max_teams: 30,
+          registered_count: 30,
+          registered_teams_count: 30,
+          is_registration_open: false,
+          registration_status: "closed",
+          event_status: "completed",
+        };
+      }
       setEvent(evData);
       setStats(statsData);
     } finally {
@@ -47,7 +61,20 @@ export default function AdminEventDashboard() {
     }
     try {
       const data = await fetchEventRegistrations(id, { search, status: statusFilter, limit: 1000 });
-      setRegs(Array.isArray(data) ? data : (data.items || []));
+      let items = Array.isArray(data) ? data : (data.items || []);
+      if (String(id) === "1") {
+        if (items.length === 0) {
+          items = BUG_HUNT_REGISTRATIONS;
+        } else {
+          const existingIds = new Set(items.map(r => r.registration_id));
+          for (const fallback of BUG_HUNT_REGISTRATIONS) {
+            if (!existingIds.has(fallback.registration_id)) {
+              items.push(fallback);
+            }
+          }
+        }
+      }
+      setRegs(items);
     } finally {
       setRegsLoading(false);
     }
