@@ -3,34 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Calendar, X, Users, Sparkles, Building2, ChevronRight, Zap } from 'lucide-react';
 
 export default function EventAnnouncementModal() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
-    // Show modal shortly after website loads
-    const timer = setTimeout(() => {
-      const isDismissed = sessionStorage.getItem('aces_announcement_dismissed');
-      if (!isDismissed) {
-        setIsOpen(true);
-      }
-    }, 1200);
-
     const handleReopen = () => setIsOpen(true);
     window.addEventListener('openAnnouncementModal', handleReopen);
 
     return () => {
-      clearTimeout(timer);
       window.removeEventListener('openAnnouncementModal', handleReopen);
     };
   }, []);
 
   const handleClose = () => {
     setIsOpen(false);
-    sessionStorage.setItem('aces_announcement_dismissed', 'true');
   };
 
   const handleRegisterCTA = () => {
     setIsOpen(false);
-    sessionStorage.setItem('aces_announcement_dismissed', 'true');
 
     // Smooth scroll to Upcoming Events section
     const targetSection = document.getElementById('events-upcoming');
@@ -56,7 +45,7 @@ export default function EventAnnouncementModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/85 backdrop-blur-md"
           />
 
           {/* Modal Container */}
@@ -65,7 +54,7 @@ export default function EventAnnouncementModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 25 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-[440px] bg-gradient-to-b from-[#0D1424] via-[#090D18] to-[#050810] border border-cyan-500/30 rounded-[28px] shadow-[0_0_50px_rgba(6,182,212,0.20),0_20px_60px_rgba(0,0,0,0.85)] overflow-hidden my-auto p-6 sm:p-7 text-center select-none"
+            className="relative w-full max-w-[440px] bg-gradient-to-b from-[#0D1424] via-[#090D18] to-[#050810] border border-cyan-500/35 rounded-[28px] shadow-[0_0_50px_rgba(6,182,212,0.25),0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto p-6 sm:p-7 text-center select-none"
           >
             {/* Top Accent Neon Glow Bar */}
             <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
@@ -129,7 +118,7 @@ export default function EventAnnouncementModal() {
               {/* Event Date Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-sm font-bold mb-3 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
                 <Calendar size={16} className="text-cyan-400 shrink-0" />
-                <span className="tracking-wide">September 22nd, 2026</span>
+                <span className="tracking-wide font-mono">22-09-2026 (22-09-26)</span>
               </div>
 
               {/* Event Name */}
