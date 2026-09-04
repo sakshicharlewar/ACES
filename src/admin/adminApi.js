@@ -28,9 +28,17 @@ function handleUnauthorized() {
 async function apiFetch(path, options = {}) {
   const baseUrl = getBaseUrl();
   const token = getToken();
-  const res = await fetch(`${baseUrl}${path}`, {
+  const sep = path.includes("?") ? "&" : "?";
+  const freshPath = `${path}${sep}_t=${Date.now()}`;
+  const res = await fetch(`${baseUrl}${freshPath}`, {
     ...options,
-    headers: { ...authHeaders(), ...(options.headers || {}) },
+    cache: "no-store",
+    headers: {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
   });
   if (res.status === 401) {
     if (!isMockToken(token)) {
@@ -134,9 +142,19 @@ export async function fetchAdminEvents(params = {}) {
 
 export async function fetchPublicEvents(params = {}) {
   const baseUrl = getBaseUrl();
-  const qs = new URLSearchParams(params).toString();
+  const queryParams = {
+    ...params,
+    _t: Date.now(),
+  };
+  const qs = new URLSearchParams(queryParams).toString();
   try {
-    const res = await fetch(`${baseUrl}/api/events${qs ? "?" + qs : ""}`);
+    const res = await fetch(`${baseUrl}/api/events?${qs}`, {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+      },
+    });
     if (res.ok) {
       const data = await res.json();
       return Array.isArray(data) ? data : (data.items || []);
