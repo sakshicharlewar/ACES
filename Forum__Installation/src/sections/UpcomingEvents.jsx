@@ -58,7 +58,7 @@ const BUILD_X_FALLBACK = {
   registered_teams_count: 0,
   registered_count: 0,
   seats_left: 60,
-  eligibility: "Computer Engineering Students",
+  eligibility: "Open to All Engineering & Diploma Students",
   venue: "Suryodaya College of Engineering & Technology",
   date: "22-09-2026",
   time: "10:00 AM onwards",
