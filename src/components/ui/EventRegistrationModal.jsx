@@ -77,10 +77,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     leaderEmail: '',
     leaderPhone: '',
     leaderYear: '',
-    leaderBranch: 'Computer Engineering',
-    customBranch: '',
-    leaderCollege: 'Suryodaya College of Engineering & Technology (SCET), Nagpur',
-    customCollege: '',
+    leaderBranch: '',
+    leaderCollege: '',
     members: makeEmptyMembers(teamSize),
     agreedToRules: false,
     transactionId: '',
@@ -105,10 +103,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         leaderEmail: '',
         leaderPhone: '',
         leaderYear: '',
-        leaderBranch: 'Computer Engineering',
-        customBranch: '',
-        leaderCollege: 'Suryodaya College of Engineering & Technology (SCET), Nagpur',
-        customCollege: '',
+        leaderBranch: '',
+        leaderCollege: '',
         members: makeEmptyMembers(size),
         agreedToRules: false,
         transactionId: '',
@@ -164,12 +160,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setError('Please select Year of study.');
       return false;
     }
-    if (formData.leaderBranch === 'Other / Diploma / Polytechnic' && !formData.customBranch?.trim()) {
-      setError('Please enter your Department / Branch name.');
+    if (!formData.leaderBranch?.trim()) {
+      setError('Please enter your Department / Branch.');
       return false;
     }
-    if (formData.leaderCollege === 'Other College / Institute' && !formData.customCollege?.trim()) {
-      setError('Please enter your College name.');
+    if (!formData.leaderCollege?.trim()) {
+      setError('Please enter your College / Institute name.');
       return false;
     }
     return true;
@@ -304,14 +300,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     const apiUrl = getBaseUrl();
     const eventId = eventDetails?.id || 1;
 
-    const effectiveBranch = (formData.leaderBranch === 'Other / Diploma / Polytechnic'
-      ? formData.customBranch?.trim()
-      : formData.leaderBranch) || 'Computer Engineering';
-
-    const effectiveCollege = (formData.leaderCollege === 'Other College / Institute'
-      ? formData.customCollege?.trim()
-      : formData.leaderCollege) || 'Suryodaya College of Engineering & Technology (SCET), Nagpur';
-
+    const effectiveBranch = (formData.leaderBranch || '').trim() || 'Computer Engineering';
+    const effectiveCollege = (formData.leaderCollege || '').trim() || 'Suryodaya College of Engineering & Technology';
     const combinedBranch = `${effectiveBranch} | ${effectiveCollege}`.slice(0, 98);
 
     // Build member fields: member2 goes as flat fields, members 3+ go as extra_members array
@@ -689,48 +679,30 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                     <div>
                       <label className="block text-sm text-gray-300 mb-2">Department / Branch *</label>
-                      <select
-                        required
-                        name="leaderBranch" value={formData.leaderBranch} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                      >
-                        {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {formData.leaderBranch === 'Other / Diploma / Polytechnic' && (
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Specify Department / Branch *</label>
                       <input
-                        type="text" name="customBranch" value={formData.customBranch} onChange={handleChange}
-                        placeholder="e.g. AI &amp; ML, Mechatronics, Diploma in CS, etc."
+                        type="text"
+                        required
+                        name="leaderBranch"
+                        value={formData.leaderBranch}
+                        onChange={handleChange}
+                        placeholder="e.g. Computer Engineering / AIDS / IT"
                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
                       />
                     </div>
-                  )}
+                  </div>
 
                   <div>
                     <label className="block text-sm text-gray-300 mb-2">College / Institute Name *</label>
-                    <select
+                    <input
+                      type="text"
                       required
-                      name="leaderCollege" value={formData.leaderCollege} onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
-                    >
-                      {COLLEGES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                      name="leaderCollege"
+                      value={formData.leaderCollege}
+                      onChange={handleChange}
+                      placeholder="e.g. Suryodaya College of Engineering & Technology, Nagpur"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                    />
                   </div>
-
-                  {formData.leaderCollege === 'Other College / Institute' && (
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-2">Enter Full College Name *</label>
-                      <input
-                        type="text" name="customCollege" value={formData.customCollege} onChange={handleChange}
-                        placeholder="Full College / University / Institute Name"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                  )}
 
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
                     <span className="text-cyan-400 text-lg">🎓</span>
