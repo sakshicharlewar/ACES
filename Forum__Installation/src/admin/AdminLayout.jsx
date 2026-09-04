@@ -133,7 +133,7 @@ export function AdminLayout({ children }) {
                     label={`${ev.title} Regs`} 
                   />
                 ))}
-                <NavLink to="/admin/registrations" icon={Lightbulb} label="Idea Submissions" />
+                <NavLink to="/admin/submissions" icon={Lightbulb} label="Idea Submissions" />
                 <NavLink to="/admin/test-registrations" icon={FlaskConical} label="Test Event Regs" />
               </div>
             )}

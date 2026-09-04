@@ -98,6 +98,16 @@ const DEFAULT_COMPLETED_EVENTS = [
     banner: "/NationalConference.jpeg",
     event_status: "completed",
   },
+  {
+    id: 13,
+    title: "GUEST LECTURE - Dr. Lowlesh Yadav (HOD)",
+    slug: "guest-lecture-hod-sir",
+    date: "28-08-2025",
+    short_description: "Special Guest Lecture and interactive technical guidance session by Dr. Lowlesh Yadav (Head of Department).",
+    full_description: "Special Guest Lecture and interactive technical guidance session conducted by Dr. Lowlesh Yadav, Head of Computer Engineering Department, Suryodaya College of Engineering & Technology. The session guided students on emerging computing technologies, research opportunities, academic excellence, and career development in modern engineering.",
+    banner: "/HODSIR1.jpeg",
+    event_status: "completed",
+  },
 ];
 
 export function CompletedEvents() {

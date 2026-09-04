@@ -38,15 +38,16 @@ async def get_dashboard_stats(
     recent_regs = []
     for row in recent_regs_result.all():
         r = row.TeamRegistration
+        pay_status = r.payment_status.value if hasattr(r.payment_status, "value") else str(r.payment_status) if r.payment_status else "pending"
         recent_regs.append({
             "id": r.id,
             "registration_id": r.registration_id,
             "team_name": r.team_name,
             "leader_name": r.leader_name,
             "leader_email": r.leader_email,
-            "payment_status": r.payment_status,
+            "payment_status": pay_status,
             "event_title": row.title,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "created_at": r.created_at.isoformat() if hasattr(r.created_at, "isoformat") else str(r.created_at) if r.created_at else None,
         })
 
     # Recent 5 events
@@ -57,11 +58,11 @@ async def get_dashboard_stats(
         {
             "id": e.id,
             "title": e.title,
-            "event_status": e.event_status,
-            "registration_status": e.registration_status,
+            "event_status": e.event_status.value if hasattr(e.event_status, "value") else str(e.event_status),
+            "registration_status": e.registration_status.value if hasattr(e.registration_status, "value") else str(e.registration_status),
             "registered_count": e.registered_count,
             "max_participants": e.max_participants,
-            "created_at": e.created_at.isoformat() if e.created_at else None,
+            "created_at": e.created_at.isoformat() if hasattr(e.created_at, "isoformat") else str(e.created_at) if e.created_at else None,
         }
         for e in recent_events_result.scalars().all()
     ]
