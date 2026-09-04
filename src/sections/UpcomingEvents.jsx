@@ -67,7 +67,7 @@ const BUILD_X_FALLBACK = {
   isFallback: true,
 };
 
-const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BUG_HUNT_FALLBACK];
+const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK];
 
 // ── Winner Cards Component ─────────────────────────────────────────────────
 function parseWinnerDetails(details) {
@@ -164,22 +164,21 @@ export function UpcomingEvents() {
         const titleLower = (e.title || "").toLowerCase();
         const slugLower = (e.slug || "").toLowerCase();
 
-        // 1. Explicitly exclude Debugging Competition and any other completed departmental events
-        const isDebuggingComp = titleLower.includes("debugging competition") || slugLower.includes("debugging-competition");
-        if (isDebuggingComp) return false;
+        // 1. Explicitly exclude Debugging Competition and Bug Hunt from Upcoming Events
+        if (titleLower.includes("debugging competition") || slugLower.includes("debugging-competition")) return false;
+        if (e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt")) return false;
 
-        // 2. Identify Flagship events
-        const isBugHunt = e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt");
+        // 2. Identify BUILDX and other open/upcoming events
         const isBuildX = slugLower.includes("buildx") || titleLower.includes("buildx");
 
         // 3. Completed departmental events should never appear in Upcoming Events
-        if (e.event_status === "completed" && !isBugHunt && !isBuildX) {
+        if (e.event_status === "completed" && !isBuildX) {
           return false;
         }
 
         const isUpcoming = e.event_status === "upcoming" || e.event_status === "ongoing";
-        const hasResult = e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
-        return isUpcoming || isBugHunt || isBuildX || hasResult;
+        const isRegOpen = e.is_registration_open || e.registration_status === "open";
+        return isUpcoming || isBuildX || isRegOpen;
       });
 
       if (upcomingAndAnnounced.length > 0) {
@@ -387,8 +386,8 @@ export function UpcomingEvents() {
                       <img src={event.banner} alt={event.title} className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-                      <span className="text-xl">🐞</span>
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                      <span className="text-2xl">⚡</span>
                     </div>
                   )}
 

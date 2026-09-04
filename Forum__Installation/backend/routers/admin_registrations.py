@@ -63,21 +63,34 @@ async def team_register(
         if dup_txn.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="This Transaction ID has already been used.")
 
-    # Generate Dynamic Registration ID: BUGHUNT-001
+    # Generate Dynamic Registration ID: BUILDX001, BUG-001, etc.
     count_query = await db.execute(select(func.count(TeamRegistration.id)).where(TeamRegistration.event_id == event_id))
     count = count_query.scalar() or 0
     seq = count + 1
     
-    prefix = re.sub(r"[^A-Za-z0-9]", "", event.title).upper()
-    if not prefix:
-        prefix = "EVENT"
+    title_upper = (event.title or "").upper()
+    slug_lower = (event.slug or "").lower()
     
-    reg_id = f"{prefix}-{seq:03d}"
+    if "BUILDX" in title_upper or "buildx" in slug_lower:
+        prefix = "BUILDX"
+        reg_id = f"BUILDX{seq:03d}"
+    elif "BUG" in title_upper or "bug" in slug_lower:
+        prefix = "BUG"
+        reg_id = f"BUG-{seq:03d}"
+    else:
+        clean_words = re.findall(r"[A-Za-z0-9]+", event.title or "")
+        prefix = clean_words[0].upper() if clean_words else "EVENT"
+        reg_id = f"{prefix}{seq:03d}"
     
     # Ensure unique
     while (await db.execute(select(TeamRegistration).where(TeamRegistration.registration_id == reg_id))).scalar_one_or_none():
         seq += 1
-        reg_id = f"{prefix}-{seq:03d}"
+        if "BUILDX" in title_upper or "buildx" in slug_lower:
+            reg_id = f"BUILDX{seq:03d}"
+        elif "BUG" in title_upper or "bug" in slug_lower:
+            reg_id = f"BUG-{seq:03d}"
+        else:
+            reg_id = f"{prefix}{seq:03d}"
 
     registration = TeamRegistration(
         registration_id=reg_id,
