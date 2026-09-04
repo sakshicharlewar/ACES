@@ -29,6 +29,7 @@ class RegistrationStatus(str, enum.Enum):
 class ResultStatus(str, enum.Enum):
     pending = "pending"
     announced = "announced"
+    none = "none"
 
 
 class PaymentStatus(str, enum.Enum):

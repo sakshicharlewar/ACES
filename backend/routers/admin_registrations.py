@@ -321,16 +321,23 @@ async def list_all_registrations(
 
 
 def _reg_dict(r: TeamRegistration) -> dict:
+    status_val = r.payment_status.value if hasattr(r.payment_status, "value") else str(r.payment_status) if r.payment_status else "pending"
     return {
         "id": r.id,
         "registration_id": r.registration_id,
         "event_id": r.event_id,
+        "event_title": "Bug Hunt: Debug the Web" if r.event_id == 1 else f"Event {r.event_id}",
         "team_name": r.team_name,
         "leader_name": r.leader_name,
+        "full_name": r.leader_name,
         "leader_email": r.leader_email,
+        "email": r.leader_email,
         "leader_phone": r.leader_phone,
+        "mobile": r.leader_phone,
         "leader_year": r.leader_year,
+        "year": r.leader_year,
         "leader_branch": r.leader_branch,
+        "department": r.leader_branch,
         "member2_name": r.member2_name,
         "member2_email": r.member2_email,
         "member2_phone": r.member2_phone,
@@ -338,9 +345,9 @@ def _reg_dict(r: TeamRegistration) -> dict:
         "extra_members": r.extra_members or [],
         "transaction_id": r.transaction_id,
         "payment_screenshot": r.payment_screenshot,
-        "payment_status": r.payment_status.value if r.payment_status else None,
+        "payment_status": status_val,
         "rejection_reason": r.rejection_reason,
         "email_sent": r.email_sent,
         "sms_sent": r.sms_sent,
-        "created_at": r.created_at.isoformat() if r.created_at else None,
+        "created_at": r.created_at.isoformat() if hasattr(r.created_at, "isoformat") else str(r.created_at) if r.created_at else None,
     }
