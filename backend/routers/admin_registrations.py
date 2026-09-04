@@ -25,7 +25,6 @@ def gen_reg_id_sync(event_id: int) -> str:
 
 # ── Public Registration ──────────────────────────────────────────────────────────
 @router.post("/api/events/{event_id}/team-register", response_model=TeamRegisterOut, status_code=201)
-@limiter.limit("10/minute")
 async def team_register(
     request: Request,
     event_id: int,

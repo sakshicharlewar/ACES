@@ -13,7 +13,7 @@ db_url = f"sqlite+aiosqlite:///{db_file}"
 engine_kwargs = {
     "pool_pre_ping": True,
     "echo": False,
-    "connect_args": {"timeout": 30},
+    "connect_args": {"timeout": 60, "check_same_thread": False},
 }
 
 engine = create_async_engine(
@@ -24,10 +24,13 @@ engine = create_async_engine(
 @event.listens_for(engine.sync_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     try:
-        if "sqlite" in str(engine.url):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA busy_timeout=5000")
-            cursor.close()
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA busy_timeout=60000;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA cache_size=-64000;")
+        cursor.execute("PRAGMA temp_store=MEMORY;")
+        cursor.close()
     except Exception:
         pass
 
