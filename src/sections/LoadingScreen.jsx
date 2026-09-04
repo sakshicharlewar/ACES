@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
+import KineticGrid from "../components/ui/kinetic-grid";
 
 const SUBTITLE = "Department of Computer Engineering";
 const TYPING_SPEED = 50; // ms per character
@@ -56,6 +57,7 @@ export function LoadingScreen({ onComplete }) {
     >
       {/* ── Background ── */}
       <div className="absolute inset-0 bg-[#0B0B0B]">
+        <KineticGrid globalColor="default" className="opacity-100" />
         {/* Ambient blue/gold glow behind title */}
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"

@@ -3,6 +3,44 @@ import { useState, useRef } from "react";
 import { GlassCard } from "../components/ui/GlassCard";
 import { MagneticButton } from "../components/ui/MagneticButton";
 import { CheckCircle2, ArrowRight, X, Upload, Loader2, Rocket, Monitor, GraduationCap, Globe, Users, Star } from "lucide-react";
+import { getBaseUrl } from "../lib/apiConfig";
+
+const compressImage = async (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX = 1200;
+        
+        if (width > height && width > MAX) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else if (height > MAX) {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          }));
+        }, 'image/jpeg', 0.8);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 export function ComplaintForm() {
   const [activeModal, setActiveModal] = useState(false);
@@ -105,53 +143,70 @@ export function ComplaintForm() {
 
     setIsSubmitting(true);
 
-    // AbortController gives us a 10-second hard timeout
+    // AbortController gives us a 60-second timeout to allow Render to wake up from sleep
     const controller = new AbortController();
-    const timeoutId  = setTimeout(() => controller.abort(), 10000);
+    const timeoutId  = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const res = await fetch('https://aces-backkend.onrender.com/api/submit-innovation', {
+      const submitData = new FormData();
+      submitData.append('Full Name', formData.fullName);
+      submitData.append('Email', formData.email);
+      submitData.append('Mobile', formData.mobile || '');
+      submitData.append('Department', formData.department);
+      submitData.append('Year', formData.year);
+      submitData.append('Idea Category', formData.category);
+      submitData.append('Idea Title', formData.subject);
+      submitData.append('Idea Description', formData.description);
+
+      submitData.append('Expected Outcome', formData.expectedOutcome || '');
+      submitData.append('Submitted Date & Time', new Date().toLocaleString());
+      
+      if (formData.attachment) {
+        if (formData.attachment.type.startsWith('image/')) {
+          const compressed = await compressImage(formData.attachment);
+          submitData.append('attachment', compressed);
+        } else {
+          submitData.append('attachment', formData.attachment);
+        }
+      }
+
+      const apiUrl = getBaseUrl();
+      const res = await fetch(`${apiUrl}/api/submit-innovation`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
         signal:  controller.signal,
-        body: JSON.stringify({
-          fullName:        formData.fullName,
-          email:           formData.email,
-          mobile:          formData.mobile || 'N/A',
-          department:      formData.department,
-          year:            formData.year,
-          category:        formData.category,
-          ideaTitle:       formData.subject,
-          ideaDescription: formData.description,
-          expectedOutcome: formData.expectedOutcome || 'None',
-          submittedAt:     new Date().toLocaleString(),
-        }),
+        body: submitData,
       });
 
       clearTimeout(timeoutId);
 
-      // Backend returns 201 immediately (email is sent in background)
       if (res.ok || res.status === 201) {
+        const data = await res.json();
         setIsSubmitting(false);
-        setIsSubmitted(true);
+        setIsSubmitted(data.idea_id || "INN-XXXX");
         setTimeout(() => {
           setIsSubmitted(false);
           closeModal();
-        }, 3000);
+        }, 5000);
       } else {
-        // Non-2xx but server responded → still show success (idea was stored)
+        // Non-2xx but server responded
         console.warn('Backend responded with status:', res.status);
+        let errorMsg = "Failed to submit idea. Please try again.";
+        try {
+          const errData = await res.json();
+          errorMsg = errData.message || errData.error || errorMsg;
+        } catch (e) {
+          console.error("Failed to parse error response", e);
+        }
         setIsSubmitting(false);
-        setIsSubmitted(true);
-        setTimeout(() => { setIsSubmitted(false); closeModal(); }, 3000);
+        alert(errorMsg);
       }
     } catch (error) {
       clearTimeout(timeoutId);
-      // Network error / timeout → still show success, idea logged locally
       console.error('Submission request failed:', error.message);
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      setTimeout(() => { setIsSubmitted(false); closeModal(); }, 3000);
+      alert(error.name === 'AbortError' 
+        ? "The server is taking too long to wake up. Please try submitting again!" 
+        : "Network error. Please check your connection and try again.");
     }
   };
 
@@ -300,13 +355,20 @@ export function ComplaintForm() {
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center py-24 text-center"
+                    className="flex flex-col items-center justify-center py-20 text-center"
                   >
                     <CheckCircle2 className="w-20 h-20 text-green-400 mb-6" />
                     <h3 className="text-3xl font-medium text-white mb-2">Success!</h3>
-                    <p className="text-text-secondary text-lg">
+                    <p className="text-text-secondary text-lg mb-6">
                       Your valuable idea has been received and will be reviewed.
                     </p>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 w-full max-w-sm">
+                      <p className="text-sm text-text-secondary mb-1">Idea ID</p>
+                      <p className="text-2xl font-mono text-accent font-semibold">{isSubmitted}</p>
+                      <p className="text-xs text-text-secondary mt-2">
+                        {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
                   </motion.div>
                 ) : (
                   <>

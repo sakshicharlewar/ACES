@@ -1,20 +1,81 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X } from "lucide-react";
-import { committeeData } from "../data/committeeData";
+import { ArrowLeft, Link, Globe, Mail, Award, Briefcase, Code, GraduationCap, X, Loader2 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
+import { committeeData as fallbackCommittee } from "../data/committeeData";
+import { getBaseUrl } from "../lib/apiConfig";
+
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [val];
+  }
+  return [];
+}
 
 export function CommitteeProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeCert, setActiveCert] = useState(null);
-
-  const member = committeeData.find(m => m.key === id);
+  
+  const [member, setMember] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/committee`)
+      .then(res => res.json())
+      .then(data => {
+        const list = (Array.isArray(data) && data.length > 0) ? data : fallbackCommittee;
+        const found = list.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase()) || fallbackCommittee.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
+        if (found) {
+          setMember({
+            ...found,
+            skills: ensureArray(found.skills),
+            experience: ensureArray(found.experience),
+            projects: ensureArray(found.projects),
+            achievements: ensureArray(found.achievements),
+            certificates: ensureArray(found.certificates),
+          });
+        } else {
+          setMember(null);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch committee data:", err);
+        const found = fallbackCommittee.find(m => m.key === id || m.key?.toLowerCase() === id?.toLowerCase());
+        if (found) {
+          setMember({
+            ...found,
+            skills: ensureArray(found.skills),
+            experience: ensureArray(found.experience),
+            projects: ensureArray(found.projects),
+            achievements: ensureArray(found.achievements),
+            certificates: ensureArray(found.certificates),
+          });
+        } else {
+          setMember(null);
+        }
+        setLoading(false);
+      });
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <p className="text-white/50">Loading profile...</p>
+      </div>
+    );
+  }
 
   if (!member) {
     return (
@@ -105,23 +166,25 @@ export function CommitteeProfilePage() {
             </motion.div>
 
             {/* Skills */}
-            <motion.div variants={itemVariants}>
-              <GlassCard className="p-8">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Code className="w-5 h-5 text-accent" /> Skills & Expertise
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {member.skills.map((skill, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 rounded-full text-sm font-medium bg-accent/10 text-accent border border-accent/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </GlassCard>
-            </motion.div>
+            {member.skills && (Array.isArray(member.skills) ? member.skills.length > 0 : typeof member.skills === 'string' && member.skills.trim().length > 0) && (
+              <motion.div variants={itemVariants}>
+                <GlassCard className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Code className="w-5 h-5 text-accent" /> Skills & Expertise
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {ensureArray(member.skills).map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="px-4 py-2 rounded-full text-sm font-medium bg-accent/10 text-accent border border-accent/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
+                      >
+                        {typeof skill === 'string' ? skill : skill?.title || JSON.stringify(skill)}
+                      </span>
+                    ))}
+                  </div>
+                </GlassCard>
+              </motion.div>
+            )}
           </div>
 
           {/* Right Column - Details */}

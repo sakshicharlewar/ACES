@@ -8,8 +8,8 @@ export default {
     extend: {
       colors: {
         background: {
-          DEFAULT: '#0B0B0B',
-          secondary: '#111111',
+          DEFAULT: 'transparent',
+          secondary: 'rgba(17,17,17,0.6)',
         },
         card: '#171717',
         glass: 'rgba(255,255,255,0.05)',
@@ -21,7 +21,7 @@ export default {
         accent: '#3B82F6',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
         serif: ['"Cormorant Garamond"', 'serif'],
         button: ['Geist', 'sans-serif'],
         label: ['"Space Grotesk"', 'sans-serif'],

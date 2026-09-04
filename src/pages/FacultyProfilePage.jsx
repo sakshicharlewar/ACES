@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom";
 import { 
-  ArrowLeft, BookOpen, GraduationCap, Briefcase, Award, 
-  Link, FileText, CheckCircle, Image as ImageIcon, ZoomIn, X, 
-  ChevronRight
+  ArrowLeft, BookOpen, GraduationCap, Briefcase, 
+  Link, FileText, ChevronRight, X, Loader2
 } from "lucide-react";
-import { facultyData } from "../data/facultyData";
+
+import { facultyData as fallbackFaculty } from "../data/facultyData";
+import { getBaseUrl } from "../lib/apiConfig";
 
 const pageVariants = {
   initial: { opacity: 0, y: 40 },
@@ -33,18 +34,78 @@ function SectionHeading({ title }) {
   );
 }
 
+function ensureArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {}
+    return [val];
+  }
+  return [];
+}
+
 export function FacultyProfilePage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [activeImg, setActiveImg] = useState(null);
+  const [faculty, setFaculty] = useState(null);
+  const [loading, setLoading] = useState(true);
   
-  const faculty = facultyData.find(f => f.id === id);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/faculty`)
+      .then(res => res.json())
+      .then(data => {
+        const list = (Array.isArray(data) && data.length > 0) ? data : fallbackFaculty;
+        const clean = str => String(str || "").toLowerCase().trim();
+        const targetId = clean(id);
+        const found = list.find(f => {
+          const fSlug = clean(f.slug || f.id);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        }) || fallbackFaculty.find(f => {
+          const fSlug = clean(f.slug || f.id);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        });
+        setFaculty(found || null);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch faculty:", err);
+        const clean = str => String(str || "").toLowerCase().trim();
+        const targetId = clean(id);
+        const found = fallbackFaculty.find(f => {
+          const fSlug = clean(f.slug || f.id);
+          const fId = clean(f.id);
+          const fNameSlug = clean(f.name).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+          return fSlug === targetId || fId === targetId || fNameSlug === targetId || fSlug.replace(/[^a-z0-9]/g, "") === targetId.replace(/[^a-z0-9]/g, "");
+        });
+        setFaculty(found || null);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <p>Loading Profile...</p>
+      </div>
+    );
+  }
 
   if (!faculty) {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <h2>Faculty not found</h2>
-        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px" }}>Go Back</button>
+        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px", border: "none", color: "#fff", cursor: "pointer" }}>Go Back</button>
       </div>
     );
   }
@@ -57,10 +118,8 @@ export function FacultyProfilePage() {
       exit="exit"
       style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
     >
-      {/* Background glow */}
       <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
-      {/* ── Top Nav ── */}
       <div style={{ padding: "24px", position: "relative", zIndex: 50, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
         <motion.button
           onClick={() => navigate("/faculty")}
@@ -82,7 +141,6 @@ export function FacultyProfilePage() {
 
       <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10, marginTop: "20px", display: "flex", flexDirection: "column", gap: "48px" }}>
         
-        {/* ── Profile Section (Hero) ── */}
         <motion.div
           initial="hidden" animate="visible" variants={fadeUpVariants} custom={1}
           style={{
@@ -99,7 +157,6 @@ export function FacultyProfilePage() {
           }}
           className="flex-col md:flex-row text-center md:text-left"
         >
-          {/* Left: Square Photo */}
           <div style={{ flexShrink: 0 }}>
             <div style={{
               width: "260px", height: "260px", borderRadius: "24px",
@@ -114,7 +171,6 @@ export function FacultyProfilePage() {
             </div>
           </div>
 
-          {/* Right: Quick Info */}
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: "clamp(2rem, 4vw, 2.8rem)", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.02em" }}>
               {faculty.name}
@@ -147,7 +203,6 @@ export function FacultyProfilePage() {
               </div>
             </div>
             
-            {/* Contact / Social Links */}
             <div style={{ marginTop: "32px", display: "flex", gap: "16px", flexWrap: "wrap", justifyContent: "center" }} className="md:justify-start">
               {faculty.linkedin && (
                 <a href={faculty.linkedin} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 20px", borderRadius: "12px", color: "#fff", textDecoration: "none", fontSize: "0.95rem", transition: "all 0.3s" }}
@@ -160,71 +215,77 @@ export function FacultyProfilePage() {
           </div>
         </motion.div>
 
-        {/* ── About & Achievements ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
           <SectionHeading title="About" />
-          
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            
-            {/* Left Side: About Text (60%) */}
             <div className="w-full lg:w-[60%]" style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", boxShadow: "0 4px 32px rgba(0,0,0,0.3)" }}>
               <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
-                {faculty.professionalSummary}
+                {faculty.professional_summary}
               </p>
             </div>
-
-            {/* Right Side: Achievements Grid (40%) */}
-            {faculty.achievementImages && faculty.achievementImages.length > 0 && (
+            {achievementImages.length > 0 && (
               <div className="w-full lg:w-[40%]" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", alignContent: "start" }}>
-                {faculty.achievementImages.map((ach, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setActiveImg(ach.src)}
-                    style={{
-                      borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
-                      background: "#111", cursor: "pointer", position: "relative",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      padding: "16px", minHeight: "180px"
-                    }}
-                    onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
-                    onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
-                  >
-                    <img src={ach.src} alt={ach.title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} className="img-hover" />
-                    <div className="overlay" style={{
-                      position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
-                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                      opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
-                    }}>
-                      <ZoomIn className="w-8 h-8 text-white mb-2" />
-                      <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{ach.title}</p>
-                      {ach.year && <p style={{ color: "#B5B5B5", fontSize: "0.9rem", marginTop: "4px" }}>{ach.year}</p>}
+                {achievementImages.map((ach, i) => {
+                  const src = typeof ach === "string" ? ach : ach?.src;
+                  const title = typeof ach === "object" ? ach?.title : "Achievement";
+                  const year = typeof ach === "object" ? ach?.year : null;
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => setActiveImg(src)}
+                      style={{
+                        borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
+                        background: "#111", cursor: "pointer", position: "relative",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: "16px", minHeight: "180px"
+                      }}
+                      onMouseEnter={e => {
+                        const el = e.currentTarget.querySelector('.overlay');
+                        if (el) el.style.opacity = 1;
+                      }}
+                      onMouseLeave={e => {
+                        const el = e.currentTarget.querySelector('.overlay');
+                        if (el) el.style.opacity = 0;
+                      }}
+                    >
+                      <img src={src} alt={title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} />
+                      <div className="overlay" style={{
+                        position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                        opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
+                      }}>
+                        <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{title}</p>
+                        {year && <p style={{ color: "#B5B5B5", fontSize: "0.9rem", marginTop: "4px" }}>{year}</p>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-
           </div>
         </motion.div>
 
-        {/* ── Academic Qualifications & Research Interests ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "40px" }}>
-          
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
             <SectionHeading title="Academic Qualifications" />
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {faculty.academicQualifications && faculty.academicQualifications.map((qual, i) => (
-                <div key={i} style={{ background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <GraduationCap className="w-5 h-5 text-blue-400" />
+              {academicQualifications.map((qual, i) => {
+                const degree = typeof qual === "string" ? qual : (qual?.degree || qual?.title || "");
+                const institution = typeof qual === "object" ? (qual?.institution || qual?.desc || "") : "";
+                const year = typeof qual === "object" ? qual?.year : "";
+                return (
+                  <div key={i} style={{ background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <GraduationCap className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{degree}</h4>
+                      {institution && <p style={{ color: "#B5B5B5", fontSize: "0.95rem" }}>{institution} {year && `(${year})`}</p>}
+                    </div>
                   </div>
-                  <div>
-                    <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{qual.degree}</h4>
-                    <p style={{ color: "#B5B5B5", fontSize: "0.95rem" }}>{qual.institution} {qual.year && `(${qual.year})`}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
@@ -232,94 +293,60 @@ export function FacultyProfilePage() {
             <SectionHeading title="Research Interests" />
             <div style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", height: "100%" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                {faculty.researchInterests && faculty.researchInterests.map((interest, i) => (
+                {researchInterests.map((interest, i) => (
                   <span key={i} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93C5FD", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
-                    {interest}
+                    {typeof interest === "string" ? interest : interest?.title || JSON.stringify(interest)}
                   </span>
                 ))}
               </div>
             </div>
           </motion.div>
-
         </div>
 
-        {/* ── Professional Information ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
           <SectionHeading title="Professional Information" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
-            
-            {/* Subjects */}
-            <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                <BookOpen className="w-5 h-5 text-blue-400" />
-                <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
-              </div>
-              <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {faculty.subjectsTaught && faculty.subjectsTaught.map((sub, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
-                    <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
-                    <span>{sub}</span>
-                  </li>
-                ))}
-              </ul>
+          <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+              <BookOpen className="w-5 h-5 text-blue-400" />
+              <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
             </div>
-
+            <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {subjectsTaught.map((sub, i) => (
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
+                  <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
+                  <span>{typeof sub === "string" ? sub : sub?.title || JSON.stringify(sub)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </motion.div>
 
-        {/* ── Publications ── */}
-        {faculty.publications && faculty.publications.length > 0 && (
+        {publications.length > 0 && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={6}>
             <SectionHeading title="Publications" />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "24px" }}>
-              {faculty.publications.map((pub, i) => (
-                <div key={i} style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                    <FileText className="w-5 h-5 text-blue-400" />
-                    <span style={{ color: "#B5B5B5", fontSize: "0.9rem" }}>{pub.year}</span>
+              {publications.map((pub, i) => {
+                const title = typeof pub === "string" ? pub : pub?.title;
+                const journal = typeof pub === "object" ? pub?.journal : "";
+                const year = typeof pub === "object" ? pub?.year : "";
+                return (
+                  <div key={i} style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", display: "flex", flexDirection: "column" }}>
+                    {year && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                        <FileText className="w-5 h-5 text-blue-400" />
+                        <span style={{ color: "#B5B5B5", fontSize: "0.9rem" }}>{year}</span>
+                      </div>
+                    )}
+                    <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "12px", lineHeight: "1.4" }}>{title}</h4>
+                    {journal && <p style={{ color: "#999", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{journal}</p>}
                   </div>
-                  <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "12px", lineHeight: "1.4" }}>{pub.title}</h4>
-                  <p style={{ color: "#999", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{pub.journal}</p>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
-
-        {/* ── Photo Gallery ── */}
-        {faculty.gallery && faculty.gallery.length > 0 && (
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={8}>
-            <SectionHeading title="Gallery" />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
-              {faculty.gallery.map((imgSrc, i) => (
-                <div
-                  key={i}
-                  onClick={() => setActiveImg(imgSrc)}
-                  style={{
-                    borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
-                    background: "#111", cursor: "pointer", aspectRatio: "1", position: "relative",
-                  }}
-                  onMouseEnter={e => e.currentTarget.querySelector('.overlay').style.opacity = 1}
-                  onMouseLeave={e => e.currentTarget.querySelector('.overlay').style.opacity = 0}
-                >
-                  <img src={imgSrc} alt="Gallery" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  <div className="overlay" style={{
-                    position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    opacity: 0, transition: "opacity 0.3s"
-                  }}>
-                    <ZoomIn className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
       </div>
 
-      {/* ── Lightbox Modal ── */}
       <AnimatePresence>
         {activeImg && (
           <motion.div
@@ -344,8 +371,6 @@ export function FacultyProfilePage() {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all 0.3s"
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
             >
               <X className="w-6 h-6" />
             </button>

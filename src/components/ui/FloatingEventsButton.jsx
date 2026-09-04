@@ -16,6 +16,9 @@ export function FloatingEventsButton() {
     return () => window.removeEventListener('toggleFloatingButton', handleToggle);
   }, []);
 
+  // Hide on all admin pages
+  if (location.pathname.startsWith("/admin")) return null;
+
   const handleClick = (e) => {
     // Ripple position
     const rect = btnRef.current.getBoundingClientRect();
@@ -42,11 +45,26 @@ export function FloatingEventsButton() {
     }
   };
 
-  if (!isVisible) return null;
+  // Don't render on admin pages at all
+  if (location.pathname.startsWith("/admin")) return null;
 
   return (
     <>
       <style>{`
+        /* Fade transition for the floating button */
+        .fab-pill-wrapper {
+          transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .fab-pill-wrapper.fab-hidden {
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(8px);
+        }
+        .fab-pill-wrapper.fab-visible {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0px);
+        }
         @keyframes pill-float {
           0%, 100% { transform: translateY(0px); }
           50%       { transform: translateY(-4px); }
@@ -197,11 +215,13 @@ export function FloatingEventsButton() {
 
       <button
         ref={btnRef}
-        className="fab-pill"
+        className={`fab-pill fab-pill-wrapper ${isVisible ? 'fab-visible' : 'fab-hidden'}`}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         aria-label="Go to Upcoming Events"
         title="Go to Upcoming Events"
+        tabIndex={isVisible ? 0 : -1}
+        aria-hidden={!isVisible}
       >
         {/* Ripple layer */}
         {ripple && (

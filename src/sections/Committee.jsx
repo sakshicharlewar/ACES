@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Link } from "lucide-react";
-import { committeeData } from "../data/committeeData";
+import { Link, Loader2 } from "lucide-react";
+import { getBaseUrl } from "../lib/apiConfig";
 
 /* ── Leader Card (For President & Vice President) ── */
 function LeaderCard({ memberKey, role, name, image, social }) {
@@ -49,6 +49,8 @@ function LeaderCard({ memberKey, role, name, image, social }) {
         <img
           src={image}
           alt={name}
+          loading="lazy"
+          decoding="async"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </div>
@@ -100,87 +102,45 @@ const GROUP_STEP  = CARD_STEP * GROUP_CARDS; // 1776 px per group
 const SPEED       = 2.5; // px per rAF tick (~150 px/s at 60 fps)
 const PAUSE_MS    = 2000;
 
+import { committeeData as fallbackCommittee } from "../data/committeeData";
+
 export function Committee() {
-  const trackRef        = useRef(null);
-  const posRef          = useRef(0);       // current scroll position in px
-  const prevPosRef      = useRef(0);
-  const pausedRef       = useRef(false);
-  const hoveredRef      = useRef(false);
-  const lastGroupRef    = useRef(-1);      // last group index we paused at
-  const halfWidthRef    = useRef(0);       // width of one card-set (for looping)
-  const rafRef          = useRef(null);
-  const timerRef        = useRef(null);
+  const [committeeData, setCommitteeData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-
-    // Always reset to position 0 on mount — ensures marquee starts from President card
-    posRef.current        = 0;
-    prevPosRef.current    = 0;
-    lastGroupRef.current  = -1;
-    track.style.transform = "translateX(0px)";
-
-    requestAnimationFrame(() => {
-      halfWidthRef.current = track.scrollWidth / 2;
-    });
-
-    const tick = () => {
-      if (!pausedRef.current && !hoveredRef.current) {
-        posRef.current += SPEED;
-
-        // ── Detect group boundary crossing ──────────────────────────────
-        const prevGroup = Math.floor(prevPosRef.current / GROUP_STEP);
-        const currGroup = Math.floor(posRef.current  / GROUP_STEP);
-
-        if (currGroup > prevGroup && currGroup !== lastGroupRef.current) {
-          lastGroupRef.current = currGroup;
-          // Snap to exact pixel boundary so no half-card shows
-          posRef.current   = currGroup * GROUP_STEP;
-          prevPosRef.current = posRef.current;
-          pausedRef.current  = true;
-
-          timerRef.current = setTimeout(() => {
-            pausedRef.current = false;
-          }, PAUSE_MS);
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/committee`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCommitteeData(data);
+        } else {
+          setCommitteeData(fallbackCommittee);
         }
-
-        // ── Seamless loop ──────────────────────────────────────────────
-        if (halfWidthRef.current > 0 && posRef.current >= halfWidthRef.current) {
-          posRef.current    -= halfWidthRef.current;
-          prevPosRef.current = posRef.current;
-          lastGroupRef.current = -1; // reset so first group pauses again
-        }
-
-        prevPosRef.current = posRef.current;
-        track.style.transform = `translateX(-${posRef.current}px)`;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      clearTimeout(timerRef.current);
-    };
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch committee:", err);
+        setCommitteeData(fallbackCommittee);
+        setLoading(false);
+      });
   }, []);
 
   return (
     <section id="committee" className="py-24 overflow-hidden relative">
       <div className="container mx-auto px-6 md:px-12 mb-16 text-center">
-          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-white mb-3 opacity-80">
+          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-white mb-3 opacity-80 text-center w-full">
             Academic Year
           </p>
           <h2
-            className="font-serif italic font-medium text-4xl md:text-6xl text-white"
+            className="font-serif italic font-medium text-4xl md:text-6xl text-white text-center"
             style={{ letterSpacing: "-0.01em" }}
           >
             ACES COMMITTEE
           </h2>
           <p
-            className="text-lg md:text-xl font-medium mt-1 tracking-widest uppercase text-white"
+            className="text-lg md:text-xl font-medium mt-1 tracking-widest uppercase text-white text-center w-full"
             style={{ letterSpacing: "0.25em" }}
           >
             2026 – 27
@@ -192,34 +152,37 @@ export function Committee() {
           </div>
         </div>
 
-      <div
-        className="relative w-full flex overflow-hidden"
-        onMouseEnter={() => { hoveredRef.current = true;  }}
-        onMouseLeave={() => { hoveredRef.current = false; }}
-      >
-        {/* Fade overlays */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+      <div className="relative w-full overflow-hidden min-h-[450px]">
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+          </div>
+        ) : committeeData.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
+            No committee members found
+          </div>
+        ) : (
+          <>
+            {/* Fade overlays */}
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
 
-        {/* Marquee track — duplicated for seamless loop */}
-        <div
-          ref={trackRef}
-          style={{
-            display: "flex",
-            gap: `${GAP}px`,
-            paddingLeft: `${GAP}px`,
-            willChange: "transform",
-          }}
-        >
-          {/* Set 1 */}
-          {committeeData.map(m => (
-            <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={m.social} />
-          ))}
-          {/* Set 2 — duplicate for seamless loop */}
-          {committeeData.map(m => (
-            <LeaderCard key={`dup-${m.key}`} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={m.social} />
-          ))}
-        </div>
+            <marquee
+              behavior="scroll"
+              direction="left"
+              scrollamount="12"
+              onMouseOver={(e) => e.currentTarget.stop?.()}
+              onMouseOut={(e) => e.currentTarget.start?.()}
+              style={{ width: "100%", padding: "20px 0" }}
+            >
+              <div style={{ display: "inline-flex", gap: "24px", paddingLeft: "24px" }}>
+                {committeeData.map(m => (
+                  <LeaderCard key={m.key} memberKey={m.key} role={m.role} name={m.name} image={m.image} social={{ linkedin: m.linkedin, github: m.github, email: m.email }} />
+                ))}
+              </div>
+            </marquee>
+          </>
+        )}
       </div>
     </section>
   );

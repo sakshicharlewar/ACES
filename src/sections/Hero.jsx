@@ -11,13 +11,12 @@ export function Hero() {
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden w-full">
-      {/* Background with Parallax — unchanged */}
+      {/* Background with Parallax */}
       <motion.div
         style={{ y, scale }}
-        className="absolute inset-0 z-0 bg-background"
+        className="absolute inset-0 z-0 bg-transparent"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-background to-background" />
-        <div className="absolute inset-0 backdrop-blur-[100px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
       </motion.div>
 
       {/* Content — same container as original */}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { motion, useScroll, useSpring } from "framer-motion";
 import { LoadingScreen } from "./sections/LoadingScreen";
@@ -14,6 +14,7 @@ import { UpcomingEvents } from "./sections/UpcomingEvents";
 import { CompletedEvents } from "./sections/CompletedEvents";
 import { VisionMission } from "./sections/VisionMission";
 import { Committee } from "./sections/Committee";
+import { NSDC } from "./sections/NSDC";
 import { AcademicToppers } from "./sections/AcademicToppers";
 import { ComplaintForm } from "./sections/ComplaintForm";
 import { ContactUs } from "./sections/ContactUs";
@@ -25,6 +26,29 @@ import { EventDetailsPage } from "./pages/EventDetailsPage";
 import { LaboratoriesPage } from "./pages/LaboratoriesPage";
 import { CommitteeProfilePage } from "./pages/CommitteeProfilePage";
 import { FloatingEventsButton } from "./components/ui/FloatingEventsButton";
+
+/* ── Admin Pages ── */
+import { ProtectedAdminRoute } from "./admin/ProtectedAdminRoute";
+import { AdminLogin } from "./admin/AdminLogin";
+import { AdminDashboard } from "./admin/AdminDashboard";
+import { AdminSubmissions } from "./admin/AdminSubmissions";
+import { AdminSubmissionDetail } from "./admin/AdminSubmissionDetail";
+import { AdminRegistrations } from "./admin/AdminRegistrations";
+import { AdminRegistrationDetail } from "./admin/AdminRegistrationDetail";
+import AdminEventRegistrations from "./admin/AdminEventRegistrations";
+import AdminTestRegistrations from "./admin/AdminTestRegistrations";
+import { AdminEvents } from "./admin/AdminEvents";
+import AdminEventDashboard from "./admin/AdminEventDashboard";
+import AdminResults from "./admin/AdminResults";
+import AdminGallery from "./admin/AdminGallery";
+import AdminNotices from "./admin/AdminNotices";
+import AdminTeam from "./admin/AdminTeam";
+import { AdminDepartmentalEvents } from "./admin/AdminDepartmentalEvents";
+import { AdminCommittee } from "./admin/AdminCommittee";
+import { AdminToppers } from "./admin/AdminToppers";
+import { AdminFaculty } from "./admin/AdminFaculty";
+import { AdminHod } from "./admin/AdminHod";
+import { AdminLaboratories } from "./admin/AdminLaboratories";
 
 /* ── Scroll Progress Bar (homepage only) ── */
 function ScrollBar() {
@@ -41,7 +65,7 @@ function ScrollBar() {
 /* ── Homepage ── */
 function HomePage() {
   return (
-    <main className="bg-background min-h-screen text-text-primary selection:bg-accent selection:text-white">
+    <main className="min-h-screen text-text-primary selection:bg-accent selection:text-white">
       <Navbar />
       <ScrollBar />
       <div id="hero-section">
@@ -60,6 +84,9 @@ function HomePage() {
       <AcesLogo />
       <div id="committee-section">
         <Committee />
+      </div>
+      <div id="nsdc-section">
+        <NSDC />
       </div>
       <div id="events-section">
         <CompletedEvents />
@@ -91,6 +118,29 @@ function AppRoutes() {
           <Route path="/committee/:id" element={<CommitteeProfilePage />} />
           <Route path="/events/reimagine" element={<EventDetailsPage />} />
           <Route path="/laboratories" element={<LaboratoriesPage />} />
+
+          {/* ── Admin Routes ── */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+          <Route path="/admin/submissions" element={<ProtectedAdminRoute><AdminSubmissions /></ProtectedAdminRoute>} />
+          <Route path="/admin/submissions/:id" element={<ProtectedAdminRoute><AdminSubmissionDetail /></ProtectedAdminRoute>} />
+          <Route path="/admin/registrations" element={<ProtectedAdminRoute><AdminRegistrations /></ProtectedAdminRoute>} />
+          <Route path="/admin/registrations/:id" element={<ProtectedAdminRoute><AdminRegistrationDetail /></ProtectedAdminRoute>} />
+          <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
+          <Route path="/admin/events/:id" element={<ProtectedAdminRoute><AdminEventDashboard /></ProtectedAdminRoute>} />
+          <Route path="/admin/event-registrations" element={<ProtectedAdminRoute><AdminEventRegistrations /></ProtectedAdminRoute>} />
+          <Route path="/admin/test-registrations" element={<ProtectedAdminRoute><AdminTestRegistrations /></ProtectedAdminRoute>} />
+          <Route path="/admin/results" element={<ProtectedAdminRoute><AdminResults /></ProtectedAdminRoute>} />
+          <Route path="/admin/gallery" element={<ProtectedAdminRoute><AdminGallery /></ProtectedAdminRoute>} />
+          <Route path="/admin/notices" element={<ProtectedAdminRoute><AdminNotices /></ProtectedAdminRoute>} />
+          <Route path="/admin/team" element={<ProtectedAdminRoute><AdminTeam /></ProtectedAdminRoute>} />
+          <Route path="/admin/committee" element={<ProtectedAdminRoute><AdminCommittee /></ProtectedAdminRoute>} />
+          <Route path="/admin/toppers" element={<ProtectedAdminRoute><AdminToppers /></ProtectedAdminRoute>} />
+          <Route path="/admin/faculty" element={<ProtectedAdminRoute><AdminFaculty /></ProtectedAdminRoute>} />
+          <Route path="/admin/hod" element={<ProtectedAdminRoute><AdminHod /></ProtectedAdminRoute>} />
+          <Route path="/admin/laboratories" element={<ProtectedAdminRoute><AdminLaboratories /></ProtectedAdminRoute>} />
+          <Route path="/admin/departmental-events" element={<ProtectedAdminRoute><AdminDepartmentalEvents /></ProtectedAdminRoute>} />
         </Routes>
       </AnimatePresence>
       <FloatingEventsButton />
