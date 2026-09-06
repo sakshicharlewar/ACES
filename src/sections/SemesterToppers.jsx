@@ -143,51 +143,51 @@ semesters.slice(2).forEach((sem) => {
 function TopperCard({ topper }) {
   return (
     <div
-      className="bg-[#171717] rounded-[18px] border border-[rgba(255,255,255,0.08)] shadow-[0_4px_30px_rgba(37,99,235,0.05)] hover:shadow-[0_4px_30px_rgba(37,99,235,0.15)] overflow-hidden flex flex-col transition-all duration-300 group"
+      className="bg-[#111317]/85 backdrop-blur-xl rounded-[24px] border border-white/10 hover:border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col transition-all duration-300 group"
     >
       <div className="relative overflow-hidden aspect-[4/3]">
         <img
           src={topper.image}
           alt={topper.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {/* Top Left Badge */}
-        <div className="absolute top-4 left-4 bg-[#2563EB] text-white text-sm font-bold px-3 py-1.5 rounded-md shadow-lg">
+        <div className="absolute top-4 left-4 bg-white/95 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-md uppercase tracking-wider">
           Rank {topper.rank}
         </div>
       </div>
 
       <div className="p-6 flex-1 flex flex-col">
-        <h3 className="font-sans text-2xl font-bold text-white mb-1">
+        <h3 className="font-sans text-xl font-bold text-white mb-1">
           {topper.name}
         </h3>
-        <p className="font-sans text-sm text-text-secondary mb-6">
+        <p className="font-sans text-sm text-[#94A3B8] mb-5">
           {topper.branch}
         </p>
 
         {/* Stats Box */}
-        <div className="flex bg-[#0f172a] rounded-lg border border-[rgba(37,99,235,0.2)] mb-6 p-4">
-          <div className="flex-1 flex flex-col items-center justify-center border-r border-[rgba(255,255,255,0.1)]">
-            <span className="text-text-secondary text-xs uppercase tracking-wider mb-1">
+        <div className="flex bg-[#15181E]/90 rounded-xl border border-white/10 mb-5 p-3.5">
+          <div className="flex-1 flex flex-col items-center justify-center border-r border-white/10">
+            <span className="text-gray-400 text-[11px] uppercase tracking-wider mb-1">
               CGPA
             </span>
-            <span className="text-[#2563EB] font-bold text-xl">
+            <span className="text-white font-bold text-lg">
               {topper.cgpa}
             </span>
           </div>
           <div className="flex-1 flex flex-col items-center justify-center">
-            <span className="text-text-secondary text-xs uppercase tracking-wider mb-1">
+            <span className="text-gray-400 text-[11px] uppercase tracking-wider mb-1">
               Rank
             </span>
-            <span className="text-white font-bold text-xl">
+            <span className="text-white font-bold text-lg">
               {topper.rank}
             </span>
           </div>
         </div>
 
         {/* Bottom Badge */}
-        <div className="mt-auto flex items-center justify-center gap-2 text-yellow-500 font-medium text-sm">
-          <Star className="w-4 h-4 fill-current" />
+        <div className="mt-auto flex items-center justify-center gap-2 text-yellow-400/90 font-medium text-xs">
+          <Star className="w-3.5 h-3.5 fill-current" />
           {topper.achievement}
         </div>
       </div>
@@ -209,13 +209,13 @@ export function SemesterToppers() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="font-label text-[#2563EB] uppercase tracking-widest text-sm mb-4 font-semibold">
+          <div className="font-label text-blue-400 uppercase tracking-widest text-xs mb-3 font-semibold">
             TOPPERS GALLERY
           </div>
           <h2 className="font-sans text-3xl md:text-5xl font-medium text-white mb-4">
             Semester Toppers
           </h2>
-          <p className="font-cambria text-text-secondary text-lg max-w-2xl mx-auto">
+          <p className="font-cambria text-[#94A3B8] text-lg max-w-2xl mx-auto">
             Celebrating the academic excellence of our brightest minds
           </p>
         </motion.div>
@@ -226,17 +226,17 @@ export function SemesterToppers() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="flex flex-wrap justify-center gap-3 mb-16 max-w-4xl mx-auto"
+          className="flex flex-wrap justify-center gap-2.5 mb-16 max-w-4xl mx-auto"
         >
           {semesters.map((semester) => (
             <button
               key={semester}
               onClick={() => setActiveSemester(semester)}
               className={cn(
-                "px-5 py-2.5 rounded-full font-sans text-sm font-medium transition-all duration-300 border",
+                "px-5 py-2.5 rounded-full font-sans text-xs font-semibold tracking-wide transition-all duration-300 border",
                 activeSemester === semester
-                  ? "bg-[#2563EB] text-white border-[#2563EB]"
-                  : "bg-[#181818] text-gray-400 border-transparent hover:border-[#2563EB] hover:text-white"
+                  ? "bg-white text-black border-white shadow-[0_4px_20px_rgba(255,255,255,0.12)]"
+                  : "bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-white"
               )}
             >
               {semester}
@@ -252,17 +252,17 @@ export function SemesterToppers() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="bg-transparent rounded-[18px] border border-[rgba(255,255,255,0.08)] p-6 lg:p-10"
+            className="bg-[#111317]/60 backdrop-blur-xl rounded-[28px] border border-white/10 p-6 lg:p-10 shadow-2xl"
           >
             {/* Top Left: Graduation cap icon & Title */}
-            <div className="flex flex-col items-start mb-10 border-b border-[rgba(255,255,255,0.08)] pb-6">
+            <div className="flex flex-col items-start mb-10 border-b border-white/10 pb-6">
               <div className="flex items-center gap-3 mb-2">
-                <GraduationCap className="w-8 h-8 text-[#2563EB]" />
-                <h3 className="font-sans text-3xl font-bold text-white">
+                <GraduationCap className="w-8 h-8 text-white" />
+                <h3 className="font-sans text-2xl md:text-3xl font-bold text-white">
                   {activeSemester} Toppers
                 </h3>
               </div>
-              <p className="font-sans text-text-secondary ml-11">
+              <p className="font-sans text-[#94A3B8] ml-11 text-sm">
                 Academic Year 2024–25
               </p>
             </div>
@@ -284,11 +284,11 @@ export function SemesterToppers() {
             </AnimatePresence>
 
             {/* Bottom Information Box */}
-            <div className="w-full bg-[rgba(37,99,235,0.05)] border border-[rgba(37,99,235,0.2)] rounded-[18px] p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-              <div className="bg-[#2563EB]/20 p-3 rounded-full flex-shrink-0">
-                <Trophy className="w-8 h-8 text-[#2563EB]" />
+            <div className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+              <div className="bg-white/10 p-3 rounded-full flex-shrink-0">
+                <Trophy className="w-7 h-7 text-white" />
               </div>
-              <p className="font-sans text-text-secondary text-sm md:text-base leading-relaxed">
+              <p className="font-sans text-[#CBD5E1] text-sm md:text-base leading-relaxed">
                 These toppers have shown exceptional dedication, hard work, and consistency throughout their academic journey.
                 <br className="hidden sm:block" />
                 They are an inspiration to all students.

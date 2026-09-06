@@ -212,7 +212,7 @@ export function ComplaintForm() {
 
 
   const inputClass = (error) => 
-    `w-full bg-white/5 border ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-accent/50'} rounded-xl px-4 py-3 text-white focus:outline-none transition-colors text-sm placeholder-white/30`;
+    `w-full bg-[#15181E]/90 border ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'} rounded-2xl px-4 py-3.5 text-white focus:outline-none transition-all text-sm placeholder-white/30`;
 
   return (
     <section className="py-24 px-6 md:px-12 relative overflow-hidden">
@@ -315,7 +315,7 @@ export function ComplaintForm() {
                 {/* CTA Button */}
                 <MagneticButton 
                   onClick={openModal}
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full px-8 py-4 font-semibold text-lg flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] border-none outline-none"
+                  className="bg-white hover:bg-neutral-200 text-black rounded-full px-8 py-4 font-semibold text-base flex items-center gap-3 transition-all duration-300 hover:scale-105 shadow-[0_4px_24px_rgba(255,255,255,0.15)] border-none outline-none"
                 >
                   Submit Your Idea <ArrowRight className="w-5 h-5" />
                 </MagneticButton>
@@ -333,7 +333,7 @@ export function ComplaintForm() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -342,11 +342,11 @@ export function ComplaintForm() {
               transition={{ duration: 0.3 }}
               className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl hide-scrollbar"
             >
-              <GlassCard className="relative p-6 sm:p-10 border border-white/20 bg-background/95 backdrop-blur-xl shadow-2xl">
+              <div className="relative p-6 sm:p-10 rounded-[28px] border border-white/10 bg-[#111317]/95 backdrop-blur-2xl shadow-[0_24px_64px_rgba(0,0,0,0.8)]">
                 <button 
                   onClick={closeModal}
                   disabled={isSubmitting}
-                  className="absolute top-6 right-6 text-text-secondary hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-full disabled:opacity-50"
+                  className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2.5 rounded-full disabled:opacity-50"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -588,7 +588,7 @@ export function ComplaintForm() {
                     </form>
                   </>
                 )}
-              </GlassCard>
+              </div>
             </motion.div>
           </motion.div>
         )}

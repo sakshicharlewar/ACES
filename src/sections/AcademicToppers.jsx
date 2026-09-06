@@ -17,17 +17,17 @@ const DEFAULT_TOPPERS = [
 
 function TopperCard({ topper }) {
   return (
-    <div className="bg-[#121212] rounded-[18px] border border-[rgba(255,255,255,0.08)] shadow-[0_4px_30px_rgba(37,99,235,0.05)] hover:shadow-[0_4px_30px_rgba(37,99,235,0.15)] overflow-hidden flex flex-col h-full transition-all duration-300 group">
+    <div className="bg-[#111317]/85 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.6)] hover:border-white/20 overflow-hidden flex flex-col h-full transition-all duration-300 group">
       <div className="relative overflow-hidden h-[340px]">
         <img
           src={topper.image}
           alt={topper.name}
           loading="lazy"
           decoding="async"
-          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
         />
         {/* Top Left Badge */}
-        <div className="absolute top-4 left-4 bg-[#2563EB] text-white text-sm font-bold px-3 py-1.5 rounded-md shadow-lg">
+        <div className="absolute top-4 left-4 bg-white text-black text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg">
           Rank {topper.rank}
         </div>
       </div>
@@ -36,22 +36,22 @@ function TopperCard({ topper }) {
         <h3 className="font-sans text-2xl font-bold text-white mb-1">
           {topper.name}
         </h3>
-        <p className="font-sans text-sm text-text-secondary mb-6">
+        <p className="font-sans text-sm text-slate-400 mb-6">
           {topper.branch}
         </p>
 
         {/* Stats Box */}
-        <div className="flex bg-[#0f172a] rounded-lg border border-[rgba(37,99,235,0.2)] mt-auto p-4">
-          <div className="flex-1 flex flex-col items-center justify-center border-r border-[rgba(255,255,255,0.1)]">
-            <span className="text-text-secondary text-xs uppercase tracking-wider mb-1">
+        <div className="flex bg-[#090A0C]/90 rounded-2xl border border-white/10 mt-auto p-4">
+          <div className="flex-1 flex flex-col items-center justify-center border-r border-white/10">
+            <span className="text-slate-400 text-xs uppercase tracking-wider mb-1">
               {topper.score_label || "CGPA"}
             </span>
-            <span className="text-[#2563EB] font-bold text-xl">
+            <span className="text-blue-400 font-bold text-xl">
               {topper.cgpa}
             </span>
           </div>
           <div className="flex-1 flex flex-col items-center justify-center">
-            <span className="text-text-secondary text-xs uppercase tracking-wider mb-1">
+            <span className="text-slate-400 text-xs uppercase tracking-wider mb-1">
               Rank
             </span>
             <span className="text-white font-bold text-xl">
@@ -166,11 +166,11 @@ export function AcademicToppers() {
             )}
 
             {/* Bottom Information Box */}
-            <div className="w-full bg-[rgba(37,99,235,0.05)] border border-[rgba(37,99,235,0.2)] rounded-[18px] p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-              <div className="bg-[#2563EB]/20 p-3 rounded-full flex-shrink-0">
-                <Trophy className="w-8 h-8 text-[#2563EB]" />
+            <div className="w-full bg-[#111317]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+              <div className="bg-white/5 border border-white/10 p-3 rounded-full flex-shrink-0">
+                <Trophy className="w-8 h-8 text-yellow-400" />
               </div>
-              <p className="font-sans text-text-secondary text-sm md:text-base leading-relaxed">
+              <p className="font-sans text-slate-300 text-sm md:text-base leading-relaxed">
                 These toppers have shown exceptional dedication, hard work, and consistency throughout their academic journey.
                 <br className="hidden sm:block" />
                 They are an inspiration to all students.

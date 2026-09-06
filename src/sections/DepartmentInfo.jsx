@@ -29,17 +29,17 @@ export function DepartmentInfo() {
           transition={{ duration: 0.9, ease: "easeOut" }}
           whileHover={{
             y: -6,
-            boxShadow: "0 0 40px 4px rgba(59,130,246,0.18), 0 8px 48px rgba(0,0,0,0.5)",
-            borderColor: "rgba(59,130,246,0.35)",
+            boxShadow: "0 0 35px 2px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.55)",
+            borderColor: "rgba(255,255,255,0.18)",
             transition: { duration: 0.3 },
           }}
           style={{
-            background: "#171717",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
+            background: "rgba(17, 19, 23, 0.8)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
             borderRadius: "28px",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 4px 32px rgba(0,0,0,0.4)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
             padding: "48px 52px",
           }}
         >
@@ -49,10 +49,10 @@ export function DepartmentInfo() {
           </h3>
 
           {/* Blue Accent Line */}
-          <div style={{ width: "56px", height: "2.5px", background: "linear-gradient(90deg, #3B82F6, #60A5FA)", borderRadius: "2px", marginBottom: "28px" }} />
+          <div style={{ width: "56px", height: "2px", background: "linear-gradient(90deg, #3B82F6, #60A5FA)", borderRadius: "2px", marginBottom: "28px" }} />
 
           {/* Body Text */}
-          <p className="font-cambria" style={{ color: "#B5B5B5", fontSize: "clamp(0.95rem, 1.5vw, 1.08rem)", lineHeight: "1.85", fontWeight: 300, marginBottom: "36px" }}>
+          <p className="font-cambria" style={{ color: "#CBD5E1", fontSize: "clamp(0.95rem, 1.5vw, 1.08rem)", lineHeight: "1.85", fontWeight: 300, marginBottom: "36px" }}>
             The Department of Computer Engineering at Suryodaya College of Engineering &amp;
             Technology (SCET) is dedicated to nurturing skilled, innovative, and industry-ready
             professionals. The department provides a strong foundation in programming, software
@@ -70,12 +70,12 @@ export function DepartmentInfo() {
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <motion.button
               onClick={() => navigate("/department")}
-              whileHover={{ scale: 1.03, boxShadow: "0 0 20px 4px rgba(59,130,246,0.3)" }}
+              whileHover={{ scale: 1.03, backgroundColor: "rgba(255,255,255,0.12)" }}
               whileTap={{ scale: 0.97 }}
               transition={{ duration: 0.3 }}
               style={{
-                background: "transparent",
-                border: "1px solid #3B82F6",
+                background: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
                 color: "#ffffff",
                 borderRadius: "9999px",
                 padding: "12px 28px",
@@ -85,6 +85,7 @@ export function DepartmentInfo() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
+                backdropFilter: "blur(12px)",
               }}
             >
               Explore Department

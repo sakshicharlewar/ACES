@@ -8,15 +8,30 @@ export default {
     extend: {
       colors: {
         background: {
-          DEFAULT: 'transparent',
-          secondary: 'rgba(17,17,17,0.6)',
+          DEFAULT: '#090A0C',
+          secondary: '#0D0F12',
+          surface: '#111317',
         },
-        card: '#171717',
-        glass: 'rgba(255,255,255,0.05)',
-        border: 'rgba(255,255,255,0.08)',
+        card: {
+          DEFAULT: '#111317',
+          surface: '#15181E',
+          hover: '#191C24',
+        },
+        glass: {
+          DEFAULT: 'rgba(255, 255, 255, 0.03)',
+          subtle: 'rgba(255, 255, 255, 0.02)',
+          medium: 'rgba(255, 255, 255, 0.05)',
+          strong: 'rgba(255, 255, 255, 0.08)',
+        },
+        border: {
+          DEFAULT: 'rgba(255, 255, 255, 0.09)',
+          subtle: 'rgba(255, 255, 255, 0.05)',
+          strong: 'rgba(255, 255, 255, 0.18)',
+        },
         text: {
           primary: '#FFFFFF',
-          secondary: '#B5B5B5',
+          secondary: '#94A3B8',
+          muted: '#64748B',
         },
         accent: '#3B82F6',
       },

@@ -59,21 +59,21 @@ export function AcesLogo() {
           >
             <motion.div 
               whileHover={{
-                boxShadow: "0 0 40px 4px rgba(59,130,246,0.18), 0 8px 48px rgba(0,0,0,0.5)",
-                borderColor: "rgba(59,130,246,0.35)",
+                boxShadow: "0 0 35px 2px rgba(255,255,255,0.08), 0 12px 48px rgba(0,0,0,0.6)",
+                borderColor: "rgba(255,255,255,0.18)",
                 transition: { duration: 0.3 },
               }}
               style={{
-                background: "#171717",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
+                background: "rgba(17, 19, 23, 0.8)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
                 borderRadius: "28px",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 4px 32px rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
               }}
               className="p-8 md:p-12 relative overflow-hidden group"
             >
-              <p className="font-cambria text-text-secondary text-lg md:text-xl font-light leading-relaxed">
+              <p className="font-cambria text-slate-300 text-lg md:text-xl font-light leading-relaxed">
                 The Association of Computer Engineering Students (ACES) is the premier student 
                 organization of the Computer Engineering department. We strive to bridge the gap 
                 between academic learning and industry requirements. Through technical workshops, 

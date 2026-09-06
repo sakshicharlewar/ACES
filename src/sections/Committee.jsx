@@ -13,11 +13,13 @@ function LeaderCard({ memberKey, role, name, image, social }) {
       style={{
         width: "420px",
         flexShrink: 0,
-        background: "#171717",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(17, 19, 23, 0.85)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255, 255, 255, 0.10)",
         borderRadius: "28px",
         padding: "32px 36px",
-        boxShadow: "0 4px 50px rgba(0,0,0,0.6)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -26,14 +28,14 @@ function LeaderCard({ memberKey, role, name, image, social }) {
         cursor: "pointer"
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = "scale(1.05)";
-        e.currentTarget.style.boxShadow = "0 0 40px rgba(59,130,246,0.28)";
-        e.currentTarget.style.borderColor = "rgba(59,130,246,0.45)";
+        e.currentTarget.style.transform = "scale(1.03)";
+        e.currentTarget.style.boxShadow = "0 0 35px rgba(255,255,255,0.08), 0 16px 48px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 4px 40px rgba(0,0,0,0.5)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+        e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
       }}
     >
       {/* Square image with blue glow */}
@@ -164,8 +166,8 @@ export function Committee() {
         ) : (
           <>
             {/* Fade overlays */}
-            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0B0B0B] to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#090A0C] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#090A0C] to-transparent z-10 pointer-events-none" />
 
             <marquee
               behavior="scroll"

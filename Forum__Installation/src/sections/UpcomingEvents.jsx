@@ -388,14 +388,14 @@ export function UpcomingEvents() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[marquee_2s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 )}
 
-                <div className="relative w-full h-full bg-[#0B0B0B]/90 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:bg-[#111111] transition-colors duration-500">
+                <div className="relative w-full h-full bg-[#111317]/85 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:border-white/20 group-hover:bg-[#15181E] transition-all duration-500 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
                   {/* Icon / Banner */}
                   {event.banner && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") || (event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug")) ? (
                     <div className="w-full h-32 rounded-xl mb-4 overflow-hidden bg-white/5 border border-white/10">
                       <img src={event.banner} alt={event.title} className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
                       <span className="text-2xl">{(event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug") ? "🐞" : "⚡"}</span>
                     </div>
                   )}
@@ -403,25 +403,25 @@ export function UpcomingEvents() {
                   {/* Title */}
                   <h4 className="font-sans text-xl font-bold text-white mb-2 leading-tight">{event.title}</h4>
                   {event.subtitle && <p className="font-sans text-xs font-semibold text-blue-400 uppercase tracking-widest mb-3">{event.subtitle}</p>}
-                  <p className="font-cambria text-gray-400 text-sm mb-4 line-clamp-3">{event.short_description || event.description}</p>
+                  <p className="font-cambria text-slate-400 text-sm mb-4 line-clamp-3 leading-relaxed">{event.short_description || event.description}</p>
 
                   {/* Badges & meta */}
                   <div className="space-y-2 mb-6 text-sm text-gray-300">
                     <div className="flex items-center justify-between mb-4">
                       {isResultAnnounced ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
                           🟢 Completed
                         </span>
                       ) : isFull ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
                           🔴 Registration Closed (Housefull)
                         </span>
                       ) : isOpen ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold uppercase tracking-wider">
                           🔥 Registration Open
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
                           🔒 Registration Closed
                         </span>
                       )}
@@ -502,30 +502,30 @@ export function UpcomingEvents() {
 
                     {isResultAnnounced ? (
                       <div
-                        className="w-full py-3 rounded-xl font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
+                        className="w-full py-3 rounded-full font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
                         onClick={() => openWinnersPopup(event)}
                       >
                         🎉 The Result Has Been Officially Announced!
                       </div>
                     ) : isResultScheduled ? (
-                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
                       </div>
                     ) : isOpen ? (
                       <button
                         id={`register-btn-${event.id}`}
                         onClick={() => handleRegisterClick(event)}
-                        className="w-full py-3 rounded-xl font-medium transition-all duration-300 flex justify-center items-center bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                        className="w-full py-3 rounded-full font-semibold transition-all duration-300 flex justify-center items-center bg-white text-black hover:bg-neutral-200 shadow-[0_4px_20px_rgba(255,255,255,0.15)] active:scale-95"
                       >
                         Register Now
                       </button>
                     ) : isFull ? (
-                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Full (60/60 Teams)</span>
                       </div>
                     ) : (
-                      <div className="w-full py-3 rounded-xl font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Has Closed</span>
                       </div>

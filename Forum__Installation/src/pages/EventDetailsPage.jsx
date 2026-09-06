@@ -67,10 +67,10 @@ export function EventDetailsPage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
+      style={{ background: "#090A0C", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
     >
       {/* Background glow */}
-      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ── TOP SECTION ── */}
       <div className="container mx-auto max-w-5xl px-6 pt-12" style={{ position: "relative", zIndex: 10 }}>
@@ -90,8 +90,8 @@ export function EventDetailsPage() {
           initial="hidden" animate="visible" variants={fadeUpVariants} custom={1}
           style={{
             width: "100%", height: "400px", borderRadius: "28px", overflow: "hidden",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 0 60px rgba(59,130,246,0.12)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
             marginBottom: "40px"
           }}
         >
@@ -102,31 +102,31 @@ export function EventDetailsPage() {
         <motion.div
           initial="hidden" animate="visible" variants={fadeUpVariants} custom={2}
           style={{
-            background: "#171717", backdropFilter: "blur(16px)",
-            borderRadius: "28px", border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)",
+            borderRadius: "28px", border: "1px solid rgba(255,255,255,0.10)",
             padding: "32px 40px", display: "flex", flexWrap: "wrap", gap: "40px",
             justifyContent: "space-between", marginBottom: "60px",
-            boxShadow: "0 4px 32px rgba(0,0,0,0.4)"
+            boxShadow: "0 12px 40px rgba(0,0,0,0.45)"
           }}
         >
           <div>
-            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "8px" }}>Event Name</p>
+            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Event Name</p>
             <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>REIMAGINE – UI/UX Competition</p>
           </div>
           <div>
-            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "8px" }}>Date</p>
+            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Date</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
               <Calendar className="w-5 h-5 text-blue-400" /> 20 August 2025
             </div>
           </div>
           <div>
-            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "8px" }}>Venue</p>
+            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Venue</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
               <MapPin className="w-5 h-5 text-blue-400" /> MCA Seminar Hall, SCET
             </div>
           </div>
           <div>
-            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "8px" }}>Organized By</p>
+            <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Organized By</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
               <Users className="w-5 h-5 text-blue-400" /> ACES
             </div>
@@ -136,7 +136,7 @@ export function EventDetailsPage() {
         {/* ── EVENT DESCRIPTION ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={1} style={{ marginBottom: "60px" }}>
           <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "20px" }}>About the Event</h2>
-          <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
+          <p style={{ color: "#CBD5E1", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
             The Department of Computer Engineering, Suryodaya College of Engineering &amp; Technology, organized the UI/UX Competition “REIMAGINE” under the ACES Forum on 20th August 2025 at MCA Seminar Hall for teams of two participants. A total of 40 teams (80participants) competed in preliminary and final rounds.
           </p>
         </motion.div>
@@ -148,15 +148,15 @@ export function EventDetailsPage() {
             {highlights.map((h, i) => (
               <motion.div
                 key={i}
-                whileHover={{ y: -4, boxShadow: "0 0 20px 2px rgba(59,130,246,0.15)", borderColor: "rgba(59,130,246,0.3)" }}
+                whileHover={{ y: -4, boxShadow: "0 0 24px 2px rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.2)" }}
                 style={{
-                  background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)",
+                  background: "rgba(17, 19, 23, 0.85)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)",
                   padding: "20px", display: "flex", alignItems: "center", gap: "12px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.3)"
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.3)"
                 }}
               >
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#3B82F6", boxShadow: "0 0 10px #3B82F6" }} />
-                <span style={{ fontWeight: 500 }}>{h}</span>
+                <span style={{ fontWeight: 500, color: "#F8FAFC" }}>{h}</span>
               </motion.div>
             ))}
           </div>
@@ -165,14 +165,14 @@ export function EventDetailsPage() {
         {/* ── EVENT TIMELINE ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3} style={{ marginBottom: "80px" }}>
           <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "32px", textAlign: "center" }}>Event Timeline</h2>
-          <div style={{ display: "flex", flexDirection: "column", md: "row", alignItems: "center", justifyContent: "space-between", gap: "20px", background: "#171717", padding: "40px", borderRadius: "28px", border: "1px solid rgba(255,255,255,0.08)" }} className="md:flex-row">
+          <div style={{ display: "flex", flexDirection: "column", md: "row", alignItems: "center", justifyContent: "space-between", gap: "20px", background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", padding: "40px", borderRadius: "28px", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" }} className="md:flex-row">
             {timeline.map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "20px" }} className="flex-col md:flex-row">
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#3B82F6", fontWeight: "bold" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#60A5FA", fontWeight: "bold" }}>
                     {i + 1}
                   </div>
-                  <p style={{ fontWeight: 500, fontSize: "0.95rem" }}>{step}</p>
+                  <p style={{ fontWeight: 500, fontSize: "0.95rem", color: "#F8FAFC" }}>{step}</p>
                 </div>
                 {i < timeline.length - 1 && (
                   <div className="hidden md:block" style={{ width: "40px", height: "2px", background: "rgba(255,255,255,0.1)" }} />
@@ -190,21 +190,21 @@ export function EventDetailsPage() {
           <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "32px" }}>Winner Recommendation</h2>
           <motion.div
             style={{
-              background: "#171717", backdropFilter: "blur(16px)",
-              borderRadius: "28px", border: "1px solid rgba(59,130,246,0.3)",
+              background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)",
+              borderRadius: "28px", border: "1px solid rgba(255,255,255,0.12)",
               padding: "24px", maxWidth: "600px", margin: "0 auto 24px",
-              boxShadow: "0 0 40px rgba(59,130,246,0.1)"
+              boxShadow: "0 12px 40px rgba(0,0,0,0.5)"
             }}
           >
             {/* Placeholder for winner image */}
-            <div style={{ width: "100%", height: "300px", borderRadius: "16px", overflow: "hidden", marginBottom: "20px" }}>
+            <div style={{ width: "100%", height: "300px", borderRadius: "18px", overflow: "hidden", marginBottom: "20px" }}>
                <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Winners" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <p style={{ fontSize: "1.1rem", fontWeight: 600, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-              <Award className="text-blue-400" /> First Prize Winners
+              <Award className="text-yellow-400" /> First Prize Winners
             </p>
           </motion.div>
-          <p style={{ color: "#B5B5B5", fontSize: "1.05rem", maxWidth: "700px", margin: "0 auto", lineHeight: "1.6" }}>
+          <p style={{ color: "#94A3B8", fontSize: "1.05rem", maxWidth: "700px", margin: "0 auto", lineHeight: "1.6" }}>
             Congratulations to all winners and participants for their outstanding creativity and innovative design solutions.
           </p>
         </motion.div>
@@ -217,13 +217,14 @@ export function EventDetailsPage() {
               <motion.div
                 key={i}
                 onClick={() => openGallery(i)}
-                whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(59,130,246,0.2)", borderColor: "rgba(59,130,246,0.4)" }}
+                whileHover={{ scale: 1.02, boxShadow: "0 12px 30px rgba(0,0,0,0.5)", borderColor: "rgba(255,255,255,0.25)" }}
                 style={{
                   height: "200px", borderRadius: "20px", overflow: "hidden",
-                  border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer"
+                  border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer",
+                  background: "rgba(17, 19, 23, 0.85)"
                 }}
               >
-                <img src={img} alt={`Gallery ${i+1}`} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s" }} className="hover:scale-110" />
+                <img src={img} alt={`Gallery ${i+1}`} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s" }} className="hover:scale-105" />
               </motion.div>
             ))}
           </div>
@@ -233,11 +234,11 @@ export function EventDetailsPage() {
         <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
           <motion.button
             onClick={() => navigate("/")}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 20px 4px rgba(59,130,246,0.3)" }}
+            whileHover={{ scale: 1.03, backgroundColor: "rgba(255,255,255,0.12)" }}
             whileTap={{ scale: 0.95 }}
             style={{
-              background: "transparent",
-              border: "1px solid #3B82F6",
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
               color: "#fff",
               borderRadius: "9999px",
               padding: "14px 32px",
@@ -247,6 +248,7 @@ export function EventDetailsPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
+              backdropFilter: "blur(12px)",
             }}
           >
             <ArrowLeft className="w-5 h-5" />

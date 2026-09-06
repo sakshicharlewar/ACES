@@ -12,18 +12,9 @@ const pageVariants = {
 
 function EquipmentItem({ text }) {
   return (
-    <li className="flex items-start gap-2 text-[#555] text-sm leading-relaxed hover:text-[#0D47A1] transition-colors duration-200 cursor-default">
-      {/* Yellow triangle bullet */}
-      <span
-        className="mt-[5px] flex-shrink-0"
-        style={{
-          width: 0,
-          height: 0,
-          borderTop: "5px solid transparent",
-          borderBottom: "5px solid transparent",
-          borderLeft: "8px solid #FFC107",
-        }}
-      />
+    <li className="flex items-start gap-2.5 text-slate-300 text-sm leading-relaxed hover:text-white transition-colors duration-200 cursor-default">
+      {/* Subtle blue accent bullet */}
+      <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] flex-shrink-0" />
       {text}
     </li>
   );
@@ -35,37 +26,37 @@ function LabCard({ lab }) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="bg-white rounded-2xl shadow-lg overflow-hidden"
+      className="bg-[#111317]/85 backdrop-blur-xl border border-white/10 rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.4)] overflow-hidden hover:border-white/20 transition-all duration-300"
     >
       <div className="flex flex-col lg:flex-row">
         {/* ── Left: Image (40%) ── */}
-        <div className="lg:w-[40%] overflow-hidden group">
+        <div className="lg:w-[40%] overflow-hidden group bg-[#090A0C]">
           <img
             src={lab.image}
             alt={lab.title}
-            className="w-full h-64 lg:h-full object-cover rounded-t-2xl lg:rounded-tr-none lg:rounded-l-2xl transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-64 lg:h-full object-cover transition-transform duration-500 group-hover:scale-105"
             style={{ minHeight: "280px" }}
           />
         </div>
 
         {/* ── Right: Content (60%) ── */}
-        <div className="lg:w-[60%] p-10">
+        <div className="lg:w-[60%] p-8 lg:p-10 flex flex-col justify-center">
           {/* Lab Title */}
-          <h2 className="text-3xl font-bold text-[#0D47A1] mb-3">{lab.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight">{lab.title}</h2>
 
           {/* Location & In-charge */}
-          <p className="text-[#555] text-base mb-8 leading-relaxed">
-            <span className="font-semibold text-gray-700">Lab location:</span>{" "}
+          <p className="text-slate-400 text-sm lg:text-base mb-6 leading-relaxed">
+            <span className="font-semibold text-slate-200">Lab location:</span>{" "}
             {lab.location}.{" "}
-            <span className="font-semibold text-gray-700">Lab in-charge:</span>{" "}
+            <span className="font-semibold text-slate-200">Lab in-charge:</span>{" "}
             {lab.in_charge}.
           </p>
 
           {/* Major Equipment Heading */}
-          <div className="mb-5">
+          <div className="mb-4">
             <h3
-              className="text-sm font-bold tracking-[0.18em] text-[#0D47A1] uppercase pb-2"
-              style={{ borderBottom: "2px solid #0D47A1", display: "inline-block" }}
+              className="text-xs font-bold tracking-[0.2em] text-blue-400 uppercase pb-1.5"
+              style={{ borderBottom: "2px solid rgba(59,130,246,0.5)", display: "inline-block" }}
             >
               Major Equipment
             </h3>
@@ -81,13 +72,13 @@ function LabCard({ lab }) {
             const rightList = Array.isArray(eq?.right) ? eq.right : [];
 
             return (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                <ul className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5">
+                <ul className="space-y-2.5">
                   {leftList.map((item, i) => (
                     <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
                   ))}
                 </ul>
-                <ul className="space-y-3">
+                <ul className="space-y-2.5">
                   {rightList.map((item, i) => (
                     <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
                   ))}

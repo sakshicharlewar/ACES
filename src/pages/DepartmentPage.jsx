@@ -155,7 +155,8 @@ export function DepartmentPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${BASE_URL}/api/hod`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/hod`)
       .then(res => res.json())
       .then(data => {
         if (data && Object.keys(data).length > 0) {
@@ -183,15 +184,15 @@ export function DepartmentPage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingTop: "80px", position: "relative" }}
+      style={{ background: "#090A0C", minHeight: "100vh", color: "#fff", paddingTop: "80px", position: "relative" }}
     >
       {/* Background glow */}
-      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ── Fixed Back Button ── */}
       <motion.button
         onClick={() => navigate("/")}
-        whileHover={{ x: -4, boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+        whileHover={{ x: -4, backgroundColor: "rgba(255,255,255,0.1)" }}
         whileTap={{ scale: 0.96 }}
         transition={{ duration: 0.3 }}
         style={{
@@ -199,8 +200,8 @@ export function DepartmentPage() {
           display: "inline-flex",
           alignItems: "center",
           gap: "8px",
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.12)",
           color: "#fff",
           borderRadius: "9999px",
           padding: "10px 20px",
@@ -208,7 +209,7 @@ export function DepartmentPage() {
           fontWeight: 500,
           cursor: "pointer",
           zIndex: 50,
-          backdropFilter: "blur(10px)",
+          backdropFilter: "blur(12px)",
         }}
       >
         <ArrowLeft className="w-4 h-4" />
@@ -237,18 +238,20 @@ export function DepartmentPage() {
                 }
               }}
               whileHover={{
-                y: -8,
-                boxShadow: "0 0 36px 4px rgba(59,130,246,0.2)",
-                borderColor: "rgba(59,130,246,0.4)",
+                y: -6,
+                boxShadow: "0 0 35px 2px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.6)",
+                borderColor: "rgba(255,255,255,0.22)",
                 transition: { duration: 0.3 },
               }}
               style={{
-                background: "#171717",
+                background: "rgba(17, 19, 23, 0.85)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
                 borderRadius: "28px",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.10)",
                 padding: "36px 32px",
                 cursor: "pointer",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
                 display: "flex",
                 flexDirection: "column",
                 gap: "16px",

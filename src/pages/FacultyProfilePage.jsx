@@ -116,22 +116,22 @@ export function FacultyProfilePage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
+      style={{ background: "#090A0C", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
     >
-      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
       <div style={{ padding: "24px", position: "relative", zIndex: 50, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
         <motion.button
           onClick={() => navigate("/faculty")}
-          whileHover={{ boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+          whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
           whileTap={{ scale: 0.96 }}
           transition={{ duration: 0.3 }}
           style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
             color: "#fff", borderRadius: "9999px", padding: "10px 20px",
             fontSize: "0.9rem", fontWeight: 500, cursor: "pointer",
-            backdropFilter: "blur(10px)",
+            backdropFilter: "blur(12px)",
           }}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -144,16 +144,17 @@ export function FacultyProfilePage() {
         <motion.div
           initial="hidden" animate="visible" variants={fadeUpVariants} custom={1}
           style={{
-            background: "#171717",
-            backdropFilter: "blur(16px)",
+            background: "rgba(17, 19, 23, 0.85)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
             borderRadius: "32px",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.10)",
             padding: "48px",
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             gap: "48px",
-            boxShadow: "0 4px 40px rgba(0,0,0,0.5)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
           }}
           className="flex-col md:flex-row text-center md:text-left"
         >
@@ -218,8 +219,8 @@ export function FacultyProfilePage() {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
           <SectionHeading title="About" />
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            <div className="w-full lg:w-[60%]" style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", boxShadow: "0 4px 32px rgba(0,0,0,0.3)" }}>
-              <p style={{ color: "#B5B5B5", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
+            <div className="w-full lg:w-[60%]" style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "40px", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" }}>
+              <p style={{ color: "#CBD5E1", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 300 }}>
                 {faculty.professional_summary}
               </p>
             </div>
@@ -234,9 +235,9 @@ export function FacultyProfilePage() {
                       key={i}
                       onClick={() => setActiveImg(src)}
                       style={{
-                        borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)",
-                        background: "#111", cursor: "pointer", position: "relative",
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                        borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)",
+                        background: "rgba(17, 19, 23, 0.9)", cursor: "pointer", position: "relative",
+                        boxShadow: "0 12px 30px rgba(0,0,0,0.4)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         padding: "16px", minHeight: "180px"
                       }}
@@ -251,12 +252,12 @@ export function FacultyProfilePage() {
                     >
                       <img src={src} alt={title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} />
                       <div className="overlay" style={{
-                        position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)",
+                        position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
                         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                         opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
                       }}>
                         <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{title}</p>
-                        {year && <p style={{ color: "#B5B5B5", fontSize: "0.9rem", marginTop: "4px" }}>{year}</p>}
+                        {year && <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: "4px" }}>{year}</p>}
                       </div>
                     </div>
                   );
@@ -275,13 +276,13 @@ export function FacultyProfilePage() {
                 const institution = typeof qual === "object" ? (qual?.institution || qual?.desc || "") : "";
                 const year = typeof qual === "object" ? qual?.year : "";
                 return (
-                  <div key={i} style={{ background: "#171717", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                  <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
                     <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <GraduationCap className="w-5 h-5 text-blue-400" />
                     </div>
                     <div>
                       <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{degree}</h4>
-                      {institution && <p style={{ color: "#B5B5B5", fontSize: "0.95rem" }}>{institution} {year && `(${year})`}</p>}
+                      {institution && <p style={{ color: "#94A3B8", fontSize: "0.95rem" }}>{institution} {year && `(${year})`}</p>}
                     </div>
                   </div>
                 );
@@ -291,10 +292,10 @@ export function FacultyProfilePage() {
 
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={4}>
             <SectionHeading title="Research Interests" />
-            <div style={{ background: "#171717", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", height: "100%" }}>
+            <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", height: "100%", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
                 {researchInterests.map((interest, i) => (
-                  <span key={i} style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#93C5FD", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
+                  <span key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#E2E8F0", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
                     {typeof interest === "string" ? interest : interest?.title || JSON.stringify(interest)}
                   </span>
                 ))}
@@ -305,15 +306,15 @@ export function FacultyProfilePage() {
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
           <SectionHeading title="Professional Information" />
-          <div style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px" }}>
+          <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
               <BookOpen className="w-5 h-5 text-blue-400" />
               <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
             </div>
             <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {subjectsTaught.map((sub, i) => (
-                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#B5B5B5", fontSize: "0.95rem" }}>
-                  <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#CBD5E1", fontSize: "0.95rem" }}>
+                  <ChevronRight className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
                   <span>{typeof sub === "string" ? sub : sub?.title || JSON.stringify(sub)}</span>
                 </li>
               ))}
@@ -330,15 +331,15 @@ export function FacultyProfilePage() {
                 const journal = typeof pub === "object" ? pub?.journal : "";
                 const year = typeof pub === "object" ? pub?.year : "";
                 return (
-                  <div key={i} style={{ background: "#171717", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", display: "flex", flexDirection: "column" }}>
+                  <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", display: "flex", flexDirection: "column", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
                     {year && (
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
                         <FileText className="w-5 h-5 text-blue-400" />
-                        <span style={{ color: "#B5B5B5", fontSize: "0.9rem" }}>{year}</span>
+                        <span style={{ color: "#94A3B8", fontSize: "0.9rem" }}>{year}</span>
                       </div>
                     )}
                     <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "12px", lineHeight: "1.4" }}>{title}</h4>
-                    {journal && <p style={{ color: "#999", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{journal}</p>}
+                    {journal && <p style={{ color: "#94A3B8", fontSize: "0.95rem", marginBottom: "24px", flex: 1 }}>{journal}</p>}
                   </div>
                 );
               })}

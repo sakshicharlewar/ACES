@@ -224,22 +224,22 @@ export function CompletedEvents() {
             {events.map((event, index) => (
               <div key={event.id} className="w-[428px] shrink-0 relative z-10 cursor-pointer" onClick={() => { if(event.gallery_images?.length) openGallery(event); }}>
                 <GlassCard
-                  className={`p-6 group flex flex-col h-[620px] ${index % 2 === 0 ? '-translate-y-8' : 'translate-y-8'} transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] hover:border-accent/40`}
+                  className={`p-6 group flex flex-col h-[620px] ${index % 2 === 0 ? '-translate-y-6' : 'translate-y-6'} transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_16px_48px_rgba(0,0,0,0.6)] hover:border-white/20`}
                 >
-                  <div className="overflow-hidden rounded-xl mb-6 relative h-[380px] w-full shrink-0 bg-black/40">
+                  <div className="overflow-hidden rounded-2xl mb-6 relative h-[380px] w-full shrink-0 bg-[#090A0C]/80 border border-white/5">
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
                     <img
                       src={event.banner || "/Reimagin.jpeg"}
                       alt={event.title}
                       loading="lazy"
                       decoding="async"
-                      className="w-full h-full object-contain object-center transition-transform duration-500 p-2"
+                      className="w-full h-full object-contain object-center transition-transform duration-500 p-2 group-hover:scale-105"
                     />
                   </div>
                   <div className="px-2 flex flex-col flex-1">
-                    <div className="font-label text-xs text-accent mb-2 uppercase tracking-wider">{event.date}</div>
-                    <h4 className="font-sans text-xl font-bold text-white mb-3 group-hover:text-accent transition-colors">{event.title}</h4>
-                    <p className="font-cambria text-sm text-text-secondary line-clamp-2 flex-1">{event.full_description || event.short_description}</p>
+                    <div className="font-label text-xs text-blue-400 mb-2 uppercase tracking-wider font-semibold">{event.date}</div>
+                    <h4 className="font-sans text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">{event.title}</h4>
+                    <p className="font-cambria text-sm text-slate-400 line-clamp-2 flex-1 leading-relaxed">{event.full_description || event.short_description}</p>
                   </div>
                 </GlassCard>
               </div>

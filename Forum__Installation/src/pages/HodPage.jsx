@@ -49,9 +49,11 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
         transition: { duration: 0.3 },
       }}
       style={{
-        background: "#171717",
+        background: "rgba(17, 19, 23, 0.85)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         borderRadius: "20px",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.09)",
         padding: isSmall ? "16px 20px" : "24px",
         display: "flex",
         alignItems: isSmall ? "center" : "flex-start",
@@ -130,7 +132,8 @@ export function HodPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetch(`${BASE_URL}/api/hod`)
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/hod`)
       .then(res => res.json())
       .then(data => {
         if (data && Object.keys(data).length > 0) {
@@ -175,24 +178,24 @@ export function HodPage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
+      style={{ background: "#090A0C", minHeight: "100vh", color: "#fff", paddingBottom: "100px", position: "relative" }}
     >
       {/* Background glow */}
-      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ── Top Nav ── */}
       <div style={{ padding: "24px", position: "relative", zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <motion.button
           onClick={() => navigate("/department")}
-          whileHover={{ boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+          whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
           whileTap={{ scale: 0.96 }}
           transition={{ duration: 0.3 }}
           style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)",
             color: "#fff", borderRadius: "9999px", padding: "10px 20px",
             fontSize: "0.9rem", fontWeight: 500, cursor: "pointer",
-            backdropFilter: "blur(10px)",
+            backdropFilter: "blur(12px)",
           }}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -208,7 +211,7 @@ export function HodPage() {
         <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.02em" }}>
           {hod.designation || "Head of Department"}
         </h1>
-        <p style={{ color: "#B5B5B5", fontSize: "1.1rem", marginTop: "12px" }}>
+        <p style={{ color: "#94A3B8", fontSize: "1.1rem", marginTop: "12px" }}>
           {hod.department || "Department of Computer Engineering"}
         </p>
       </motion.div>
@@ -227,18 +230,19 @@ export function HodPage() {
               initial="hidden" animate="visible" variants={fadeLeftVariants} custom={2}
               style={{
                 position: "sticky", top: "40px",
-                borderRadius: "24px",
+                borderRadius: "28px",
                 overflow: "hidden",
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "#171717",
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(17, 19, 23, 0.85)",
+                backdropFilter: "blur(20px)",
                 padding: "16px",
-                boxShadow: "0 0 60px rgba(59,130,246,0.12), 0 24px 64px rgba(0,0,0,0.6)",
+                boxShadow: "0 16px 48px rgba(0,0,0,0.6)",
               }}
             >
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.03 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                style={{ width: "100%", height: "500px", borderRadius: "16px", overflow: "hidden" }}
+                style={{ width: "100%", height: "500px", borderRadius: "18px", overflow: "hidden" }}
               >
                 <img
                   src={hod.image}
@@ -253,12 +257,13 @@ export function HodPage() {
           <motion.div
             initial="hidden" animate="visible" variants={fadeUpVariants} custom={3}
             style={{
-              background: "#171717",
-              backdropFilter: "blur(16px)",
+              background: "rgba(17, 19, 23, 0.85)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
               borderRadius: "28px",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.10)",
               padding: "40px 48px",
-              boxShadow: "0 4px 32px rgba(0,0,0,0.4)",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
               display: "flex", flexDirection: "column", gap: "48px"
             }}
           >
