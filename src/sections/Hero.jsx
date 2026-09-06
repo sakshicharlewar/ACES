@@ -134,48 +134,43 @@ export function Hero() {
             </motion.div>
           </div>
 
-          {/* Right Column (5 cols) - Visual 3D Telemetry Graphic */}
+          {/* Right Column (5 cols) - ACES Forum Image Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="lg:col-span-5 relative"
           >
-            <div className="rounded-2xl border border-white/10 bg-[#0B0D11] overflow-hidden relative group shadow-[0_12px_40px_rgba(0,0,0,0.6)]">
+            <div className="rounded-2xl border border-white/10 bg-[#0B0D11] overflow-hidden relative group shadow-[0_12px_40px_rgba(0,0,0,0.6)] hover:border-amber-200/30 transition-all duration-300">
               {/* Overlaid Top-Left Status Badge */}
               <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 px-3 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/10 text-[11px] font-mono text-white">
-                <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span>3D TWIN: LIVE TELEMETRY</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>ACES FORUM LOADING CEREMONY</span>
               </div>
 
-              {/* Graphic Asset Container */}
-              <div className="relative aspect-[16/11] overflow-hidden bg-black flex items-center justify-center">
+              {/* Image Container */}
+              <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden bg-black flex items-center justify-center">
                 <img
-                  src="/hero_tech_campus.png"
-                  alt="3D Digital Twin Interactive Campus Telemetry"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  src="/hero_aces_forum.jpg"
+                  alt="ACES Forum Loading Ceremony - Computer Engineering Department"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
                 />
 
-                {/* Overlaid Spatial Hotspots */}
-                <div className="absolute top-1/4 left-1/4 z-10 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[10px] sm:text-[11px] text-white flex items-center gap-1.5 shadow-lg pointer-events-none">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span>AI Supercompute Pod</span>
-                </div>
-
-                <div className="absolute bottom-1/3 right-1/4 z-10 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[10px] sm:text-[11px] text-white flex items-center gap-1.5 shadow-lg pointer-events-none">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>Innovation Geodesic Dome</span>
+                {/* Overlaid Tag */}
+                <div className="absolute bottom-3 right-3 z-10 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[10px] sm:text-[11px] text-amber-200 flex items-center gap-1.5 shadow-lg pointer-events-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <span>Leadership &amp; Innovation</span>
                 </div>
               </div>
 
-              {/* Overlaid Bottom Telemetry Status Bar */}
+              {/* Overlaid Bottom Status Bar */}
               <div className="px-4 py-3 bg-[#0e1014] border-t border-white/5 flex items-center justify-between text-[11px] font-mono">
                 <div className="flex items-center gap-2 text-neutral-300">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span>Smart Microgrid 100% Solar Active</span>
+                  <span>SCET Computer Engineering Forum</span>
                 </div>
-                <div className="text-neutral-500 hidden sm:block">
-                  LAT 21.096° N, 79.162° E
+                <div className="text-amber-200 font-semibold">
+                  2026 – 27
                 </div>
               </div>
             </div>
