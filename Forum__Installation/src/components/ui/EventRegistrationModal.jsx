@@ -614,37 +614,59 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
             <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()} noValidate>
 
-              {/* ── EVENT INFO CARD (always visible at top of Step 1) ── */}
+              {/* ── COMPACT & AESTHETIC EVENT INFO CARD (Step 1) ── */}
               {step === 1 && (
-                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden bg-white/[0.03] border border-white/15 backdrop-blur-md p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base">📌</span>
-                    <h4 className="text-white font-semibold text-sm tracking-wide uppercase font-sans">Event Details</h4>
+                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-white/[0.05] via-white/[0.02] to-transparent border border-white/15 backdrop-blur-md p-4 sm:p-5 shadow-lg">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-200 text-base">⚡</span>
+                      <h4 className="text-white font-bold text-xs tracking-wider uppercase font-sans">
+                        Event Highlights
+                      </h4>
+                    </div>
+                    {eventDetails?.subtitle && (
+                      <span className="text-[11px] font-mono text-amber-200/90 font-medium hidden sm:inline">
+                        {eventDetails.subtitle}
+                      </span>
+                    )}
                   </div>
 
-                  <p className="text-neutral-200 text-sm leading-relaxed mb-3 font-sans">
-                    <span className="text-white font-semibold">{eventDetails?.title || "Event"}</span> - {eventDetails?.description || eventDetails?.short_description || "A technical event."}
+                  {/* Compact Short Description (1-2 clean lines) */}
+                  <p className="text-neutral-300 text-xs sm:text-sm leading-relaxed mb-3.5 font-sans">
+                    <span className="text-white font-semibold">{eventDetails?.title?.split('-')[0]?.trim() || "Event"}</span> — {
+                      (eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx")
+                        ? "Full Stack Development & Live Problem Solving Challenge. Build scalable solutions and adapt in real-time."
+                        : (eventDetails?.short_description || "Showcase your technical excellence and teamwork.")
+                    }
                   </p>
 
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
-                      👥 Team of {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : (eventDetails?.team_size ? `${eventDetails.team_size} Members` : "2 to 4 Members")}
+                  {/* Aesthetic Color Badges */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Team Size */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs font-medium font-sans">
+                      👥 {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : `${eventDetails?.team_size || 2} Members`}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
-                      💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
+
+                    {/* Registration Fee */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-200 text-xs font-semibold font-sans">
+                      💳 Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+
+                    {/* Seats */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-200 text-xs font-medium font-sans">
                       🏆 Seats: {eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60} Registered
                     </span>
-                    {eventDetails?.venue && (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
-                         📍 {eventDetails.venue}
-                       </span>
-                    )}
+
+                    {/* Venue */}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-200 text-xs font-medium font-sans">
+                      📍 SCET, Nagpur
+                    </span>
+
+                    {/* Eligibility */}
                     {eventDetails?.eligibility && (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
-                         🎓 Eligibility: {eventDetails.eligibility}
-                       </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/25 text-rose-200 text-xs font-medium font-sans">
+                        🎓 {eventDetails.eligibility}
+                      </span>
                     )}
                   </div>
                 </div>
