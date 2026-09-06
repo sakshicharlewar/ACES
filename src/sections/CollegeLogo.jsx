@@ -77,11 +77,16 @@ export function CollegeLogo() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="font-sans text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-center px-4"
+              className="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-center px-4"
             >
-              Suryodaya College of
+              <span className="font-sans text-white tracking-wide">Suryodaya College of</span>
               <br/>
-              <span className="font-sans font-normal text-text-secondary">Engineering & Technology</span>
+              <span 
+                className="text-4xl md:text-6xl lg:text-7xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-white to-amber-100 mt-2 inline-block"
+                style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+              >
+                Engineering &amp; Technology
+              </span>
             </motion.h2>
           </motion.div>
           

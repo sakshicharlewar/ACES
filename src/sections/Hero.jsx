@@ -53,42 +53,69 @@ export function Hero() {
               <span>Central India Premier Tech Hub</span>
             </motion.div>
 
-            {/* Main Headline */}
+            {/* Main Headline with Mixed Aesthetic Fonts & Colors */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-extrabold text-white tracking-tight leading-[1.08] mb-4 font-sans"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[48px] tracking-tight leading-[1.15] mb-5"
             >
-              Welcome to<br />
-              Association of Computer<br />
-              Engineering Students.
+              <span 
+                className="text-3xl sm:text-4xl md:text-5xl font-normal text-amber-200 block mb-1"
+                style={{ fontFamily: "'Great Vibes', cursive" }}
+              >
+                Welcome to
+              </span>
+              <span className="text-white font-sans font-extrabold tracking-tight">
+                Association{" "}
+              </span>
+              <span 
+                className="text-neutral-400 font-normal italic text-2xl sm:text-3xl md:text-4xl"
+                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              >
+                of{" "}
+              </span>
+              <span 
+                className="text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-neutral-100 to-amber-200 font-serif italic font-medium tracking-wide"
+                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              >
+                Computer Engineering
+              </span>
+              <br />
+              <span className="text-white font-sans font-black uppercase tracking-wider text-2xl sm:text-3xl md:text-4xl">
+                Students{" "}
+              </span>
+              <span className="text-xs sm:text-sm px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-300 border border-white/15 font-mono font-medium align-middle ml-2">
+                (ACES)
+              </span>
             </motion.h1>
 
-            {/* Subtitle & Autonomous Tag */}
+            {/* Subtitle with Cursive Aesthetic Font in Engineering & Technology */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-4"
+              className="mb-8 p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
             >
-              <p className="text-base sm:text-lg text-neutral-200 font-semibold font-sans">
-                Suryodaya College of Engineering &amp; Technology, Nagpur
+              <p className="text-base sm:text-lg text-neutral-300 font-medium font-sans">
+                <span>Suryodaya College of </span>
+                <span 
+                  className="text-2xl sm:text-3xl text-amber-200 font-normal inline-block px-1"
+                  style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+                >
+                  Engineering &amp; Technology
+                </span>
+                <span className="text-neutral-400 text-xs sm:text-sm font-sans block sm:inline sm:ml-2">
+                  • Nagpur
+                </span>
               </p>
-              <p className="text-xs sm:text-sm text-neutral-400 font-medium uppercase tracking-widest mt-1">
-                An Autonomous Institute
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-xs text-neutral-400 font-mono tracking-widest uppercase font-semibold">
+                  An Autonomous Institute
+                </span>
+              </div>
             </motion.div>
-
-            {/* Paragraph Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-sm sm:text-base text-neutral-400 leading-relaxed mb-8 max-w-xl font-sans"
-            >
-              Where breakthrough computational intelligence, spatial robotics, and sustainable civil infrastructure converge to forge India's next generation of engineering visionaries.
-            </motion.p>
 
             {/* Explore Button */}
             <motion.div
