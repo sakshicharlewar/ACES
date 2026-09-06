@@ -90,30 +90,19 @@ export function Hero() {
               Where breakthrough computational intelligence, spatial robotics, and sustainable civil infrastructure converge to forge India's next generation of engineering visionaries.
             </motion.p>
 
-            {/* Dual CTA Buttons: Upcoming Events & Explore */}
+            {/* Explore Button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center gap-4"
+              className="flex items-center gap-4"
             >
-              {/* Upcoming Events Button */}
-              <button
-                onClick={() => scrollTo("events-upcoming")}
-                className="px-7 py-3.5 rounded-full bg-white text-black text-sm font-bold flex items-center gap-2.5 hover:bg-neutral-200 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)] active:scale-95"
-              >
-                <Calendar className="w-4 h-4 text-black" />
-                Upcoming Events
-                <ArrowUpRight className="w-4 h-4 text-black" />
-              </button>
-
-              {/* Explore Button */}
               <button
                 onClick={() => scrollTo("collegelogo")}
-                className="px-7 py-3.5 rounded-full bg-[#181a20] border border-white/15 text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95"
+                className="px-8 py-3.5 rounded-full bg-white text-black text-sm font-bold flex items-center gap-2.5 hover:bg-neutral-200 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)] active:scale-95"
               >
                 Explore
-                <ChevronDown className="w-4 h-4 text-neutral-300 animate-bounce" />
+                <ChevronDown className="w-4 h-4 text-black animate-bounce" />
               </button>
             </motion.div>
           </div>

@@ -83,9 +83,9 @@ export function Navbar() {
               if (el) el.scrollIntoView({ behavior: "smooth" });
               else navigate("/");
             }}
-            className="px-4 md:px-5 py-2 rounded-full bg-white text-black text-xs md:text-sm font-semibold hover:bg-neutral-200 transition-all shadow-md active:scale-95"
+            className="px-3.5 md:px-4 py-1.5 md:py-2 rounded-full bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition-all shadow-md active:scale-95"
           >
-            Apply Now
+            Upcoming Events
           </button>
           <button
             onClick={() => navigate("/admin")}
