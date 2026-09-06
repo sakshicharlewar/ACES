@@ -390,7 +390,7 @@ export function UpcomingEvents() {
 
                 <div className="relative w-full h-full bg-[#0B0B0B]/90 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:bg-[#111111] transition-colors duration-500">
                   {/* Icon / Banner */}
-                  {event.banner && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx")) ? (
+                  {event.banner && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") || (event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug")) ? (
                     <div className="w-full h-32 rounded-xl mb-4 overflow-hidden bg-white/5 border border-white/10">
                       <img src={event.banner} alt={event.title} className="w-full h-full object-cover" />
                     </div>
