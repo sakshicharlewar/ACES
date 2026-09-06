@@ -5,7 +5,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func, update, case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 import io
@@ -122,7 +122,7 @@ async def team_register(
                 .where(Event.id == event_id)
                 .values(
                     registered_count=Event.registered_count + 1,
-                    registration_status=func.case(
+                    registration_status=case(
                         (Event.registered_count + 1 >= max_cap, RegistrationStatus.closed),
                         else_=Event.registration_status
                     )
