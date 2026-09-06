@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import KineticGrid from "../components/ui/kinetic-grid";
 
 const SUBTITLE = "Department of Computer Engineering";
-const TYPING_SPEED = 50; // ms per character
+const TYPING_SPEED = 22; // ms per character — fast & snappy
 
 export function LoadingScreen({ onComplete }) {
   const [phase, setPhase] = useState("typing");   // typing | pause | curtain
@@ -12,9 +12,9 @@ export function LoadingScreen({ onComplete }) {
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [isTypingStarted, setIsTypingStarted] = useState(false);
 
-  // Delay the start of the typing effect to wait for title and divider
+  // Quick start for the typing effect
   useEffect(() => {
-    const t = setTimeout(() => setIsTypingStarted(true), 1800);
+    const t = setTimeout(() => setIsTypingStarted(true), 350);
     return () => clearTimeout(t);
   }, []);
 
@@ -22,11 +22,11 @@ export function LoadingScreen({ onComplete }) {
   useEffect(() => {
     if (phase !== "typing" || !isTypingStarted) return;
     if (typedCount >= SUBTITLE.length) {
-      // Typing done → show prompt after a longer pause (waiting for PRESENTS)
+      // Typing done → show prompt quickly
       const t = setTimeout(() => {
         setShowPrompt(true);
         setPhase("pause");
-      }, 2500);
+      }, 400);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setTypedCount(c => c + 1), TYPING_SPEED);
@@ -35,25 +35,23 @@ export function LoadingScreen({ onComplete }) {
 
   /* ── Click / Enter handler → trigger curtain ── */
   const handleEnter = useCallback(() => {
-    if (phase !== "pause") return;
+    if (curtainOpen) return;
     setPhase("curtain");
     setCurtainOpen(true);
     // Wait for curtain animation, then hand off to app
-    setTimeout(onComplete, 1400);
-  }, [phase, onComplete]);
+    setTimeout(onComplete, 800);
+  }, [curtainOpen, onComplete]);
 
   useEffect(() => {
-    if (phase !== "pause") return;
-    const onKey = (e) => { if (e.key === "Enter") handleEnter(); };
+    const onKey = (e) => { if (e.key === "Enter" || e.key === " ") handleEnter(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, handleEnter]);
+  }, [handleEnter]);
 
   return (
     <div
-      className="fixed inset-0 z-[9999] overflow-hidden"
+      className="fixed inset-0 z-[9999] overflow-hidden cursor-pointer"
       onClick={handleEnter}
-      style={{ cursor: phase === "pause" ? "pointer" : "default" }}
     >
       {/* ── Background ── */}
       <div className="absolute inset-0 bg-[#0B0B0B]">
@@ -133,9 +131,9 @@ export function LoadingScreen({ onComplete }) {
 
         {/* SURYODAYA COLLEGE OF ENGINEERING AND TECHNOLOGY */}
         <motion.h1
-          initial={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
+          initial={{ opacity: 0, filter: "blur(8px)", scale: 0.96 }}
           animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
           style={{ fontFamily: "'Cinzel', serif" }}
           className="text-3xl md:text-5xl lg:text-6xl font-bold text-[#FDF8E1] drop-shadow-[0_0_15px_rgba(253,248,225,0.4)] mb-6 max-w-5xl leading-tight text-center"
         >
@@ -146,15 +144,16 @@ export function LoadingScreen({ onComplete }) {
         <motion.div
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 1.2, ease: "easeInOut", delay: 1.2 }}
+          transition={{ duration: 0.5, ease: "easeInOut", delay: 0.2 }}
           className="w-48 md:w-64 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mb-8"
-        />
+        >
+        </motion.div>
 
         {/* Typewriter subtitle */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 1.8 }}
+          transition={{ duration: 0.3, delay: 0.35 }}
           style={{ fontFamily: "'Great Vibes', cursive" }}
           className="text-4xl md:text-6xl lg:text-7xl text-[#FFF3CD] drop-shadow-[0_0_10px_rgba(255,243,205,0.3)] mb-12 text-center"
         >
@@ -164,9 +163,9 @@ export function LoadingScreen({ onComplete }) {
 
         {/* PRESENTS */}
         <motion.div
-          initial={{ opacity: 0, filter: "blur(8px)", y: 10 }}
+          initial={{ opacity: 0, filter: "blur(6px)", y: 10 }}
           animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-          transition={{ duration: 2, ease: "easeInOut", delay: 4.5 }}
+          transition={{ duration: 0.8, ease: "easeInOut", delay: 1.2 }}
           style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.4em" }}
           className="text-lg md:text-2xl font-semibold text-[#D4AF37] drop-shadow-[0_0_12px_rgba(212,175,55,0.5)] uppercase"
         >

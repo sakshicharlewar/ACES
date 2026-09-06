@@ -55,9 +55,9 @@ export function Hero() {
 
             {/* Main Headline with Mixed Aesthetic Fonts & Colors */}
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              transition={{ duration: 0.4, delay: 0.05 }}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-[48px] tracking-tight leading-[1.15] mb-5"
             >
               <span 
@@ -92,9 +92,9 @@ export function Hero() {
 
             {/* Subtitle with Cursive Aesthetic Font in Engineering & Technology */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
               className="mb-8 p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md"
             >
               <p className="text-base sm:text-lg text-neutral-300 font-medium font-sans">
@@ -119,9 +119,9 @@ export function Hero() {
 
             {/* Explore Button */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
               className="flex items-center gap-4"
             >
               <button
