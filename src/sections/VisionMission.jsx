@@ -45,17 +45,17 @@ export function VisionMission() {
             className="h-full p-10 md:p-14 relative overflow-hidden group"
           >
             <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 text-white">
-              <Target className="w-8 h-8 text-blue-400" />
+              <Target className="w-8 h-8 text-white" />
             </div>
-            <h3 className="font-sans text-3xl font-medium mb-4 text-white">Department Vision</h3>
+            <h3 className="font-sans text-3xl font-semibold mb-4 text-white">Department Vision</h3>
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               whileInView={{ width: 48, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-              className="h-[2px] bg-blue-500 mb-6 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
+              className="h-[2px] bg-white mb-6 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
             />
-            <p className="font-cambria text-slate-300 text-lg leading-relaxed font-light">
+            <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
               To emerge as a center of excellence in computer engineering by fostering academic excellence, innovative research, and entrepreneurial skills, empowering graduates to address global challenges and contribute to the advancement of technology and society.
             </p>
           </motion.div>
@@ -85,15 +85,15 @@ export function VisionMission() {
             className="h-full p-10 md:p-14 relative overflow-hidden group"
           >
             <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 text-white">
-              <Compass className="w-8 h-8 text-blue-400" />
+              <Compass className="w-8 h-8 text-white" />
             </div>
-            <h3 className="font-sans text-3xl font-medium mb-4 text-white">Department Mission</h3>
+            <h3 className="font-sans text-3xl font-semibold mb-4 text-white">Department Mission</h3>
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               whileInView={{ width: 48, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-              className="h-[2px] bg-blue-500 mb-6 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
+              className="h-[2px] bg-white mb-6 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
             />
             <ul className="space-y-6">
               {missions.map((m, i) => (
@@ -105,8 +105,8 @@ export function VisionMission() {
                   transition={{ duration: 0.5, delay: 0.3 + i * 0.12 }}
                   className="flex gap-5 items-start"
                 >
-                  <span className="text-blue-400 font-bold text-lg shrink-0 mt-0.5">{m.number}</span>
-                  <p className="font-cambria text-slate-300 text-base leading-relaxed font-light">{m.text}</p>
+                  <span className="text-white font-bold text-lg shrink-0 mt-0.5">{m.number}</span>
+                  <p className="font-sans text-neutral-300 text-base leading-relaxed font-normal">{m.text}</p>
                 </motion.li>
               ))}
             </ul>

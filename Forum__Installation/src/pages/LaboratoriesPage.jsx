@@ -13,8 +13,8 @@ const pageVariants = {
 function EquipmentItem({ text }) {
   return (
     <li className="flex items-start gap-2.5 text-slate-300 text-sm leading-relaxed hover:text-white transition-colors duration-200 cursor-default">
-      {/* Subtle blue accent bullet */}
-      <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] flex-shrink-0" />
+      {/* Subtle white accent bullet */}
+      <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)] flex-shrink-0" />
       {text}
     </li>
   );
@@ -42,10 +42,10 @@ function LabCard({ lab }) {
         {/* ── Right: Content (60%) ── */}
         <div className="lg:w-[60%] p-8 lg:p-10 flex flex-col justify-center">
           {/* Lab Title */}
-          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight">{lab.title}</h2>
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight font-sans">{lab.title}</h2>
 
           {/* Location & In-charge */}
-          <p className="text-slate-400 text-sm lg:text-base mb-6 leading-relaxed">
+          <p className="text-slate-400 text-sm lg:text-base mb-6 leading-relaxed font-sans">
             <span className="font-semibold text-slate-200">Lab location:</span>{" "}
             {lab.location}.{" "}
             <span className="font-semibold text-slate-200">Lab in-charge:</span>{" "}
@@ -55,8 +55,8 @@ function LabCard({ lab }) {
           {/* Major Equipment Heading */}
           <div className="mb-4">
             <h3
-              className="text-xs font-bold tracking-[0.2em] text-blue-400 uppercase pb-1.5"
-              style={{ borderBottom: "2px solid rgba(59,130,246,0.5)", display: "inline-block" }}
+              className="text-xs font-bold tracking-[0.2em] text-white uppercase pb-1.5 font-sans"
+              style={{ borderBottom: "2px solid rgba(255,255,255,0.2)", display: "inline-block" }}
             >
               Major Equipment
             </h3>
@@ -127,7 +127,7 @@ export function LaboratoriesPage() {
   if (loading) {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+        <Loader2 className="w-10 h-10 animate-spin text-white" />
       </div>
     );
   }
@@ -154,7 +154,7 @@ export function LaboratoriesPage() {
           transform: "translate(-50%, -50%)",
           width: "800px",
           height: "800px",
-          background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -163,7 +163,7 @@ export function LaboratoriesPage() {
       {/* Back Button */}
       <motion.button
         onClick={() => navigate("/department")}
-        whileHover={{ boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+        whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
         whileTap={{ scale: 0.96 }}
         transition={{ duration: 0.3 }}
         style={{
@@ -206,13 +206,13 @@ export function LaboratoriesPage() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="font-label text-[#3B82F6] uppercase tracking-widest text-sm mb-3 font-semibold">
+          <div className="font-label text-neutral-400 uppercase tracking-widest text-xs mb-3 font-semibold">
             Computer Engineering Department
           </div>
           <h1 className="font-sans text-3xl md:text-5xl font-medium text-white mb-4">
             Laboratories
           </h1>
-          <p className="text-text-secondary text-lg max-w-2xl mx-auto">
+          <p className="text-neutral-400 text-base md:text-lg max-w-2xl mx-auto font-sans">
             State-of-the-art labs equipped for modern computing and software development.
           </p>
         </motion.div>

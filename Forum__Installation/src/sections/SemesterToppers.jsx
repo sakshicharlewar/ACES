@@ -209,13 +209,13 @@ export function SemesterToppers() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="font-label text-blue-400 uppercase tracking-widest text-xs mb-3 font-semibold">
+          <div className="font-label text-neutral-400 uppercase tracking-widest text-xs mb-3 font-semibold">
             TOPPERS GALLERY
           </div>
           <h2 className="font-sans text-3xl md:text-5xl font-medium text-white mb-4">
             Semester Toppers
           </h2>
-          <p className="font-cambria text-[#94A3B8] text-lg max-w-2xl mx-auto">
+          <p className="font-sans text-neutral-400 text-base md:text-lg max-w-2xl mx-auto">
             Celebrating the academic excellence of our brightest minds
           </p>
         </motion.div>

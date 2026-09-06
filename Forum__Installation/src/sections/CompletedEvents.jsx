@@ -192,11 +192,11 @@ export function CompletedEvents() {
         {/* Timeline progress bar */}
         <div className="relative w-full h-[2px] bg-border mb-12 px-24">
           <motion.div
-            className="h-full bg-accent relative"
+            className="h-full bg-white relative"
             animate={{ width: `${progressPercent}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
           >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-accent shadow-[0_0_10px_#3B82F6]" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
           </motion.div>
         </div>
 
@@ -237,9 +237,9 @@ export function CompletedEvents() {
                     />
                   </div>
                   <div className="px-2 flex flex-col flex-1">
-                    <div className="font-label text-xs text-blue-400 mb-2 uppercase tracking-wider font-semibold">{event.date}</div>
-                    <h4 className="font-sans text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">{event.title}</h4>
-                    <p className="font-cambria text-sm text-slate-400 line-clamp-2 flex-1 leading-relaxed">{event.full_description || event.short_description}</p>
+                    <div className="font-sans text-xs text-neutral-400 mb-2 uppercase tracking-wider font-semibold">{event.date}</div>
+                    <h4 className="font-sans text-xl font-bold text-white mb-2 group-hover:text-neutral-200 transition-colors">{event.title}</h4>
+                    <p className="font-sans text-sm text-neutral-400 line-clamp-2 flex-1 leading-relaxed">{event.full_description || event.short_description}</p>
                   </div>
                 </GlassCard>
               </div>

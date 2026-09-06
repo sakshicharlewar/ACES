@@ -72,19 +72,19 @@ export function FloatingEventsButton() {
         @keyframes pill-pulse-glow {
           0%, 100% {
             box-shadow:
-              0 0 0 0 rgba(37,99,235,0.40),
-              0 8px 28px rgba(37,99,235,0.30),
+              0 0 0 0 rgba(255,255,255,0.30),
+              0 8px 28px rgba(0,0,0,0.40),
               0 2px 8px rgba(0,0,0,0.25);
           }
           55% {
             box-shadow:
-              0 0 0 10px rgba(37,99,235,0),
-              0 8px 28px rgba(37,99,235,0.30),
+              0 0 0 10px rgba(255,255,255,0),
+              0 8px 28px rgba(0,0,0,0.40),
               0 2px 8px rgba(0,0,0,0.25);
           }
         }
         @keyframes pill-ripple {
-          0%   { transform: scale(0); opacity: 0.55; }
+          0%   { transform: scale(0); opacity: 0.35; }
           100% { transform: scale(5); opacity: 0; }
         }
 
@@ -97,10 +97,10 @@ export function FloatingEventsButton() {
           align-items: center;
           gap: 10px;
           padding: 0 22px;
-          height: 56px;
+          height: 54px;
           border-radius: 100px;
-          border: 1px solid rgba(255, 255, 255, 0.20);
-          background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+          border: 1px solid rgba(255, 255, 255, 0.40);
+          background: #FFFFFF;
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           cursor: pointer;
@@ -113,7 +113,6 @@ export function FloatingEventsButton() {
             transform 0.28s cubic-bezier(.34,1.56,.64,1),
             box-shadow  0.25s ease,
             filter      0.25s ease;
-          /* prevent animation fighting on hover */
           will-change: transform;
         }
 
@@ -122,14 +121,14 @@ export function FloatingEventsButton() {
           animation: none;
           transform: translateY(-3px) scale(1.05) !important;
           box-shadow:
-            0 0 0 12px rgba(37,99,235,0.10),
-            0 14px 38px rgba(37,99,235,0.55),
+            0 0 0 12px rgba(255,255,255,0.10),
+            0 14px 38px rgba(0,0,0,0.55),
             0 2px 8px rgba(0,0,0,0.25);
-          filter: brightness(1.10);
+          filter: brightness(1.05);
         }
 
         .fab-pill:focus-visible {
-          outline: 3px solid #93C5FD;
+          outline: 3px solid #FFFFFF;
           outline-offset: 3px;
         }
 
@@ -143,7 +142,7 @@ export function FloatingEventsButton() {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: rgba(255,255,255,0.40);
+          background: rgba(0,0,0,0.20);
           pointer-events: none;
           transform: scale(0);
           animation: pill-ripple 0.6s ease-out forwards;
@@ -151,28 +150,22 @@ export function FloatingEventsButton() {
 
         /* Icon */
         .fab-pill-icon {
-          color: #fff;
+          color: #000;
           flex-shrink: 0;
           position: relative;
           z-index: 1;
-          filter: drop-shadow(0 0 5px rgba(255,255,255,0.45));
           transition: filter 0.25s ease;
-        }
-        .fab-pill:hover .fab-pill-icon,
-        .fab-pill:focus-visible .fab-pill-icon {
-          filter: drop-shadow(0 0 9px rgba(255,255,255,0.75));
         }
 
         /* Label */
         .fab-pill-label {
-          color: #fff;
+          color: #000;
           font-size: 15px;
           font-weight: 700;
           letter-spacing: 0.01em;
           white-space: nowrap;
           position: relative;
           z-index: 1;
-          text-shadow: 0 1px 4px rgba(0,0,0,0.18);
           font-family: inherit;
         }
 
@@ -180,7 +173,7 @@ export function FloatingEventsButton() {
         .fab-pill-divider {
           width: 1px;
           height: 22px;
-          background: rgba(255,255,255,0.28);
+          background: rgba(0,0,0,0.15);
           flex-shrink: 0;
           position: relative;
           z-index: 1;

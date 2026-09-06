@@ -46,7 +46,7 @@ function TopperCard({ topper }) {
             <span className="text-slate-400 text-xs uppercase tracking-wider mb-1">
               {topper.score_label || "CGPA"}
             </span>
-            <span className="text-blue-400 font-bold text-xl">
+            <span className="text-white font-bold text-xl">
               {topper.cgpa}
             </span>
           </div>
@@ -99,10 +99,10 @@ export function AcademicToppers() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <h2 className="font-sans text-3xl md:text-5xl font-medium text-white mb-4">
+          <h2 className="font-sans text-3xl md:text-5xl font-bold text-white mb-4">
             Semester Toppers
           </h2>
-          <p className="font-cambria text-text-secondary text-lg max-w-2xl mx-auto">
+          <p className="font-sans text-neutral-400 text-base md:text-lg max-w-2xl mx-auto">
             Celebrating the academic excellence of our brightest minds.
           </p>
         </motion.div>
@@ -115,18 +115,18 @@ export function AcademicToppers() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="bg-transparent rounded-[18px] border border-[rgba(255,255,255,0.08)] p-6 lg:p-10"
+            className="bg-transparent rounded-[28px] border border-white/10 p-6 lg:p-10"
           >
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+                <Loader2 className="w-8 h-8 animate-spin text-white mb-4" />
                 <p className="text-white/50">Loading academic toppers...</p>
               </div>
             ) : (
               <>
                 {finalYearToppers.length > 0 && (
                   <>
-                    <div className="mb-6 border-b border-[rgba(255,255,255,0.08)] pb-4">
+                    <div className="mb-6 border-b border-white/10 pb-4">
                       <h3 className="font-sans text-xl font-semibold text-white">Final Year</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -139,7 +139,7 @@ export function AcademicToppers() {
 
                 {thirdYearToppers.length > 0 && (
                   <>
-                    <div className="mb-6 border-b border-[rgba(255,255,255,0.08)] pb-4">
+                    <div className="mb-6 border-b border-white/10 pb-4">
                       <h3 className="font-sans text-xl font-semibold text-white">3rd Year</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
@@ -152,7 +152,7 @@ export function AcademicToppers() {
 
                 {secondYearToppers.length > 0 && (
                   <>
-                    <div className="mb-6 border-b border-[rgba(255,255,255,0.08)] pb-4">
+                    <div className="mb-6 border-b border-white/10 pb-4">
                       <h3 className="font-sans text-xl font-semibold text-white">2nd Year</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
@@ -168,9 +168,9 @@ export function AcademicToppers() {
             {/* Bottom Information Box */}
             <div className="w-full bg-[#111317]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
               <div className="bg-white/5 border border-white/10 p-3 rounded-full flex-shrink-0">
-                <Trophy className="w-8 h-8 text-yellow-400" />
+                <Trophy className="w-8 h-8 text-white" />
               </div>
-              <p className="font-sans text-slate-300 text-sm md:text-base leading-relaxed">
+              <p className="font-sans text-neutral-300 text-sm md:text-base leading-relaxed">
                 These toppers have shown exceptional dedication, hard work, and consistency throughout their academic journey.
                 <br className="hidden sm:block" />
                 They are an inspiration to all students.

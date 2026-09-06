@@ -36,12 +36,12 @@ export function ContactUs() {
           >
             <h3 className="font-sans text-2xl font-bold text-white tracking-wide">ACES</h3>
             <div className="space-y-4">
-              <div className="flex items-start gap-3 text-text-secondary hover:text-white transition-colors">
-                <MapPin className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                <p className="font-cambria text-sm leading-relaxed">Suryodaya College of Engineering & Technology,<br/> Nagpur, Maharashtra, India</p>
+              <div className="flex items-start gap-3 text-neutral-400 hover:text-white transition-colors">
+                <MapPin className="w-5 h-5 text-white shrink-0 mt-0.5" />
+                <p className="font-sans text-sm leading-relaxed">Suryodaya College of Engineering & Technology,<br/> Nagpur, Maharashtra, India</p>
               </div>
-              <div className="flex items-center gap-3 text-text-secondary hover:text-white transition-colors">
-                <Mail className="w-5 h-5 text-accent shrink-0" />
+              <div className="flex items-center gap-3 text-neutral-400 hover:text-white transition-colors">
+                <Mail className="w-5 h-5 text-white shrink-0" />
                 <a href="mailto:acescomputer0101@gmail.com" className="text-sm">acescomputer0101@gmail.com</a>
               </div>
             </div>
@@ -58,19 +58,19 @@ export function ContactUs() {
             <div className="space-y-6 flex flex-col items-start pt-2">
               <div>
                 <h4 className="font-sans text-base text-white mb-1">Yatharth Donarkar</h4>
-                <a href="tel:+918999045885" className="text-text-secondary text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 8999045885</a>
+                <a href="tel:+918999045885" className="text-neutral-400 text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 8999045885</a>
               </div>
               <div>
                 <h4 className="font-sans text-base text-white mb-1">Sakshi Charlewar</h4>
-                <a href="tel:+918087436159" className="text-text-secondary text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 8087436159</a>
+                <a href="tel:+918087436159" className="text-neutral-400 text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 8087436159</a>
               </div>
               <div>
                 <h4 className="font-sans text-base text-white mb-1">Soham Runghe</h4>
-                <a href="tel:+919545382135" className="text-text-secondary text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 95453 82135</a>
+                <a href="tel:+919545382135" className="text-neutral-400 text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 95453 82135</a>
               </div>
               <div>
                 <h4 className="font-sans text-base text-white mb-1">Aakansha Adhau</h4>
-                <a href="tel:+919527908347" className="text-text-secondary text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 95279 08347</a>
+                <a href="tel:+919527908347" className="text-neutral-400 text-sm flex items-center gap-2 hover:text-white transition-colors"><Phone className="w-3.5 h-3.5"/> +91 95279 08347</a>
               </div>
             </div>
           </motion.div>
@@ -90,7 +90,7 @@ export function ContactUs() {
                   <a 
                     href={`#${item.toLowerCase()}`}
                     onClick={(e) => scrollToSection(e, item.toLowerCase())}
-                    className="text-text-secondary hover:text-accent transition-colors text-sm flex items-center gap-2 group"
+                    className="text-neutral-400 hover:text-white transition-colors text-sm flex items-center gap-2 group"
                   >
                     <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 -ml-4 group-hover:ml-0 transition-all duration-300"/>
                     <span className="transform transition-transform duration-300">{item}</span>
@@ -111,12 +111,12 @@ export function ContactUs() {
         >
           <div className="flex-1 flex justify-center md:justify-start">
             <p className="text-[14px] text-white font-bold flex items-center gap-1.5 m-0">
-              <Code className="w-4 h-4 text-accent" />
-              <Link to="/admin/login" className="hover:text-accent transition-colors">Developed by CODEFury</Link>
+              <Code className="w-4 h-4 text-white" />
+              <Link to="/admin/login" className="hover:text-neutral-300 transition-colors">Developed by CODEFury</Link>
             </p>
           </div>
           <div className="flex-1 text-center md:text-right">
-            <p className="font-cambria text-[14px] font-medium text-white/65 m-0">
+            <p className="font-sans text-[14px] font-normal text-neutral-400 m-0">
               © {currentYear} ACES – Association of Computer Engineering Students. All Rights Reserved.
             </p>
           </div>

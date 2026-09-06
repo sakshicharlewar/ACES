@@ -54,8 +54,8 @@ export function Achievements() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <div className="font-label text-accent uppercase tracking-widest text-sm mb-4">Milestones</div>
-          <h2 className="font-sans text-3xl md:text-5xl font-medium">Achievements of Students</h2>
+          <div className="font-sans text-neutral-400 uppercase tracking-widest text-xs mb-3 font-semibold">Milestones</div>
+          <h2 className="font-sans text-3xl md:text-5xl font-bold text-white">Achievements of Students</h2>
         </motion.div>
 
         {/* Counters */}
@@ -75,7 +75,7 @@ export function Achievements() {
               className="text-center"
             >
               <Counter end={stat.value} />
-              <div className="font-label text-sm text-text-secondary mt-2 tracking-wide uppercase">{stat.label}</div>
+              <div className="font-sans text-xs text-neutral-400 mt-2 tracking-wider uppercase font-medium">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -91,12 +91,12 @@ export function Achievements() {
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
               <GlassCard className="h-full flex items-start gap-4 p-6 transition-transform duration-300">
-                <div className="p-3 bg-accent/10 text-accent rounded-xl">
+                <div className="p-3 bg-white/10 text-white rounded-xl">
                   {card.icon}
                 </div>
                 <div>
-                  <h4 className="font-sans text-lg font-medium text-white mb-2">{card.title}</h4>
-                  <p className="font-sans text-sm text-text-secondary">{card.count}</p>
+                  <h4 className="font-sans text-lg font-semibold text-white mb-2">{card.title}</h4>
+                  <p className="font-sans text-sm text-neutral-400">{card.count}</p>
                 </div>
               </GlassCard>
             </motion.div>

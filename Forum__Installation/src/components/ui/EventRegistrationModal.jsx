@@ -478,18 +478,18 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           
           {/* Registration ID */}
           <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-center">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Your Registration ID</p>
-            <p className="text-2xl font-mono font-bold text-blue-400">{pendingSuccessData?.registrationId}</p>
+            <p className="text-xs text-neutral-400 uppercase tracking-wider mb-1">Your Registration ID</p>
+            <p className="text-2xl font-mono font-bold text-white">{pendingSuccessData?.registrationId}</p>
           </div>
 
-          <div className="w-full bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-6 text-left space-y-2">
-            <p className="text-green-200 text-sm font-semibold mb-2">📋 What happens next?</p>
-            <div className="flex items-start gap-2 text-xs text-gray-300">
-              <span className="text-green-400 mt-0.5 shrink-0">1️⃣</span>
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left space-y-2">
+            <p className="text-white text-sm font-semibold mb-2">📋 What happens next?</p>
+            <div className="flex items-start gap-2 text-xs text-neutral-300">
+              <span className="text-white mt-0.5 shrink-0">1️⃣</span>
               <span>Your registration details &amp; team entries are saved in the system.</span>
             </div>
-            <div className="flex items-start gap-2 text-xs text-gray-300">
-              <span className="text-green-400 mt-0.5 shrink-0">2️⃣</span>
+            <div className="flex items-start gap-2 text-xs text-neutral-300">
+              <span className="text-white mt-0.5 shrink-0">2️⃣</span>
               <span>Join our official WhatsApp group for round schedules, seat numbers &amp; announcements:</span>
             </div>
             {(eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link) && (
@@ -498,7 +498,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   href={eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link || "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"} 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:shadow-[0_6px_20px_rgba(37,211,102,0.23)] hover:-translate-y-0.5 active:translate-y-0"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-white hover:bg-neutral-200 text-black font-bold rounded-full transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -513,7 +513,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               if (onSuccess) onSuccess();
               setSuccessData(pendingSuccessData);
             }}
-            className="w-full bg-green-500 hover:bg-green-400 text-black font-semibold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(34,197,94,0.25)] hover:shadow-[0_0_28px_rgba(34,197,94,0.4)]"
+            className="w-full bg-white hover:bg-neutral-200 text-black font-semibold py-3.5 rounded-full transition-all shadow-lg"
           >
             OK, Got it!
           </button>
@@ -566,20 +566,20 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative w-full max-w-2xl bg-[#0B0B0B] border border-white/10 rounded-2xl shadow-2xl overflow-hidden my-auto"
+          className="relative w-full max-w-2xl bg-[#0F1115] border border-white/15 rounded-3xl shadow-2xl overflow-hidden my-auto"
         >
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b border-white/10">
             <div>
-              <h2 className="text-xl font-bold text-white">{eventName} Registration</h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <h2 className="text-xl font-bold text-white font-sans">{eventName} Registration</h2>
+              <p className="text-sm text-neutral-400 mt-1 font-sans">
                 Team Registration ({eventDetails?.team_size || 2} Members) •{' '}
-                <span className="text-blue-400">Step {step} of 3</span>
+                <span className="text-white font-semibold">Step {step} of 3</span>
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
             >
               <X size={20} />
             </button>
@@ -588,7 +588,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           {/* Progress Bar */}
           <div className="w-full bg-white/5 h-1">
             <motion.div
-              className="h-full bg-blue-500"
+              className="h-full bg-white"
               initial={{ width: '33%' }}
               animate={{ width: progressWidth }}
               transition={{ duration: 0.4 }}
@@ -598,7 +598,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           {/* Step Labels */}
           <div className="flex justify-between px-6 pt-3 pb-1">
             {['Leader Info', 'Member 2', '💳 Payment'].map((label, i) => (
-              <span key={i} className={`text-xs font-medium ${step === i + 1 ? 'text-blue-400' : step > i + 1 ? 'text-green-400' : 'text-gray-600'}`}>
+              <span key={i} className={`text-xs font-medium font-sans ${step === i + 1 ? 'text-white font-bold' : step > i + 1 ? 'text-neutral-300' : 'text-neutral-600'}`}>
                 {step > i + 1 ? '✓ ' : ''}{label}
               </span>
             ))}
@@ -616,99 +616,92 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
               {/* ── EVENT INFO CARD (always visible at top of Step 1) ── */}
               {step === 1 && (
-                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden">
-                  {/* Blue glow border */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/30 via-blue-600/10 to-purple-500/20 blur-sm" />
-                  <div className="relative rounded-2xl border border-blue-500/40 bg-white/[0.03] backdrop-blur-md p-5">
-                    {/* Top accent line */}
-                    <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-blue-500 via-blue-400 to-purple-500" />
+                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden bg-white/[0.03] border border-white/15 backdrop-blur-md p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📌</span>
+                    <h4 className="text-white font-semibold text-sm tracking-wide uppercase font-sans">Event Details</h4>
+                  </div>
 
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-base">📌</span>
-                      <h4 className="text-white font-semibold text-sm tracking-wide uppercase">Event Details</h4>
-                    </div>
+                  <p className="text-neutral-200 text-sm leading-relaxed mb-3 font-sans">
+                    <span className="text-white font-semibold">{eventDetails?.title || "Event"}</span> - {eventDetails?.description || eventDetails?.short_description || "A technical event."}
+                  </p>
 
-                    <p className="text-gray-200 text-sm leading-relaxed mb-3">
-                      <span className="text-white font-semibold">{eventDetails?.title || "Event"}</span> - {eventDetails?.description || eventDetails?.short_description || "A technical event."}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-medium">
-                        👥 Team of {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : (eventDetails?.team_size ? `${eventDetails.team_size} Members` : "2 to 4 Members")}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-500/15 border border-yellow-500/25 text-yellow-300 text-xs font-medium">
-                        💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-500/25 text-purple-300 text-xs font-medium">
-                        🏆 Seats: {eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60} Registered
-                      </span>
-                      {eventDetails?.venue && (
-                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 text-green-300 text-xs font-medium">
-                           📍 {eventDetails.venue}
-                         </span>
-                      )}
-                      {eventDetails?.eligibility && (
-                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/25 text-cyan-300 text-xs font-medium">
-                           🎓 Eligibility: {eventDetails.eligibility}
-                         </span>
-                      )}
-                    </div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+                      👥 Team of {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : (eventDetails?.team_size ? `${eventDetails.team_size} Members` : "2 to 4 Members")}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+                      💳 Registration Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+                      🏆 Seats: {eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60} Registered
+                    </span>
+                    {eventDetails?.venue && (
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+                         📍 {eventDetails.venue}
+                       </span>
+                    )}
+                    {eventDetails?.eligibility && (
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 text-xs font-medium font-sans">
+                         🎓 Eligibility: {eventDetails.eligibility}
+                       </span>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* ── STEP 1: LEADER ── */}
               <div className={step === 1 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm">1</span>
+                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white text-sm">1</span>
                   Team &amp; Leader Details
                 </h3>
 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm text-gray-300 mb-2">Team Name *</label>
+                    <label className="block text-sm text-neutral-300 mb-2 font-sans">Team Name *</label>
                     <input
                       type="text" name="teamName" value={formData.teamName} onChange={handleChange}
                       placeholder="e.g. Code Breakers"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 focus:ring-1 focus:ring-white/20 outline-none transition-all font-sans"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Leader Name *</label>
+                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Name *</label>
                       <input
                         type="text" name="leaderName" value={formData.leaderName} onChange={handleChange}
                         placeholder="Full Name"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Leader Phone *</label>
+                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Phone *</label>
                       <input
                         type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleChange}
                         placeholder="10-digit number" maxLength="10"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-300 mb-2">Leader Email *</label>
+                    <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Email *</label>
                     <input
                       type="email" name="leaderEmail" value={formData.leaderEmail} onChange={handleChange}
                       placeholder="Email Address"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Year of Study *</label>
+                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Year of Study *</label>
                       <select
                         required
                         name="leaderYear" value={formData.leaderYear} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-white/40 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans"
                       >
                         <option value="">-- Select Year --</option>
                         {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -716,7 +709,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     </div>
 
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Department / Branch *</label>
+                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Department / Branch *</label>
                       <input
                         type="text"
                         required
@@ -724,13 +717,13 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                         value={formData.leaderBranch}
                         onChange={handleChange}
                         placeholder="e.g. Computer Engineering / AIDS / IT"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-300 mb-2">College / Institute Name *</label>
+                    <label className="block text-sm text-neutral-300 mb-2 font-sans">College / Institute Name *</label>
                     <input
                       type="text"
                       required
@@ -738,21 +731,21 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       value={formData.leaderCollege}
                       onChange={handleChange}
                       placeholder="e.g. Suryodaya College of Engineering & Technology, Nagpur"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                    <span className="text-cyan-400 text-lg">🎓</span>
-                    <p className="text-xs sm:text-sm text-cyan-300 font-medium">Open for all Engineering, Polytechnic &amp; Diploma Students from all Colleges!</p>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+                    <span className="text-white text-lg">🎓</span>
+                    <p className="text-xs sm:text-sm text-neutral-300 font-medium font-sans">Open for all Engineering, Polytechnic &amp; Diploma Students from all Colleges!</p>
                   </div>
                 </div>
               </div>
 
               {/* ── STEP 2: ALL EXTRA MEMBERS (dynamic) ── */}
               <div className={step === 2 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-sm"><Users size={14} /></span>
+                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white text-sm"><Users size={14} /></span>
                   Team Members Details
                 </h3>
 
@@ -760,60 +753,60 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   {formData.members.map((member, idx) => {
                     const isOptional = idx > 0;
                     return (
-                      <div key={idx} className={`p-4 rounded-xl border ${isOptional ? 'border-white/5 bg-white/[0.02]' : 'border-blue-500/20 bg-blue-500/[0.03]'} space-y-4`}>
+                      <div key={idx} className={`p-4 rounded-xl border ${isOptional ? 'border-white/5 bg-white/[0.02]' : 'border-white/15 bg-white/[0.03]'} space-y-4`}>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-blue-300">
-                            Member {idx + 2} {isOptional ? <span className="text-xs font-normal text-gray-400">(Optional — Leave blank if not needed)</span> : <span className="text-xs text-red-400 font-semibold">* Required</span>}
+                          <p className="text-sm font-semibold text-white font-sans">
+                            Member {idx + 2} {isOptional ? <span className="text-xs font-normal text-neutral-400 font-sans">(Optional — Leave blank if not needed)</span> : <span className="text-xs text-neutral-400 font-semibold font-sans">* Required</span>}
                           </p>
                           {isOptional && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-400">
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-neutral-400 font-sans">
                               Optional
                             </span>
                           )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm text-gray-300 mb-2">
-                              Name {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                            <label className="block text-sm text-neutral-300 mb-2 font-sans">
+                              Name {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
                             </label>
                             <input
                               type="text" value={member.name}
                               onChange={e => handleMemberChange(idx, 'name', e.target.value)}
                               placeholder={isOptional ? "Full Name (leave blank if not applicable)" : "Full Name"}
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm text-gray-300 mb-2">
-                              Phone {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                            <label className="block text-sm text-neutral-300 mb-2 font-sans">
+                              Phone {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
                             </label>
                             <input
                               type="tel" value={member.phone} maxLength="10"
                               onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
                               placeholder="10-digit number"
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">
-                            Email {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                          <label className="block text-sm text-neutral-300 mb-2 font-sans">
+                            Email {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
                           </label>
                           <input
                             type="email" value={member.email}
                             onChange={e => handleMemberChange(idx, 'email', e.target.value)}
                             placeholder="Email Address"
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-blue-500 outline-none transition-all"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-2">
-                            Year {isOptional ? <span className="text-gray-500 font-normal">(Optional)</span> : <span className="text-red-400">*</span>}
+                          <label className="block text-sm text-neutral-300 mb-2 font-sans">
+                            Year {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
                           </label>
                           <select
                             value={member.year}
                             onChange={e => handleMemberChange(idx, 'year', e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-blue-500 outline-none transition-all [&>option]:bg-[#0B0B0B]"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-white/40 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans"
                           >
                             <option value="">{isOptional ? "-- Select Year (Optional) --" : "-- Select Year --"}</option>
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -828,12 +821,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       <div className="relative flex items-center">
                         <input
                           type="checkbox" name="agreedToRules" checked={formData.agreedToRules} onChange={handleChange}
-                          className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded cursor-pointer checked:bg-blue-500 checked:border-blue-500 transition-colors"
+                          className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded cursor-pointer checked:bg-white checked:border-white transition-colors"
                         />
-                        <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                        <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-black opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
                       </div>
-                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                        ☑ I agree to all event rules. <span className="text-red-400">*</span>
+                      <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-sans">
+                        ☑ I agree to all event rules. <span className="text-neutral-400">*</span>
                       </span>
                     </label>
                   </div>
@@ -842,40 +835,39 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
               {/* ── STEP 3: PAYMENT ── */}
               <div className={step === 3 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-blue-400 mb-5 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
                   <CreditCard size={18} />
                   Registration Payment
                 </h3>
-                <p className="text-sm text-gray-400 mb-6">Complete the registration fee to confirm your participation.</p>
+                <p className="text-sm text-neutral-400 mb-6 font-sans">Complete the registration fee to confirm your participation.</p>
 
                 {/* Payment Details */}
                 <div className="flex flex-col items-center p-5 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
-                  <h4 className="text-white font-semibold mb-5 text-lg">Payment Details</h4>
+                  <h4 className="text-white font-semibold mb-5 text-lg font-sans">Payment Details</h4>
 
                   {/* QR Code — Custom or default image */}
-                  <div className="bg-white rounded-2xl p-3 shadow-[0_8px_40px_rgba(59,130,246,0.20)] mb-3 w-full max-w-[280px]">
+                  <div className="bg-white rounded-2xl p-3 shadow-2xl mb-3 w-full max-w-[280px]">
                     <img
                       src={eventDetails?.qr_image || "/BuildXScanner.jpeg"}
                       alt="Payment QR Code"
                       style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />
                   </div>
-                  <p className="text-xs text-blue-300/70 mb-3 text-center">Scan this QR using GPay · PhonePe · Paytm · BHIM</p>
+                  <p className="text-xs text-neutral-400 mb-3 text-center font-sans">Scan this QR using GPay · PhonePe · Paytm · BHIM</p>
 
                   {/* Info box — explain GPay "not debited" message */}
-                  <div className="w-full bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 mb-5 flex gap-3 items-start">
-                    <span className="text-yellow-400 text-base mt-0.5 shrink-0">ℹ️</span>
-                    <p className="text-xs text-yellow-200 leading-relaxed">
-                      <span className="font-semibold block mb-0.5">Seeing "Your money has not been debited"?</span>
-                      That is normal — it is Google Pay's safety screen shown <span className="font-semibold">before</span> payment.
-                      Simply enter your <span className="font-semibold">UPI PIN</span> to complete the ₹{eventDetails?.fee || eventDetails?.registration_fee || 0} payment.
+                  <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-5 flex gap-3 items-start">
+                    <span className="text-white text-base mt-0.5 shrink-0">ℹ️</span>
+                    <p className="text-xs text-neutral-300 leading-relaxed font-sans">
+                      <span className="font-semibold block mb-0.5 text-white">Seeing "Your money has not been debited"?</span>
+                      That is normal — it is Google Pay's safety screen shown <span className="font-semibold text-white">before</span> payment.
+                      Simply enter your <span className="font-semibold text-white">UPI PIN</span> to complete the ₹{eventDetails?.fee || eventDetails?.registration_fee || 0} payment.
                     </p>
                   </div>
 
                   {/* UPI ID block */}
                   <div className="w-full bg-black/30 rounded-xl p-4 border border-white/8 mb-4">
-                    <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 text-center">UPI ID</p>
+                    <p className="text-xs text-neutral-400 uppercase tracking-widest mb-2 text-center font-sans">UPI ID</p>
                     <div
                       className="w-full text-center font-mono font-semibold text-white break-all select-all bg-white/5 rounded-lg px-3 py-3 border border-white/10 text-sm sm:text-base cursor-text mb-3"
                       style={{ wordBreak: 'break-all' }}
@@ -887,10 +879,10 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <button
                       type="button"
                       onClick={handleCopyUPI}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-full font-medium text-sm transition-all duration-300 font-sans ${
                         upiCopied
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/40'
-                          : 'bg-white/8 hover:bg-white/15 text-gray-300 border border-white/10'
+                          ? 'bg-white text-black font-semibold'
+                          : 'bg-white/10 hover:bg-white/15 text-white border border-white/15'
                       }`}
                     >
                       {upiCopied ? (
@@ -903,8 +895,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                   {/* Amount */}
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-gray-400 text-sm">Amount:</span>
-                    <span className="text-2xl font-bold text-white">₹{FEE_AMOUNT}</span>
+                    <span className="text-neutral-400 text-sm font-sans">Amount:</span>
+                    <span className="text-2xl font-bold text-white font-sans">₹{FEE_AMOUNT}</span>
                   </div>
 
 
@@ -914,9 +906,9 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
                   {/* Transaction ID */}
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3 font-sans">
                       <span className="text-lg">🔢</span>
-                      UPI Transaction ID <span className="text-red-400">*</span>
+                      UPI Transaction ID <span className="text-neutral-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -924,18 +916,18 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       value={formData.transactionId}
                       onChange={handleChange}
                       placeholder="e.g. 318512345678"
-                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-gray-600 focus:border-blue-500 focus:bg-black/50 outline-none transition-all font-mono text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-neutral-600 focus:border-white/40 focus:bg-black/50 outline-none transition-all font-mono text-sm"
                       minLength="12"
                       maxLength="40"
                     />
-                    <p className="text-xs text-gray-500 mt-2">Enter the 12-digit UTR / Transaction ID from your UPI app after payment.</p>
+                    <p className="text-xs text-neutral-400 mt-2 font-sans">Enter the 12-digit UTR / Transaction ID from your UPI app after payment.</p>
                   </div>
 
                   {/* Screenshot Upload */}
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3 font-sans">
                       <span className="text-lg">📸</span>
-                      Payment Screenshot / Proof <span className="text-red-400">*</span>
+                      Payment Screenshot / Proof <span className="text-neutral-400">*</span>
                     </label>
 
                     {formData.paymentScreenshot ? (
@@ -949,14 +941,14 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                           <button
                             type="button"
                             onClick={() => fileRef.current?.click()}
-                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
+                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-white text-sm font-medium backdrop-blur-md transition-colors font-sans"
                           >
                             Replace
                           </button>
                           <button
                             type="button"
                             onClick={() => setFormData(p => ({ ...p, paymentScreenshot: null }))}
-                            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-lg text-white text-sm font-medium backdrop-blur-md transition-colors"
+                            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white text-sm font-medium backdrop-blur-md transition-colors font-sans"
                           >
                             Remove
                           </button>
@@ -965,13 +957,13 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     ) : (
                       <div
                         onClick={() => fileRef.current?.click()}
-                        className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
+                        className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
                       >
-                        <div className="w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                          <Upload className="text-blue-400" size={26} />
+                        <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <Upload className="text-white" size={26} />
                         </div>
-                        <p className="text-sm text-gray-300 font-medium text-center">Tap to upload payment screenshot</p>
-                        <p className="text-xs text-gray-500 mt-1 text-center">JPG, PNG · Max 10MB</p>
+                        <p className="text-sm text-neutral-300 font-medium text-center font-sans">Tap to upload payment screenshot</p>
+                        <p className="text-xs text-neutral-500 mt-1 text-center font-sans">JPG, PNG · Max 10MB</p>
                       </div>
                     )}
 
@@ -982,7 +974,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       accept="image/jpeg, image/png, image/jpg"
                       className="hidden"
                     />
-                    <p className="text-xs text-gray-500 mt-2">Upload a screenshot of the payment confirmation from your UPI app.</p>
+                    <p className="text-xs text-neutral-400 mt-2 font-sans">Upload a screenshot of the payment confirmation from your UPI app.</p>
                   </div>
 
                 </div> {/* end space-y-5 */}
@@ -998,12 +990,8 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   <button
                     type="submit"
                     disabled={loading || !formData.transactionId || !formData.paymentScreenshot}
-                    className="w-full py-4 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed
-                      bg-gradient-to-r from-green-600 to-emerald-500
-                      hover:from-green-500 hover:to-emerald-400
-                      text-white shadow-[0_4px_24px_rgba(22,163,74,0.4)]
-                      hover:shadow-[0_4px_32px_rgba(22,163,74,0.55)]
-                      active:scale-[0.98]"
+                    className="w-full py-4 rounded-full font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed
+                      bg-white hover:bg-neutral-200 text-black shadow-lg active:scale-[0.98] font-sans"
                   >
                     {loading ? (
                       <><Loader2 className="animate-spin" size={20} /> Submitting...</>
@@ -1012,7 +1000,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     )}
                   </button>
                   {(!formData.transactionId || !formData.paymentScreenshot) && (
-                    <p className="text-xs text-gray-500 text-center mt-2">
+                    <p className="text-xs text-neutral-500 text-center mt-2 font-sans">
                       {!formData.transactionId && !formData.paymentScreenshot
                         ? '⚠️ Enter Transaction ID and upload Payment Screenshot to continue.'
                         : !formData.transactionId
@@ -1028,18 +1016,18 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/10 bg-[#0B0B0B]">
+          <div className="px-6 py-4 border-t border-white/10 bg-[#0F1115]">
             {step === 3 && (
-              <div className="flex justify-between items-center mb-3 px-1 text-xs">
-                <span className="text-gray-400 font-medium">Teams Registered</span>
-                <span className="text-blue-400 font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</span>
+              <div className="flex justify-between items-center mb-3 px-1 text-xs font-sans">
+                <span className="text-neutral-400 font-medium">Teams Registered</span>
+                <span className="text-white font-bold">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</span>
               </div>
             )}
             <div className="flex justify-between items-center gap-3">
               {step > 1 && (
                 <button
                   type="button" onClick={prevStep} disabled={loading}
-                  className="px-6 py-2.5 rounded-xl text-gray-300 hover:bg-white/5 transition-colors font-medium disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-full text-neutral-300 hover:bg-white/10 transition-colors font-medium disabled:opacity-50 font-sans"
                 >
                   Back
                 </button>
@@ -1047,7 +1035,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               {step < 3 ? (
                 <button
                   type="button" onClick={nextStep}
-                  className="ml-auto px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                  className="ml-auto px-8 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black transition-colors font-semibold shadow-lg font-sans"
                 >
                   Continue →
                 </button>

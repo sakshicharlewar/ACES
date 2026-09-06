@@ -48,11 +48,11 @@ export function DepartmentInfo() {
             Computer Engineering Department
           </h3>
 
-          {/* Blue Accent Line */}
-          <div style={{ width: "56px", height: "2px", background: "linear-gradient(90deg, #3B82F6, #60A5FA)", borderRadius: "2px", marginBottom: "28px" }} />
+          {/* Monochrome White Accent Line */}
+          <div style={{ width: "56px", height: "2px", background: "linear-gradient(90deg, #FFFFFF, rgba(255,255,255,0.2))", borderRadius: "2px", marginBottom: "28px" }} />
 
           {/* Body Text */}
-          <p className="font-cambria" style={{ color: "#CBD5E1", fontSize: "clamp(0.95rem, 1.5vw, 1.08rem)", lineHeight: "1.85", fontWeight: 300, marginBottom: "36px" }}>
+          <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal mb-8">
             The Department of Computer Engineering at Suryodaya College of Engineering &amp;
             Technology (SCET) is dedicated to nurturing skilled, innovative, and industry-ready
             professionals. The department provides a strong foundation in programming, software

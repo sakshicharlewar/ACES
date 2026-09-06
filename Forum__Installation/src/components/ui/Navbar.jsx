@@ -83,9 +83,9 @@ export function Navbar() {
           {/* Logo */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="font-poppins font-bold text-white text-base tracking-widest uppercase hover:text-blue-400 transition-colors flex items-center gap-2"
+            className="font-sans font-bold text-white text-base tracking-widest uppercase hover:text-neutral-300 transition-colors flex items-center gap-2"
           >
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             ACES
           </button>
 

@@ -16,49 +16,35 @@ export function Hero() {
         style={{ y, scale }}
         className="absolute inset-0 z-0 bg-transparent"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.04] via-transparent to-transparent" />
       </motion.div>
 
       {/* Content — same container as original */}
       <div className="relative z-10 container mx-auto px-6 text-center flex flex-col items-center">
 
-        {/* WELCOME TO — Space Grotesk Medium, same size & tracking as original */}
+        {/* WELCOME TO */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="text-3xl md:text-5xl lg:text-5xl uppercase text-text-secondary mb-6"
-          style={{
-            fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 500,
-            letterSpacing: "0.3em",
-          }}
+          className="text-2xl md:text-3xl lg:text-4xl uppercase text-text-secondary mb-4 tracking-[0.25em] font-medium font-sans"
         >
           Welcome To
         </motion.div>
 
-        {/* Association of Computer Engineering Students — Sora ExtraBold */}
+        {/* Association of Computer Engineering Students */}
         <RevealText
           text="Association of Computer Engineering Students"
           delay={0.8}
-          className="text-5xl md:text-7xl lg:text-[5.5rem] font-normal leading-tight max-w-[90%] mx-auto mb-4"
-          style={{
-            fontFamily: "'Sora', sans-serif",
-            fontWeight: 800,
-          }}
+          className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight max-w-[90%] mx-auto mb-4 font-sans text-white"
         />
 
-        {/* (ACES) — Cormorant Garamond Italic, same gradient & size as original */}
+        {/* (ACES) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 1.5 }}
-          className="text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-white mb-8 drop-shadow-lg"
-          style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontStyle: "italic",
-            fontWeight: 500,
-          }}
+          className="text-5xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-300 to-neutral-500 mb-6 drop-shadow-sm font-sans"
         >
           (ACES)
         </motion.div>

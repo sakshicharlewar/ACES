@@ -50,35 +50,31 @@ export default function EventAnnouncementModal() {
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 25 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 25 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-[440px] bg-gradient-to-b from-[#0D1424] via-[#090D18] to-[#050810] border border-cyan-500/35 rounded-[28px] shadow-[0_0_50px_rgba(6,182,212,0.25),0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden my-auto p-6 sm:p-7 text-center select-none"
+            className="relative w-full max-w-[440px] bg-[#121417]/95 border border-white/15 backdrop-blur-2xl rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden my-auto p-6 sm:p-7 text-center select-none"
           >
-            {/* Top Accent Neon Glow Bar */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
-
             {/* Top Bar: Tech Pill + Notification Bell + Close Button */}
             <div className="flex items-center justify-between mb-4 relative z-10">
-              {/* Left Tech Badge */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-semibold shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-                <span className="text-cyan-400 text-sm font-black">+</span>
+              {/* Left Badge */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold">
+                <span className="text-white text-xs font-bold">•</span>
                 <span>ACES</span>
               </div>
 
-              {/* Center Notification Bell with Glow */}
+              {/* Center Notification Bell */}
               <div className="relative flex items-center justify-center">
-                <div className="absolute -inset-1 rounded-full bg-cyan-400/20 blur-sm animate-pulse" />
-                <div className="w-12 h-12 rounded-full bg-gradient-to-b from-cyan-900/50 to-blue-950/80 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.35)]">
-                  <Bell className="w-6 h-6 animate-bounce text-cyan-300" />
+                <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white shadow-lg">
+                  <Bell className="w-6 h-6 text-white" />
                 </div>
               </div>
 
               {/* Close Button */}
               <button
                 onClick={handleClose}
-                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close Notice"
               >
                 <X size={18} />
@@ -90,68 +86,58 @@ export default function EventAnnouncementModal() {
               <h2 className="text-2xl sm:text-3xl font-black tracking-wider text-white uppercase font-sans">
                 ATTENTION
               </h2>
-              <h3 className="text-2xl sm:text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400 uppercase">
+              <h3 className="text-2xl sm:text-3xl font-bold tracking-widest text-neutral-400 uppercase font-sans">
                 PLEASE
               </h3>
             </div>
 
-            {/* Glowing ECG / Waveform Divider */}
-            <div className="flex items-center justify-center gap-2 my-2.5 opacity-80">
-              <svg className="w-48 h-4 text-cyan-400" viewBox="0 0 160 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M0 8H55L62 2L68 14L74 4L80 12L86 8H160"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            {/* Divider */}
+            <div className="w-16 h-[1px] bg-white/20 mx-auto my-3" />
 
             {/* Notification Text */}
-            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4">
-              This is to notify that <span className="text-cyan-300 font-semibold">Registrations are officially LIVE</span> for our mega tech challenge:
+            <p className="text-neutral-300 text-xs sm:text-sm leading-relaxed mb-4 font-sans">
+              This is to notify that <span className="text-white font-semibold">Registrations are officially LIVE</span> for our mega tech challenge:
             </p>
 
             {/* Highlighted Event & Date Card */}
-            <div className="relative rounded-2xl bg-gradient-to-b from-[#111C30]/90 to-[#0A1120]/90 border border-cyan-500/40 p-4 mb-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_24px_rgba(0,0,0,0.4)]">
+            <div className="relative rounded-2xl bg-black/40 border border-white/10 p-4 mb-4">
               {/* Event Date Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 text-sm font-bold mb-3 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
-                <Calendar size={16} className="text-cyan-400 shrink-0" />
-                <span className="tracking-wide font-mono">22-09-2026 (22-09-26)</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold mb-3">
+                <Calendar size={14} className="text-white shrink-0" />
+                <span>22-09-2026 (22-09-26)</span>
               </div>
 
               {/* Event Name */}
-              <h4 className="text-xl sm:text-2xl font-black text-white tracking-wide mb-1">
+              <h4 className="text-xl sm:text-2xl font-bold text-white tracking-wide mb-1 font-sans">
                 BUILDX
               </h4>
-              <p className="text-xs text-cyan-300/90 font-medium mb-3">
+              <p className="text-xs text-neutral-400 font-medium mb-3 font-sans">
                 Build. Break. Adapt. Repeat.
               </p>
 
               {/* Event Details Chips */}
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-gray-300 pt-1 border-t border-white/10">
-                <div className="bg-black/30 rounded-lg py-1.5 px-2 flex items-center justify-center gap-1.5 text-blue-200">
-                  <Users size={12} className="text-cyan-400" />
+              <div className="grid grid-cols-2 gap-2 text-xs font-medium text-neutral-300 pt-2 border-t border-white/10">
+                <div className="bg-white/5 rounded-lg py-1.5 px-2 flex items-center justify-center gap-1.5 text-neutral-200">
+                  <Users size={13} className="text-white" />
                   <span>2 to 4 Members</span>
                 </div>
-                <div className="bg-black/30 rounded-lg py-1.5 px-2 flex items-center justify-center gap-1.5 text-green-300">
-                  <Zap size={12} className="text-green-400" />
+                <div className="bg-white/5 rounded-lg py-1.5 px-2 flex items-center justify-center gap-1.5 text-neutral-200">
+                  <Zap size={13} className="text-white" />
                   <span>Entry Fee: ₹200</span>
                 </div>
               </div>
             </div>
 
             {/* Venue & Urgency Info Box */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/10 text-left mb-5">
-              <div className="w-9 h-9 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-left mb-5">
+              <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white shrink-0">
                 <Building2 size={18} />
               </div>
               <div className="text-xs">
-                <p className="text-white font-semibold leading-tight">
+                <p className="text-white font-semibold leading-tight font-sans">
                   Suryodaya College of Engg. & Tech.
                 </p>
-                <p className="text-gray-400 text-[11px] mt-0.5">
+                <p className="text-neutral-400 text-[11px] mt-0.5 font-sans">
                   Limited to 60 Teams • Live seats filling fast!
                 </p>
               </div>
@@ -162,23 +148,16 @@ export default function EventAnnouncementModal() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleRegisterCTA}
-              className="group relative w-full py-3.5 px-5 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 hover:from-blue-500 hover:via-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl text-sm sm:text-base tracking-wide transition-all shadow-[0_0_25px_rgba(6,182,212,0.45)] hover:shadow-[0_0_35px_rgba(6,182,212,0.7)] flex items-center justify-center gap-2 overflow-hidden mb-3.5 cursor-pointer"
+              className="group relative w-full py-3.5 px-5 bg-white text-black font-bold rounded-full text-sm sm:text-base tracking-wide transition-all hover:bg-neutral-200 shadow-[0_4px_20px_rgba(255,255,255,0.15)] flex items-center justify-center gap-2 overflow-hidden mb-3.5 cursor-pointer"
             >
-              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
-              <Sparkles size={18} className="text-yellow-300 animate-spin" style={{ animationDuration: '4s' }} />
+              <Sparkles size={16} className="text-black" />
               <span>Registrations are Live — Register Now</span>
-              <ChevronRight size={18} className="text-white group-hover:translate-x-1 transition-transform" />
+              <ChevronRight size={18} className="text-black group-hover:translate-x-1 transition-transform" />
             </motion.button>
 
-            {/* Bottom Heartbeat Line & Footer Accent */}
-            <div className="flex items-center justify-between text-[10px] text-gray-500 px-1 pt-1">
-              <svg className="w-10 h-3 text-cyan-500/60" viewBox="0 0 40 10" fill="none">
-                <path d="M0 5H15L18 1L22 9L25 5H40" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-              <span className="text-gray-400 font-mono">Tap button to view Upcoming Events</span>
-              <svg className="w-10 h-3 text-cyan-500/60" viewBox="0 0 40 10" fill="none">
-                <path d="M0 5H15L18 1L22 9L25 5H40" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
+            {/* Bottom Footer Accent */}
+            <div className="flex items-center justify-center text-[11px] text-neutral-500 pt-1">
+              <span>Tap button to view Upcoming Events</span>
             </div>
           </motion.div>
         </div>

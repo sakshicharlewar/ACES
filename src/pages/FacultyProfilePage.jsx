@@ -95,7 +95,7 @@ export function FacultyProfilePage() {
   if (loading) {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <Loader2 className="w-10 h-10 animate-spin text-white mb-4" />
         <p>Loading Profile...</p>
       </div>
     );
@@ -105,7 +105,7 @@ export function FacultyProfilePage() {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <h2>Faculty not found</h2>
-        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px", border: "none", color: "#fff", cursor: "pointer" }}>Go Back</button>
+        <button onClick={() => navigate("/faculty")} style={{ marginLeft: "16px", padding: "8px 20px", background: "#FFFFFF", color: "#000", fontWeight: 600, borderRadius: "9999px", border: "none", cursor: "pointer" }}>Go Back</button>
       </div>
     );
   }
@@ -161,8 +161,8 @@ export function FacultyProfilePage() {
           <div style={{ flexShrink: 0 }}>
             <div style={{
               width: "260px", height: "260px", borderRadius: "24px",
-              padding: "8px", background: "linear-gradient(135deg, rgba(59,130,246,0.5), rgba(96,165,250,0.1))",
-              boxShadow: "0 0 40px rgba(59,130,246,0.25)"
+              padding: "8px", background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))",
+              boxShadow: "0 0 40px rgba(255,255,255,0.08)"
             }}>
               <img
                 src={faculty.image}
@@ -176,30 +176,30 @@ export function FacultyProfilePage() {
             <h1 style={{ fontSize: "clamp(2rem, 4vw, 2.8rem)", fontWeight: 700, color: "#fff", marginBottom: "8px", letterSpacing: "-0.02em" }}>
               {faculty.name}
             </h1>
-            <p style={{ color: "#3B82F6", fontSize: "1.2rem", fontWeight: 500, marginBottom: "4px" }}>
+            <p style={{ color: "#FFFFFF", fontSize: "1.2rem", fontWeight: 600, marginBottom: "4px" }}>
               {faculty.designation}
             </p>
-            <p style={{ color: "#B5B5B5", fontSize: "1.05rem", marginBottom: "32px" }}>
+            <p style={{ color: "#94A3B8", fontSize: "1.05rem", marginBottom: "32px" }}>
               {faculty.department}
             </p>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px" }}>
               <div>
-                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Qualification</p>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "6px" }}>Qualification</p>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
-                  <GraduationCap className="w-4 h-4 text-blue-400" /> {faculty.qualification}
+                  <GraduationCap className="w-4 h-4 text-white" /> {faculty.qualification}
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Experience</p>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "6px" }}>Experience</p>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
-                  <Briefcase className="w-4 h-4 text-blue-400" /> {faculty.experience}
+                  <Briefcase className="w-4 h-4 text-white" /> {faculty.experience}
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "6px" }}>Specialization</p>
+                <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "6px" }}>Specialization</p>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fff", fontSize: "1.05rem", fontWeight: 500, justifyContent: "center" }} className="md:justify-start">
-                  <BookOpen className="w-4 h-4 text-blue-400" /> {faculty.specialization || "Computer Engineering"}
+                  <BookOpen className="w-4 h-4 text-white" /> {faculty.specialization || "Computer Engineering"}
                 </div>
               </div>
             </div>
@@ -209,7 +209,7 @@ export function FacultyProfilePage() {
                 <a href={faculty.linkedin} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", padding: "10px 20px", borderRadius: "12px", color: "#fff", textDecoration: "none", fontSize: "0.95rem", transition: "all 0.3s" }}
                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  <Link className="w-4 h-4" /> LinkedIn
+                  <Link className="w-4 h-4 text-white" /> LinkedIn
                 </a>
               )}
             </div>
@@ -277,8 +277,8 @@ export function FacultyProfilePage() {
                 const year = typeof qual === "object" ? qual?.year : "";
                 return (
                   <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <GraduationCap className="w-5 h-5 text-blue-400" />
+                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <GraduationCap className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{degree}</h4>
@@ -308,13 +308,13 @@ export function FacultyProfilePage() {
           <SectionHeading title="Professional Information" />
           <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-              <BookOpen className="w-5 h-5 text-blue-400" />
+              <BookOpen className="w-5 h-5 text-white" />
               <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
             </div>
             <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {subjectsTaught.map((sub, i) => (
                 <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#CBD5E1", fontSize: "0.95rem" }}>
-                  <ChevronRight className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-neutral-400 mt-1 flex-shrink-0" />
                   <span>{typeof sub === "string" ? sub : sub?.title || JSON.stringify(sub)}</span>
                 </li>
               ))}
@@ -334,7 +334,7 @@ export function FacultyProfilePage() {
                   <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", display: "flex", flexDirection: "column", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
                     {year && (
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                        <FileText className="w-5 h-5 text-blue-400" />
+                        <FileText className="w-5 h-5 text-white" />
                         <span style={{ color: "#94A3B8", fontSize: "0.9rem" }}>{year}</span>
                       </div>
                     )}
@@ -390,8 +390,8 @@ export function FacultyProfilePage() {
                   maxWidth: "90vw", maxHeight: "85vh",
                   objectFit: "contain",
                   borderRadius: "16px",
-                  boxShadow: "0 0 60px rgba(59,130,246,0.15), 0 24px 64px rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(59,130,246,0.2)",
+                  boxShadow: "0 24px 64px rgba(0,0,0,0.8)",
+                  border: "1px solid rgba(255,255,255,0.15)",
                 }}
               />
             </div>

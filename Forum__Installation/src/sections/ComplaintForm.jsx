@@ -217,7 +217,7 @@ export function ComplaintForm() {
   return (
     <section className="py-24 px-6 md:px-12 relative overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/[0.02] rounded-full blur-[100px] pointer-events-none" />
       
       <div className="container mx-auto max-w-[1200px] relative z-10">
         <motion.div
@@ -227,8 +227,8 @@ export function ComplaintForm() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <h2 className="font-label tracking-wide text-3xl md:text-5xl font-medium mb-4">Innovation Box</h2>
-          <p className="text-text-secondary">We value your privacy and input.</p>
+          <h2 className="font-sans tracking-tight text-3xl md:text-5xl font-bold text-white mb-4">Innovation Box</h2>
+          <p className="font-sans text-neutral-400">We value your privacy and input.</p>
         </motion.div>
 
         {/* Idea Box Layout */}
@@ -238,58 +238,58 @@ export function ComplaintForm() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <GlassCard className="group p-8 md:p-10 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:border-blue-500/30 overflow-hidden relative">
+          <GlassCard className="group p-8 md:p-10 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_16px_48px_rgba(0,0,0,0.6)] hover:border-white/20 overflow-hidden relative">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 items-center">
               
               {/* Left Column (40%) */}
               <div className="md:col-span-5 flex flex-col items-start text-left z-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-accent font-medium text-sm mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white font-medium text-xs mb-6 uppercase tracking-wider">
                   <span>💡</span> Idea Box
                 </div>
                 <h3 className="font-sans text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
                   Turn Your Ideas <br /> Into Reality
                 </h3>
-                <p className="font-cambria text-text-secondary text-sm md:text-base leading-relaxed mb-8">
+                <p className="font-sans text-neutral-400 text-sm md:text-base leading-relaxed mb-8">
                   Have an innovative idea to improve ACES? We welcome your creative suggestions for technical events, workshops, hackathons, website enhancements, student activities, and new initiatives. Every submission is carefully reviewed by the ACES committee to help create a better learning experience for everyone.
                 </p>
 
                 {/* Feature List */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 mb-10 w-full">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Rocket className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Rocket className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">Technical Events</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">Technical Events</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Monitor className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Monitor className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">Coding Competitions</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">Coding Competitions</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <GraduationCap className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <GraduationCap className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">Workshops & Seminars</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">Workshops & Seminars</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Globe className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Globe className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">Website Improvements</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">Website Improvements</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Users className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">Student Activities</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">Student Activities</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Star className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Star className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm text-gray-300 font-medium">New Initiatives</span>
+                    <span className="text-sm text-neutral-300 font-medium font-sans">New Initiatives</span>
                   </div>
                 </div>
 
@@ -574,7 +574,7 @@ export function ComplaintForm() {
                         <MagneticButton 
                           type="submit"
                           disabled={isSubmitting}
-                          className="bg-accent hover:bg-accent/90 disabled:bg-accent/50 text-white px-8 py-3 rounded-full text-sm font-medium transition-colors flex items-center gap-2"
+                          className="bg-white text-black font-semibold hover:bg-neutral-200 disabled:opacity-50 px-8 py-3 rounded-full text-sm transition-all flex items-center gap-2 shadow-[0_4px_20px_rgba(255,255,255,0.12)]"
                         >
                           {isSubmitting ? (
                             <>

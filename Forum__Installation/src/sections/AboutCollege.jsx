@@ -15,12 +15,12 @@ export function AboutCollege() {
           className="order-2 lg:order-1"
         >
 
-          <h2 className="font-sans text-5xl md:text-6xl lg:text-7xl font-medium mb-4">
+          <h2 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
             About SCET
           </h2>
           <RevealText 
             text="Excellence in Engineering Education"
-            className="text-4xl md:text-5xl lg:text-6xl font-serif italic font-medium mb-8 justify-start text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400"
+            className="text-3xl md:text-4xl lg:text-5xl font-sans font-semibold mb-8 justify-start text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-200 to-neutral-400"
             delay={0.6}
           />
           <motion.div
@@ -30,15 +30,15 @@ export function AboutCollege() {
             transition={{ duration: 1, delay: 1.0 }}
             className="space-y-5"
           >
-            <p className="font-cambria text-text-secondary text-lg leading-relaxed font-light">
+            <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
               Suryodaya College of Engineering & Technology, established in <span className="text-white font-medium">2010</span>, is a premier{" "}
-              <span className="text-blue-400 font-medium">NAAC A+ accredited</span> institution offering UG, PG, and Diploma programs in Engineering & Management. Our Diploma programs in Civil and Mechanical Engineering are further accredited by the <span className="text-white font-medium">NBA</span>.
+              <span className="text-white font-semibold">NAAC A+ accredited</span> institution offering UG, PG, and Diploma programs in Engineering & Management. Our Diploma programs in Civil and Mechanical Engineering are further accredited by the <span className="text-white font-medium">NBA</span>.
             </p>
-            <p className="font-cambria text-text-secondary text-lg leading-relaxed font-light">
+            <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
               With its lush green campus and academically enriching environment, the institute provides students with an ideal atmosphere to learn, innovate, and grow. Our forward-thinking approach toward employability and entrepreneurship has earned recognition across the region.
             </p>
-            <p className="font-cambria text-text-secondary text-lg leading-relaxed font-light">
-              A major milestone is our <span className="text-blue-400 font-medium">Centre for Skill & Entrepreneurship Development (CSED)</span> — envisioned as <span className="text-white font-medium italic">"Industry Inside an Institute"</span>. Global technology partners include{" "}
+            <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
+              A major milestone is our <span className="text-white font-semibold">Centre for Skill & Entrepreneurship Development (CSED)</span> — envisioned as <span className="text-white font-medium italic">"Industry Inside an Institute"</span>. Global technology partners include{" "}
               <span className="text-white font-medium">Dassault Systèmes, PTC, Ansys, Festo,</span> and <span className="text-white font-medium">Mastercam</span>, bridging academia with Industry 4.0.
             </p>
           </motion.div>
@@ -53,7 +53,7 @@ export function AboutCollege() {
           className="order-1 lg:order-2"
         >
           <GlassCard className="aspect-[4/3] flex items-center justify-center relative overflow-hidden group p-0 border-none">
-            <div className="absolute inset-0 bg-gradient-to-tr from-accent/20 to-transparent mix-blend-overlay z-10" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.04] to-transparent mix-blend-overlay z-10 pointer-events-none" />
             <img 
               src="/Scet_Image.jpeg" 
               alt="SCET Campus" 

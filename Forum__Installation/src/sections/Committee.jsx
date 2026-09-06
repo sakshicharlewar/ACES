@@ -38,14 +38,14 @@ function LeaderCard({ memberKey, role, name, image, social }) {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
       }}
     >
-      {/* Square image with blue glow */}
+      {/* Square image */}
       <div style={{
         width: "240px",
         height: "240px",
         borderRadius: "16px",
         overflow: "hidden",
-        border: "2px solid rgba(59,130,246,0.55)",
-        boxShadow: "0 0 24px rgba(59,130,246,0.25)",
+        border: "1px solid rgba(255, 255, 255, 0.15)",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
         flexShrink: 0,
       }}>
         <img
@@ -60,33 +60,34 @@ function LeaderCard({ memberKey, role, name, image, social }) {
       {/* Text block — centered */}
       <div style={{ textAlign: "center", position: "relative", zIndex: 10 }}>
         <p style={{
-          fontSize: "36px",
-          fontWeight: 800,
+          fontSize: "30px",
+          fontWeight: 700,
           color: "#ffffff",
-          letterSpacing: "-0.02em",
-          marginBottom: "10px",
+          letterSpacing: "-0.01em",
+          marginBottom: "8px",
           lineHeight: 1.1,
+          fontFamily: "'Plus Jakarta Sans', sans-serif"
         }}>
           {role}
         </p>
         <p style={{
-          fontSize: "20px",
+          fontSize: "18px",
           fontWeight: 500,
-          color: "#60A5FA",
-          fontStyle: "italic",
+          color: "#CBD5E1",
           letterSpacing: "0.01em",
           marginBottom: "16px",
+          fontFamily: "'Plus Jakarta Sans', sans-serif"
         }}>
           {name}
         </p>
         
-        {/* Link Icon (Replacing LinkedIn) */}
+        {/* Link Icon */}
         <a 
           href={social?.linkedin || "#"}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white hover:bg-white hover:text-black transition-colors duration-300"
         >
           <Link className="w-5 h-5" />
         </a>
@@ -132,32 +133,32 @@ export function Committee() {
   return (
     <section id="committee" className="py-24 overflow-hidden relative">
       <div className="container mx-auto px-6 md:px-12 mb-16 text-center">
-          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-white mb-3 opacity-80 text-center w-full">
+          <p className="text-xs font-semibold tracking-[0.35em] uppercase text-neutral-400 mb-3 text-center w-full">
             Academic Year
           </p>
           <h2
-            className="font-serif italic font-medium text-4xl md:text-6xl text-white text-center"
+            className="font-sans font-bold text-3xl md:text-5xl text-white text-center"
             style={{ letterSpacing: "-0.01em" }}
           >
             ACES COMMITTEE
           </h2>
           <p
-            className="text-lg md:text-xl font-medium mt-1 tracking-widest uppercase text-white text-center w-full"
+            className="text-base md:text-lg font-medium mt-2 tracking-widest uppercase text-neutral-400 text-center w-full"
             style={{ letterSpacing: "0.25em" }}
           >
             2026 – 27
           </p>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#3B82F6]" />
-            <div className="w-2 h-2 rounded-full bg-[#3B82F6]" />
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#3B82F6]" />
+            <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/40" />
+            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+            <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/40" />
           </div>
         </div>
 
       <div className="relative w-full overflow-hidden min-h-[450px]">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+            <Loader2 className="w-8 h-8 animate-spin text-white mb-4" />
           </div>
         ) : committeeData.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center text-white/50 z-20">

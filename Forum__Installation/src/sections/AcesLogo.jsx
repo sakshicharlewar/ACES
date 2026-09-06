@@ -9,8 +9,8 @@ export function AcesLogo() {
   return (
     <>
       <section className="relative min-h-screen py-24 px-6 md:px-12 flex flex-col items-center justify-center overflow-hidden">
-        {/* Ambient background glow (Matching SCET Logo but in Blue) */}
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08)_0%,transparent_50%)] pointer-events-none" />
+        {/* Ambient background glow */}
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_50%)] pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, filter: "blur(10px)", scale: 0.7 }}
@@ -26,8 +26,8 @@ export function AcesLogo() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="w-full h-full relative"
           >
-            {/* Soft blue glow around the circle */}
-            <div className="absolute inset-0 rounded-full animate-glow opacity-60 pointer-events-none z-0 shadow-[0_0_50px_rgba(59,130,246,0.3)] transition-all duration-300 group-hover:shadow-[0_0_80px_rgba(59,130,246,0.6)]" />
+            {/* Soft glow around the circle */}
+            <div className="absolute inset-0 rounded-full opacity-60 pointer-events-none z-0 shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-300 group-hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]" />
             
             {/* Perfect circular frame */}
             <div className="w-full h-full rounded-full overflow-hidden bg-transparent flex items-center justify-center relative z-10 transition-all duration-300 group-hover:scale-[1.03]">
@@ -46,7 +46,7 @@ export function AcesLogo() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="font-sans text-3xl md:text-5xl font-medium mb-8"
+            className="font-sans text-3xl md:text-5xl font-semibold mb-8"
           >
             About ACES
           </motion.h3>
@@ -73,7 +73,7 @@ export function AcesLogo() {
               }}
               className="p-8 md:p-12 relative overflow-hidden group"
             >
-              <p className="font-cambria text-slate-300 text-lg md:text-xl font-light leading-relaxed">
+              <p className="font-sans text-neutral-300 text-base md:text-lg font-normal leading-relaxed">
                 The Association of Computer Engineering Students (ACES) is the premier student 
                 organization of the Computer Engineering department. We strive to bridge the gap 
                 between academic learning and industry requirements. Through technical workshops, 

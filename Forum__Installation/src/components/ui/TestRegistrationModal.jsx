@@ -23,8 +23,8 @@ function validate(form, documentFile) {
   return null;
 }
 
-const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/60 transition-colors duration-200";
-const labelCls = "block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5";
+const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-white/40 transition-colors duration-200 font-sans";
+const labelCls = "block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1.5 font-sans";
 
 export default function TestRegistrationModal({ isOpen, onClose }) {
   const [form, setForm]       = useState(INITIAL_FORM);
@@ -87,7 +87,7 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
   };
 
   const overlay = { position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.78)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"16px" };
-  const modal   = { background:"#0f0f0f", border:"1px solid rgba(255,255,255,0.10)", borderRadius:"24px", width:"100%", maxWidth:"560px", maxHeight:"92vh", overflowY:"auto", padding:"32px 28px", position:"relative" };
+  const modal   = { background:"#121417", border:"1px solid rgba(255,255,255,0.15)", borderRadius:"24px", width:"100%", maxWidth:"560px", maxHeight:"92vh", overflowY:"auto", padding:"32px 28px", position:"relative" };
 
   return (
     <AnimatePresence>
@@ -106,10 +106,10 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
             {success ? (
               <div style={{textAlign:"center",padding:"20px 0"}}>
                 <div style={{fontSize:"3rem",marginBottom:"12px"}}>🎉</div>
-                <CheckCircle size={48} color="#22c55e" style={{margin:"0 auto 16px"}}/>
-                <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.35rem",marginBottom:"8px"}}>Registration Successful!</h2>
-                <p style={{color:"#9ca3af",fontSize:"0.9rem",lineHeight:1.7,marginBottom:"28px"}}>Your registration and document have been submitted successfully.</p>
-                <button onClick={handleClose} style={{background:"#2563eb",color:"#fff",border:"none",borderRadius:"12px",padding:"12px 32px",fontSize:"0.95rem",fontWeight:600,cursor:"pointer"}}>Close</button>
+                <CheckCircle size={48} color="#ffffff" style={{margin:"0 auto 16px"}}/>
+                <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.35rem",marginBottom:"8px",fontFamily:"sans-serif"}}>Registration Successful!</h2>
+                <p style={{color:"#9ca3af",fontSize:"0.9rem",lineHeight:1.7,marginBottom:"28px",fontFamily:"sans-serif"}}>Your registration and document have been submitted successfully.</p>
+                <button onClick={handleClose} style={{background:"#ffffff",color:"#000",border:"none",borderRadius:"9999px",padding:"12px 32px",fontSize:"0.95rem",fontWeight:600,cursor:"pointer",fontFamily:"sans-serif"}}>Close</button>
               </div>
             ) : (
               <>
@@ -117,15 +117,15 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
                 <div style={{marginBottom:"24px"}}>
                   <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"6px"}}>
                     <span style={{fontSize:"1.4rem"}}>🧪</span>
-                    <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.2rem",margin:0}}>Individual Test Registration</h2>
+                    <h2 style={{color:"#fff",fontWeight:700,fontSize:"1.2rem",margin:0,fontFamily:"sans-serif"}}>Individual Test Registration</h2>
                   </div>
-                  <p style={{color:"#6b7280",fontSize:"0.82rem",margin:0}}>Check the Website — All fields are required.</p>
+                  <p style={{color:"#94A3B8",fontSize:"0.82rem",margin:0,fontFamily:"sans-serif"}}>Check the Website — All fields are required.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} noValidate>
                   {/* Participant */}
                   <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
-                    <p style={{color:"#3b82f6",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>👤 Participant Details</p>
+                    <p style={{color:"#ffffff",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px",fontFamily:"sans-serif"}}>👤 Participant Details</p>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px",marginBottom:"12px"}}>
                     <div><label className={labelCls}>Full Name</label><input className={inputCls} type="text" name="full_name" value={form.full_name} onChange={handleChange} placeholder="Full name" disabled={loading} maxLength={100}/></div>
@@ -138,7 +138,7 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
 
                   {/* College Info */}
                   <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
-                    <p style={{color:"#34d399",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>🏫 College Info</p>
+                    <p style={{color:"#ffffff",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px",fontFamily:"sans-serif"}}>🏫 College Info</p>
                   </div>
                   <div style={{marginBottom:"12px"}}>
                     <label className={labelCls}>College Name</label>
@@ -160,7 +160,7 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
 
                   {/* Document Upload */}
                   <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",margin:"18px 0 14px",paddingTop:"14px"}}>
-                    <p style={{color:"#f59e0b",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px"}}>📄 Document Upload</p>
+                    <p style={{color:"#ffffff",fontSize:"0.78rem",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"14px",fontFamily:"sans-serif"}}>📄 Document Upload</p>
                   </div>
                   <div style={{marginBottom:"20px"}}>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{display: 'none'}} disabled={loading} />
@@ -182,11 +182,11 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
                       onMouseOver={(e) => !loading && (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                       onMouseOut={(e) => !loading && (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                     >
-                      <UploadCloud size={32} color={documentFile ? "#34d399" : "#9ca3af"} />
-                      <div style={{color: documentFile ? "#34d399" : "#fff", fontSize: "0.9rem", fontWeight: 500}}>
+                      <UploadCloud size={32} color={documentFile ? "#ffffff" : "#9ca3af"} />
+                      <div style={{color: documentFile ? "#ffffff" : "#fff", fontSize: "0.9rem", fontWeight: 500, fontFamily: "sans-serif"}}>
                         {documentFile ? documentFile.name : "Click to select a document"}
                       </div>
-                      <div style={{color: "#6b7280", fontSize: "0.75rem"}}>
+                      <div style={{color: "#6b7280", fontSize: "0.75rem", fontFamily: "sans-serif"}}>
                         Any file type is supported for testing (PDF, Image, DOC)
                       </div>
                     </div>
@@ -194,14 +194,14 @@ export default function TestRegistrationModal({ isOpen, onClose }) {
 
                   {/* Error */}
                   {error && (
-                    <div style={{display:"flex",alignItems:"center",gap:"8px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:"10px",padding:"10px 14px",color:"#fca5a5",fontSize:"0.83rem",marginBottom:"16px"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:"8px",background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:"10px",padding:"10px 14px",color:"#fca5a5",fontSize:"0.83rem",marginBottom:"16px",fontFamily:"sans-serif"}}>
                       <AlertCircle size={15} style={{flexShrink:0}}/>{error}
                     </div>
                   )}
 
                   {/* Submit */}
-                  <button type="submit" disabled={loading} style={{width:"100%",padding:"13px",borderRadius:"14px",border:"none",background:loading?"rgba(37,99,235,0.5)":"#2563eb",color:"#fff",fontSize:"0.95rem",fontWeight:700,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",transition:"background 0.2s",boxShadow:loading?"none":"0 0 20px rgba(37,99,235,0.35)"}}>
-                    {loading ? <><Loader2 size={18} className="animate-spin"/>Submitting…</> : "Submit Registration"}
+                  <button type="submit" disabled={loading} style={{width:"100%",padding:"13px",borderRadius:"9999px",border:"none",background:loading?"rgba(255,255,255,0.4)":"#ffffff",color:"#000",fontSize:"0.95rem",fontWeight:700,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",transition:"background 0.2s",boxShadow:"0 4px 20px rgba(255,255,255,0.15)",fontFamily:"sans-serif"}}>
+                    {loading ? <><Loader2 size={18} className="animate-spin text-black"/>Submitting…</> : "Submit Registration"}
                   </button>
                 </form>
               </>

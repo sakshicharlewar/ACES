@@ -48,7 +48,7 @@ export function ImagePreviewModal({ isOpen, onClose, imageUrl, altText = "Attach
         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
         onClick={onClose}
       >
-        <div className="absolute top-4 right-4 flex items-center gap-4 z-[110] bg-[#0a1120]/80 p-2 rounded-xl border border-white/10 backdrop-blur-md" onClick={e => e.stopPropagation()}>
+        <div className="absolute top-4 right-4 flex items-center gap-4 z-[110] bg-[#121417]/90 p-2 rounded-2xl border border-white/10 backdrop-blur-md" onClick={e => e.stopPropagation()}>
           {!isPdf && (
             <>
               <button onClick={handleZoomOut} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Zoom Out">
@@ -73,7 +73,7 @@ export function ImagePreviewModal({ isOpen, onClose, imageUrl, altText = "Attach
             <Download className="w-5 h-5" />
           </button>
           
-          <button onClick={onClose} className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors ml-2" title="Close (Esc)">
+          <button onClick={onClose} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors ml-2" title="Close (Esc)">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -86,17 +86,17 @@ export function ImagePreviewModal({ isOpen, onClose, imageUrl, altText = "Attach
           onClick={e => e.stopPropagation()}
         >
           {isPdf ? (
-            <div className="bg-[#0d1426] border border-white/10 rounded-2xl p-12 flex flex-col items-center gap-6">
-              <div className="w-24 h-24 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center">
+            <div className="bg-[#121417] border border-white/10 rounded-2xl p-12 flex flex-col items-center gap-6">
+              <div className="w-24 h-24 bg-white/10 text-white rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
               <div className="text-center">
-                <h3 className="text-white font-medium text-lg">PDF Document</h3>
-                <p className="text-white/50 text-sm mt-2">PDF previews are not available inline.</p>
+                <h3 className="text-white font-medium text-lg font-sans">PDF Document</h3>
+                <p className="text-neutral-400 text-sm mt-2 font-sans">PDF previews are not available inline.</p>
               </div>
-              <button onClick={handleDownload} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-colors">
+              <button onClick={handleDownload} className="px-6 py-2.5 bg-white hover:bg-neutral-200 text-black font-semibold rounded-full text-sm flex items-center gap-2 transition-colors font-sans">
                 <Download className="w-4 h-4" /> Download PDF
               </button>
             </div>

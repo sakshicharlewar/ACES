@@ -48,11 +48,11 @@ export function AdminLayout({ children }) {
         to={to}
         onClick={() => setOpen(false)}
         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-          ${active ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
+          ${active ? "bg-white text-black shadow-lg shadow-white/10" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
       >
         <Icon className="w-4 h-4 shrink-0" />
         <span className="flex-1">{label}</span>
-        {badge && <span className="text-[10px] bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full">{badge}</span>}
+        {badge && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? "bg-black/20 text-black font-semibold" : "bg-white/10 text-white border border-white/15"}`}>{badge}</span>}
       </Link>
     );
   };
@@ -69,15 +69,15 @@ export function AdminLayout({ children }) {
   );
 
   return (
-    <div className="min-h-screen flex bg-transparent text-white font-sans">
+    <div className="min-h-screen flex bg-[#08090A] text-white font-sans">
       {/* ── Sidebar ── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#111111] border-r border-white/10 flex flex-col transform transition-transform duration-300
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0F1115] border-r border-white/10 flex flex-col transform transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -108,7 +108,7 @@ export function AdminLayout({ children }) {
                     onClick={() => setOpen(false)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200
                       ${isActive(`/admin/events/${ev.id}`)
-                        ? "bg-blue-600/30 text-blue-300"
+                        ? "bg-white/15 text-white font-medium border border-white/20"
                         : "text-white/40 hover:bg-white/5 hover:text-white/70"
                       }`}
                   >

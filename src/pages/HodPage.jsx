@@ -44,8 +44,8 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
       variants={fadeUpVariants}
       whileHover={{
         y: -4,
-        boxShadow: "0 0 24px 2px rgba(59,130,246,0.15)",
-        borderColor: "rgba(59,130,246,0.3)",
+        boxShadow: "0 0 24px 2px rgba(255,255,255,0.06)",
+        borderColor: "rgba(255,255,255,0.2)",
         transition: { duration: 0.3 },
       }}
       style={{
@@ -62,9 +62,10 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
     >
       <div style={{
         width: "44px", height: "44px", flexShrink: 0,
-        borderRadius: "12px", background: "rgba(59,130,246,0.08)",
-        border: "1px solid rgba(59,130,246,0.15)",
-        display: "flex", alignItems: "center", justifyContent: "center"
+        borderRadius: "12px", background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "#fff"
       }}>
         {icon}
       </div>
@@ -73,7 +74,7 @@ function GlassCard({ icon, title, desc, delayIndex, isSmall = false }) {
           {title}
         </h4>
         {desc && (
-          <p style={{ color: "#B5B5B5", fontSize: "0.9rem", fontWeight: 300 }}>
+          <p style={{ color: "#94A3B8", fontSize: "0.9rem", fontWeight: 400 }}>
             {desc}
           </p>
         )}
@@ -153,7 +154,7 @@ export function HodPage() {
   if (loading) {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-        <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+        <Loader2 className="w-10 h-10 animate-spin text-white mb-4" />
         <p>Loading Profile...</p>
       </div>
     );
@@ -163,7 +164,7 @@ export function HodPage() {
     return (
       <div style={{ background: "#0B0B0B", minHeight: "100vh", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <h2>HOD Profile not found</h2>
-        <button onClick={() => navigate("/department")} style={{ marginLeft: "16px", padding: "8px 16px", background: "#3B82F6", borderRadius: "8px", border: "none", color: "#fff", cursor: "pointer" }}>Go Back</button>
+        <button onClick={() => navigate("/department")} style={{ marginLeft: "16px", padding: "8px 20px", background: "#FFFFFF", color: "#000", fontWeight: 600, borderRadius: "9999px", border: "none", cursor: "pointer" }}>Go Back</button>
       </div>
     );
   }
@@ -274,7 +275,7 @@ export function HodPage() {
                 <h3 style={{ fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#B5B5B5" }}>About</h3>
                 <div style={{ height: "1px", flex: 1, background: "rgba(255,255,255,0.08)" }} />
               </div>
-              <p style={{ color: "#B5B5B5", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 300 }}>
+              <p style={{ color: "#CBD5E1", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 400 }}>
                 {hod.professional_summary}
               </p>
             </div>
@@ -291,7 +292,7 @@ export function HodPage() {
                   const title = typeof q === "string" ? q : q?.title || "";
                   const desc = typeof q === "object" ? q?.desc : "";
                   return (
-                    <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-blue-400" />} title={title} desc={desc} delayIndex={i + 4} />
+                    <GlassCard key={i} icon={<GraduationCap className="w-5 h-5 text-white" />} title={title} desc={desc} delayIndex={i + 4} />
                   );
                 })}
               </div>
@@ -308,7 +309,7 @@ export function HodPage() {
                 {professionalHighlights.map((h, i) => {
                   const title = typeof h === "string" ? h : h?.title || "";
                   return (
-                    <GlassCard key={i} icon={<Award className="w-5 h-5 text-blue-400" />} title={title} delayIndex={i + 6} isSmall />
+                    <GlassCard key={i} icon={<Award className="w-5 h-5 text-white" />} title={title} delayIndex={i + 6} isSmall />
                   );
                 })}
               </div>
@@ -335,7 +336,7 @@ export function HodPage() {
                         viewport={{ once: true }}
                         variants={fadeUpVariants}
                         onClick={() => setActiveImg(src)}
-                        whileHover={{ scale: 1.03, boxShadow: "0 0 24px rgba(59,130,246,0.25)", borderColor: "rgba(59,130,246,0.4)" }}
+                        whileHover={{ scale: 1.03, boxShadow: "0 0 24px rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.25)" }}
                         style={{
                           borderRadius: "16px",
                           overflow: "hidden",
@@ -397,6 +398,7 @@ export function HodPage() {
                 borderRadius: "50%", padding: "10px", cursor: "pointer",
                 color: "rgba(255,255,255,0.5)",
                 display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.3s"
               }}
             >
               <X className="w-6 h-6" />
@@ -416,8 +418,8 @@ export function HodPage() {
                   maxWidth: "90vw", maxHeight: "85vh",
                   objectFit: "contain",
                   borderRadius: "16px",
-                  boxShadow: "0 0 60px rgba(59,130,246,0.15), 0 24px 64px rgba(0,0,0,0.8)",
-                  border: "1px solid rgba(59,130,246,0.2)",
+                  boxShadow: "0 24px 64px rgba(0,0,0,0.8)",
+                  border: "1px solid rgba(255,255,255,0.15)",
                 }}
               />
             </div>

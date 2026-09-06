@@ -305,8 +305,8 @@ export function UpcomingEvents() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="font-sans text-3xl md:text-5xl font-medium mb-4">Upcoming Events</h2>
-          <p className="font-cambria text-text-secondary text-lg">Participate &amp; Showcase your skills</p>
+          <h2 className="font-sans text-3xl md:text-5xl font-bold text-white mb-4">Upcoming Events</h2>
+          <p className="font-sans text-neutral-400 text-base md:text-lg">Participate &amp; Showcase your skills</p>
         </motion.div>
 
         {/* ── Server warm-up banner ── */}
@@ -314,11 +314,11 @@ export function UpcomingEvents() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-3 mb-8 px-5 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm max-w-md mx-auto"
+            className="flex items-center justify-center gap-3 mb-8 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-neutral-300 text-sm max-w-md mx-auto"
           >
             <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
             </span>
             <span>Server is waking up — events will load in a few seconds…</span>
           </motion.div>
@@ -337,14 +337,14 @@ export function UpcomingEvents() {
                   transition={{ duration: 0.8, delay: index * 0.2 }}
                   className="relative p-[1px] rounded-[28px] overflow-hidden group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/50 to-transparent translate-x-[-100%] group-hover:animate-[marquee_2s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative h-full bg-card/80 backdrop-blur-xl rounded-[28px] p-8 flex flex-col items-center justify-center text-center border border-border group-hover:bg-card transition-colors duration-500 min-h-[300px]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[marquee_2s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative h-full bg-[#111317]/85 backdrop-blur-xl rounded-[28px] p-8 flex flex-col items-center justify-center text-center border border-white/10 group-hover:border-white/20 transition-colors duration-500 min-h-[300px]">
                     <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
                       <span className="text-2xl">⏳</span>
                     </div>
-                    <h4 className="font-sans text-xl font-medium text-white mb-3">Coming Soon</h4>
-                    <p className="font-cambria text-text-secondary text-sm mb-6">Registration Opens Soon</p>
-                    <div className="mt-auto inline-flex items-center justify-center px-6 py-2 rounded-full border border-white/10 text-xs font-label uppercase tracking-wider text-text-secondary">
+                    <h4 className="font-sans text-xl font-bold text-white mb-3">Coming Soon</h4>
+                    <p className="font-sans text-neutral-400 text-sm mb-6">Registration Opens Soon</p>
+                    <div className="mt-auto inline-flex items-center justify-center px-6 py-2 rounded-full border border-white/10 text-xs font-medium uppercase tracking-wider text-neutral-400">
                       Stay Tuned
                     </div>
                   </div>
@@ -382,7 +382,7 @@ export function UpcomingEvents() {
               >
                 {/* Glowing border when open */}
                 {isOpen && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/50 via-purple-500/50 to-blue-500/50 opacity-100 group-hover:animate-[spin_4s_linear_infinite] transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-white/5 to-white/25 opacity-100 group-hover:animate-[spin_4s_linear_infinite] transition-all duration-500" />
                 )}
                 {!isOpen && (
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[marquee_2s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -402,74 +402,74 @@ export function UpcomingEvents() {
 
                   {/* Title */}
                   <h4 className="font-sans text-xl font-bold text-white mb-2 leading-tight">{event.title}</h4>
-                  {event.subtitle && <p className="font-sans text-xs font-semibold text-blue-400 uppercase tracking-widest mb-3">{event.subtitle}</p>}
-                  <p className="font-cambria text-slate-400 text-sm mb-4 line-clamp-3 leading-relaxed">{event.short_description || event.description}</p>
+                  {event.subtitle && <p className="font-sans text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">{event.subtitle}</p>}
+                  <p className="font-sans text-neutral-400 text-sm mb-4 line-clamp-3 leading-relaxed">{event.short_description || event.description}</p>
 
                   {/* Badges & meta */}
-                  <div className="space-y-2 mb-6 text-sm text-gray-300">
+                  <div className="space-y-2 mb-6 text-sm text-neutral-300">
                     <div className="flex items-center justify-between mb-4">
                       {isResultAnnounced ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold uppercase tracking-wider">
-                          🟢 Completed
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold uppercase tracking-wider">
+                          ✓ Completed
                         </span>
                       ) : isFull ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
-                          🔴 Registration Closed (Housefull)
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-neutral-400 text-xs font-semibold uppercase tracking-wider">
+                          Registration Closed (Housefull)
                         </span>
                       ) : isOpen ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold uppercase tracking-wider">
-                          🔥 Registration Open
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-semibold uppercase tracking-wider">
+                          ● Registration Open
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
-                          🔒 Registration Closed
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-neutral-400 text-xs font-semibold uppercase tracking-wider">
+                          Registration Closed
                         </span>
                       )}
                     </div>
 
                     {event.date && (
                       <div className="flex items-center gap-2">
-                        <span className="text-blue-400">📅</span>
+                        <span className="text-white">📅</span>
                         <span>{event.date}{event.time && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx")) ? ` | ${event.time}` : ''}</span>
                       </div>
                     )}
                     {event.venue && (
                       <div className="flex items-center gap-2">
-                        <span className="text-green-400">📍</span>
+                        <span className="text-white">📍</span>
                         <span className="truncate">{event.venue}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <span className="text-blue-400">🪑</span>
-                      <span className="text-gray-300 font-medium">
+                      <span className="text-white">🪑</span>
+                      <span className="text-neutral-300 font-medium">
                         Seats Registered: <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
                         {seatsLeft > 0 ? (
-                          <span className="text-xs text-green-400 ml-1.5 font-normal">({seatsLeft} seats left)</span>
+                          <span className="text-xs text-neutral-400 ml-1.5 font-normal">({seatsLeft} seats left)</span>
                         ) : (
-                          <span className="text-xs text-red-400 ml-1.5 font-normal">(Housefull)</span>
+                          <span className="text-xs text-neutral-500 ml-1.5 font-normal">(Housefull)</span>
                         )}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users size={14} className="text-blue-400" />
+                      <Users size={14} className="text-white" />
                       <span>Team Size: {(event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : `${event.team_size} Members`}</span>
                     </div>
                     {(event.fee || event.registration_fee) && (
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">💳</span>
+                        <span className="text-white">💳</span>
                         <span>Registration Fee: <span className="text-white font-semibold">₹{event.fee ?? event.registration_fee}</span></span>
                       </div>
                     )}
                     {event.eligibility && (
                       <div className="flex items-center gap-2">
-                        <span className="text-pink-400">🎓</span>
-                        <span className="text-gray-300 text-sm">Eligibility: {event.eligibility}</span>
+                        <span className="text-white">🎓</span>
+                        <span className="text-neutral-300 text-sm">Eligibility: {event.eligibility}</span>
                       </div>
                     )}
                     {(event.prizes || event.prize_pool) && (
                       <div className="flex items-center gap-2">
-                        <span className="text-purple-400">🏆</span>
-                        <span className="text-gray-300 text-sm truncate">{event.prizes || event.prize_pool}</span>
+                        <span className="text-white">🏆</span>
+                        <span className="text-neutral-300 text-sm truncate">{event.prizes || event.prize_pool}</span>
                       </div>
                     )}
                   </div>
@@ -479,22 +479,16 @@ export function UpcomingEvents() {
                     {/* Live Progress Bar */}
                     <div className="mb-3">
                       <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-gray-400 font-medium flex items-center gap-1.5">
-                          <span className="text-blue-400">⚡</span> Live Seats: <strong className="text-white font-mono">{registeredTeams}/{maxTeams}</strong>
+                        <span className="text-neutral-400 font-medium flex items-center gap-1.5">
+                          <span className="text-white">⚡</span> Live Seats: <strong className="text-white font-mono">{registeredTeams}/{maxTeams}</strong>
                         </span>
-                        <span className="text-green-400 font-semibold text-[11px]">
+                        <span className="text-neutral-300 font-semibold text-[11px]">
                           {seatsLeft} remaining
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
                         <div 
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isFull 
-                              ? 'bg-red-500' 
-                              : registeredTeams > maxTeams * 0.75 
-                              ? 'bg-amber-500' 
-                              : 'bg-gradient-to-r from-blue-500 to-cyan-400'
-                          }`}
+                          className="h-full rounded-full transition-all duration-500 bg-white"
                           style={{ width: `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
                         />
                       </div>
@@ -502,13 +496,13 @@ export function UpcomingEvents() {
 
                     {isResultAnnounced ? (
                       <div
-                        className="w-full py-3 rounded-full font-medium text-center text-sm bg-amber-500/10 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/20 transition-colors duration-200"
+                        className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/10 text-white border border-white/20 cursor-pointer hover:bg-white/20 transition-colors duration-200"
                         onClick={() => openWinnersPopup(event)}
                       >
-                        🎉 The Result Has Been Officially Announced!
+                        🏆 The Result Has Been Officially Announced!
                       </div>
                     ) : isResultScheduled ? (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/10 text-white border border-white/20">
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
                       </div>
                     ) : isOpen ? (
@@ -520,12 +514,12 @@ export function UpcomingEvents() {
                         Register Now
                       </button>
                     ) : isFull ? (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Full (60/60 Teams)</span>
                       </div>
                     ) : (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center gap-2">
+                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Has Closed</span>
                       </div>

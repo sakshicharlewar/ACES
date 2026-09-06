@@ -91,7 +91,7 @@ export function FacultyListPage() {
       <div className="container mx-auto max-w-5xl px-6" style={{ position: "relative", zIndex: 10 }}>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-white/50">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
+            <Loader2 className="w-10 h-10 animate-spin text-white mb-4" />
             <p>Loading faculty directory...</p>
           </div>
         ) : (
@@ -132,8 +132,8 @@ export function FacultyListPage() {
                 <div style={{ flexShrink: 0 }}>
                   <div style={{
                     width: "160px", height: "160px", borderRadius: "50%",
-                    padding: "4px", background: "linear-gradient(135deg, rgba(59,130,246,0.5), rgba(96,165,250,0.1))",
-                    boxShadow: "0 0 24px rgba(59,130,246,0.2)"
+                    padding: "4px", background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))",
+                    boxShadow: "0 0 24px rgba(255,255,255,0.08)"
                   }}>
                     <img
                       src={facultyMember.image}
@@ -151,11 +151,11 @@ export function FacultyListPage() {
 
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", justifyContent: "center" }} className="md:justify-start">
                     <div>
-                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Qualification</p>
+                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "4px" }}>Qualification</p>
                       <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{facultyMember.qualification}</p>
                     </div>
                     <div>
-                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#666", marginBottom: "4px" }}>Experience</p>
+                      <p style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "4px" }}>Experience</p>
                       <p style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 500 }}>{facultyMember.experience}</p>
                     </div>
                   </div>

@@ -77,7 +77,7 @@ export function EventDetailsPage() {
         
         {/* Page Title */}
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <div style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.2em", color: "#3B82F6", marginBottom: "12px", fontWeight: 500 }}>
+          <div style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.2em", color: "#A1A1AA", marginBottom: "12px", fontWeight: 600 }}>
             Completed Event
           </div>
           <h1 style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.02em" }}>
@@ -116,19 +116,19 @@ export function EventDetailsPage() {
           <div>
             <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Date</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
-              <Calendar className="w-5 h-5 text-blue-400" /> 20 August 2025
+              <Calendar className="w-5 h-5 text-white" /> 20 August 2025
             </div>
           </div>
           <div>
             <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Venue</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
-              <MapPin className="w-5 h-5 text-blue-400" /> MCA Seminar Hall, SCET
+              <MapPin className="w-5 h-5 text-white" /> MCA Seminar Hall, SCET
             </div>
           </div>
           <div>
             <p style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#94A3B8", marginBottom: "8px" }}>Organized By</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "1.1rem", fontWeight: 500 }}>
-              <Users className="w-5 h-5 text-blue-400" /> ACES
+              <Users className="w-5 h-5 text-white" /> ACES
             </div>
           </div>
         </motion.div>
@@ -136,8 +136,8 @@ export function EventDetailsPage() {
         {/* ── EVENT DESCRIPTION ── */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={1} style={{ marginBottom: "60px" }}>
           <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "20px" }}>About the Event</h2>
-          <p style={{ color: "#CBD5E1", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 300 }}>
-            The Department of Computer Engineering, Suryodaya College of Engineering &amp; Technology, organized the UI/UX Competition “REIMAGINE” under the ACES Forum on 20th August 2025 at MCA Seminar Hall for teams of two participants. A total of 40 teams (80participants) competed in preliminary and final rounds.
+          <p style={{ color: "#CBD5E1", fontSize: "1.1rem", lineHeight: "1.8", fontWeight: 400 }}>
+            The Department of Computer Engineering, Suryodaya College of Engineering &amp; Technology, organized the UI/UX Competition “REIMAGINE” under the ACES Forum on 20th August 2025 at MCA Seminar Hall for teams of two participants. A total of 40 teams (80 participants) competed in preliminary and final rounds.
           </p>
         </motion.div>
 
@@ -155,7 +155,7 @@ export function EventDetailsPage() {
                   boxShadow: "0 8px 30px rgba(0,0,0,0.3)"
                 }}
               >
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#3B82F6", boxShadow: "0 0 10px #3B82F6" }} />
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#FFFFFF", boxShadow: "0 0 10px rgba(255,255,255,0.5)" }} />
                 <span style={{ fontWeight: 500, color: "#F8FAFC" }}>{h}</span>
               </motion.div>
             ))}
@@ -169,7 +169,7 @@ export function EventDetailsPage() {
             {timeline.map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "20px" }} className="flex-col md:flex-row">
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#60A5FA", fontWeight: "bold" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#FFFFFF", fontWeight: "bold" }}>
                     {i + 1}
                   </div>
                   <p style={{ fontWeight: 500, fontSize: "0.95rem", color: "#F8FAFC" }}>{step}</p>
