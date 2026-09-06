@@ -1,10 +1,7 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, FileText, Shield, Eye, Rocket, Cpu, Globe, Sparkles, CheckSquare } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowUpRight, ChevronDown, Calendar, Sparkles, CheckSquare } from "lucide-react";
 
 export function Hero() {
-  const navigate = useNavigate();
-
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) {
@@ -15,7 +12,7 @@ export function Hero() {
   return (
     <section className="relative pt-24 md:pt-28 pb-12 px-3 sm:px-6 md:px-8 w-full max-w-7xl mx-auto">
       {/* Outer Spatial Container Frame */}
-      <div className="relative bg-[#0c0e12] border border-white/10 rounded-[28px] md:rounded-[36px] p-5 sm:p-8 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
+      <div className="relative bg-[#0c0e12] border border-white/10 rounded-[28px] md:rounded-[36px] p-6 sm:p-10 md:p-12 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
         
         {/* Subtle Ambient Background Gradient */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/[0.03] via-transparent to-transparent pointer-events-none" />
@@ -40,7 +37,7 @@ export function Hero() {
         </div>
 
         {/* ── Main 2-Column Hero Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column (7 cols) */}
           <div className="lg:col-span-7 flex flex-col justify-center">
@@ -93,52 +90,31 @@ export function Hero() {
               Where breakthrough computational intelligence, spatial robotics, and sustainable civil infrastructure converge to forge India's next generation of engineering visionaries.
             </motion.p>
 
-            {/* Dual CTA Buttons */}
+            {/* Dual CTA Buttons: Upcoming Events & Explore */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap items-center gap-3.5 mb-10"
+              className="flex flex-wrap items-center gap-4"
             >
+              {/* Upcoming Events Button */}
               <button
                 onClick={() => scrollTo("events-upcoming")}
-                className="px-6 py-3.5 rounded-full bg-white text-black text-sm font-bold flex items-center gap-2 hover:bg-neutral-200 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)] active:scale-95"
+                className="px-7 py-3.5 rounded-full bg-white text-black text-sm font-bold flex items-center gap-2.5 hover:bg-neutral-200 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)] active:scale-95"
               >
-                Explore Campus <ArrowUpRight className="w-4 h-4 text-black" />
+                <Calendar className="w-4 h-4 text-black" />
+                Upcoming Events
+                <ArrowUpRight className="w-4 h-4 text-black" />
               </button>
 
+              {/* Explore Button */}
               <button
-                onClick={() => scrollTo("events-upcoming")}
-                className="px-6 py-3.5 rounded-full bg-[#181a20] border border-white/15 text-white text-sm font-medium flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95"
+                onClick={() => scrollTo("collegelogo")}
+                className="px-7 py-3.5 rounded-full bg-[#181a20] border border-white/15 text-white text-sm font-semibold flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95"
               >
-                <FileText className="w-4 h-4 text-neutral-300" />
-                Apply Now (2025-26)
+                Explore
+                <ChevronDown className="w-4 h-4 text-neutral-300 animate-bounce" />
               </button>
-            </motion.div>
-
-            {/* Bottom 4-Stat Box */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 md:p-5 rounded-2xl bg-[#14171d]/80 border border-white/5"
-            >
-              <div>
-                <div className="text-xl sm:text-2xl font-extrabold text-white">20+</div>
-                <div className="text-xs text-neutral-400 font-medium mt-0.5">Years Legacy</div>
-              </div>
-              <div>
-                <div className="text-xl sm:text-2xl font-extrabold text-white">1000+</div>
-                <div className="text-xs text-neutral-400 font-medium mt-0.5">Innovators</div>
-              </div>
-              <div>
-                <div className="text-xl sm:text-2xl font-extrabold text-white">50+</div>
-                <div className="text-xs text-neutral-400 font-medium mt-0.5">Global Tie-Ups</div>
-              </div>
-              <div>
-                <div className="text-xl sm:text-2xl font-extrabold text-white">6</div>
-                <div className="text-xs text-neutral-400 font-medium mt-0.5">R&amp;D Clusters</div>
-              </div>
             </motion.div>
           </div>
 
@@ -188,59 +164,6 @@ export function Hero() {
               </div>
             </div>
           </motion.div>
-        </div>
-
-        {/* ── Section Below Hero: Institutional Blueprint ── */}
-        <div className="mt-14 pt-10 border-t border-white/10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8 mb-8">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold uppercase tracking-widest text-neutral-300 mb-3">
-                <Shield className="w-3.5 h-3.5 text-white" />
-                <span>Institutional Blueprint</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-sans">
-                More Than a College. A Launchpad for the Future.
-              </h2>
-            </div>
-            <p className="text-sm text-neutral-400 max-w-md leading-relaxed font-sans">
-              Engineered from ground up with spatial labs, active venture studios, and direct industry mentor clusters that transition students straight into production.
-            </p>
-          </div>
-
-          {/* 4 Pillar Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1 */}
-            <div className="p-6 rounded-2xl bg-[#121419] border border-white/10 hover:border-white/20 transition-all group flex flex-col gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <Eye className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="font-bold text-base text-white font-sans">Autonomous Vision</h3>
-            </div>
-
-            {/* Card 2 */}
-            <div className="p-6 rounded-2xl bg-[#121419] border border-white/10 hover:border-white/20 transition-all group flex flex-col gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <Rocket className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="font-bold text-base text-white font-sans">Action Incubator</h3>
-            </div>
-
-            {/* Card 3 */}
-            <div className="p-6 rounded-2xl bg-[#121419] border border-white/10 hover:border-white/20 transition-all group flex flex-col gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <Cpu className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="font-bold text-base text-white font-sans">Industry R&amp;D Links</h3>
-            </div>
-
-            {/* Card 4 */}
-            <div className="p-6 rounded-2xl bg-[#121419] border border-white/10 hover:border-white/20 transition-all group flex flex-col gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="font-bold text-base text-white font-sans">Global Recognition</h3>
-            </div>
-          </div>
         </div>
 
       </div>
