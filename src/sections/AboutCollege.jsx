@@ -15,30 +15,37 @@ export function AboutCollege() {
           className="order-2 lg:order-1"
         >
 
-          <h2 className="font-sans text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
-            About SCET
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+            <span className="text-white font-sans">About </span>
+            <span 
+              className="text-amber-200 font-normal inline-block text-5xl md:text-6xl lg:text-7xl"
+              style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+            >
+              SCET
+            </span>
           </h2>
-          <RevealText 
-            text="Excellence in Engineering Education"
-            className="text-3xl md:text-4xl lg:text-5xl font-sans font-semibold mb-8 justify-start text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-200 to-neutral-400"
-            delay={0.6}
-          />
+          <div 
+            className="text-2xl md:text-3xl lg:text-4xl font-normal mb-8 text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-neutral-100 to-amber-200"
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          >
+            Excellence in Engineering Education
+          </div>
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, delay: 1.0 }}
+            transition={{ duration: 1, delay: 0.6 }}
             className="space-y-5"
           >
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              Suryodaya College of Engineering & Technology, established in <span className="text-white font-medium">2010</span>, is a premier{" "}
-              <span className="text-white font-semibold">NAAC A+ accredited</span> institution offering UG, PG, and Diploma programs in Engineering & Management. Our Diploma programs in Civil and Mechanical Engineering are further accredited by the <span className="text-white font-medium">NBA</span>.
+              Suryodaya College of Engineering & Technology, established in <span className="text-amber-200 font-semibold font-mono">2010</span>, is a premier{" "}
+              <span className="text-white font-semibold px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15">NAAC A+ accredited</span> institution offering UG, PG, and Diploma programs in Engineering & Management. Our Diploma programs in Civil and Mechanical Engineering are further accredited by the <span className="text-cyan-200 font-semibold">NBA</span>.
             </p>
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              With its lush green campus and academically enriching environment, the institute provides students with an ideal atmosphere to learn, innovate, and grow. Our forward-thinking approach toward employability and entrepreneurship has earned recognition across the region.
+              With its lush green campus and academically enriching environment, the institute provides students with an ideal atmosphere to <span className="text-white font-medium italic font-serif" style={{ fontFamily: "'Cormorant Garamond', serif" }}>learn, innovate, and grow</span>. Our forward-thinking approach toward employability and entrepreneurship has earned recognition across the region.
             </p>
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              A major milestone is our <span className="text-white font-semibold">Centre for Skill & Entrepreneurship Development (CSED)</span> — envisioned as <span className="text-white font-medium italic">"Industry Inside an Institute"</span>. Global technology partners include{" "}
+              A major milestone is our <span className="text-amber-100 font-semibold">Centre for Skill & Entrepreneurship Development (CSED)</span> — envisioned as <span className="text-amber-200/90 font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>"Industry Inside an Institute"</span>. Global technology partners include{" "}
               <span className="text-white font-medium">Dassault Systèmes, PTC, Ansys, Festo,</span> and <span className="text-white font-medium">Mastercam</span>, bridging academia with Industry 4.0.
             </p>
           </motion.div>

@@ -29,8 +29,8 @@ function LeaderCard({ memberKey, role, name, image, social }) {
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "scale(1.03)";
-        e.currentTarget.style.boxShadow = "0 0 35px rgba(255,255,255,0.08), 0 16px 48px rgba(0,0,0,0.6)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
+        e.currentTarget.style.boxShadow = "0 0 35px rgba(251,191,36,0.2), 0 16px 48px rgba(0,0,0,0.6)";
+        e.currentTarget.style.borderColor = "rgba(251,191,36,0.35)";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "scale(1)";
@@ -58,36 +58,19 @@ function LeaderCard({ memberKey, role, name, image, social }) {
       </div>
 
       {/* Text block — centered */}
-      <div style={{ textAlign: "center", position: "relative", zIndex: 10 }}>
-        <p style={{
-          fontSize: "30px",
-          fontWeight: 700,
-          color: "#ffffff",
-          letterSpacing: "-0.01em",
-          marginBottom: "8px",
-          lineHeight: 1.1,
-          fontFamily: "'Plus Jakarta Sans', sans-serif"
-        }}>
+      <div className="flex flex-col items-center text-center">
+        <span className="text-xs font-semibold uppercase tracking-widest text-amber-200 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 mb-2">
           {role}
-        </p>
-        <p style={{
-          fontSize: "18px",
-          fontWeight: 500,
-          color: "#CBD5E1",
-          letterSpacing: "0.01em",
-          marginBottom: "16px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif"
-        }}>
+        </span>
+        <h3 className="font-sans text-xl font-bold text-white mb-3">
           {name}
-        </p>
-        
-        {/* Link Icon */}
-        <a 
+        </h3>
+        <a
           href={social?.linkedin || "#"}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white hover:bg-white hover:text-black transition-colors duration-300"
+          onClick={e => e.stopPropagation()}
+          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white hover:bg-amber-200 hover:text-black hover:shadow-[0_0_15px_rgba(251,191,36,0.5)] transition-all duration-300"
         >
           <Link className="w-5 h-5" />
         </a>
@@ -136,11 +119,14 @@ export function Committee() {
           <p className="text-xs font-semibold tracking-[0.35em] uppercase text-neutral-400 mb-3 text-center w-full">
             Academic Year
           </p>
-          <h2
-            className="font-sans font-bold text-3xl md:text-5xl text-white text-center"
-            style={{ letterSpacing: "-0.01em" }}
-          >
-            ACES COMMITTEE
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white text-center">
+            <span className="font-sans font-extrabold tracking-wider">ACES </span>
+            <span 
+              className="text-amber-200 font-normal text-4xl md:text-6xl inline-block px-1"
+              style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+            >
+              Committee
+            </span>
           </h2>
           <p
             className="text-base md:text-lg font-medium mt-2 tracking-widest uppercase text-neutral-400 text-center w-full"
@@ -149,9 +135,9 @@ export function Committee() {
             2026 – 27
           </p>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/40" />
-            <div className="w-1.5 h-1.5 rounded-full bg-white" />
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/40" />
+            <div className="h-px w-16 bg-gradient-to-r from-transparent to-amber-200/40" />
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-200" />
+            <div className="h-px w-16 bg-gradient-to-l from-transparent to-amber-200/40" />
           </div>
         </div>
 

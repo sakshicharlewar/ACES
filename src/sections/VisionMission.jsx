@@ -30,12 +30,12 @@ export function VisionMission() {
         >
           <motion.div 
             whileHover={{
-              boxShadow: "0 0 35px 2px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.55)",
-              borderColor: "rgba(255,255,255,0.18)",
+              boxShadow: "0 0 35px 2px rgba(251,113,133,0.18), 0 16px 48px rgba(0,0,0,0.6)",
+              borderColor: "rgba(251,113,133,0.35)",
               transition: { duration: 0.3 },
             }}
             style={{
-              background: "rgba(17, 19, 23, 0.8)",
+              background: "rgba(17, 19, 23, 0.85)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "28px",
@@ -44,19 +44,27 @@ export function VisionMission() {
             }}
             className="h-full p-10 md:p-14 relative overflow-hidden group"
           >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 text-white">
-              <Target className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-8 text-rose-300">
+              <Target className="w-8 h-8 text-rose-300" />
             </div>
-            <h3 className="font-sans text-3xl font-semibold mb-4 text-white">Department Vision</h3>
+            <h3 className="text-3xl font-semibold mb-4 text-white">
+              <span>Department </span>
+              <span 
+                className="text-rose-200 font-normal text-4xl inline-block px-1"
+                style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+              >
+                Vision
+              </span>
+            </h3>
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               whileInView={{ width: 48, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-              className="h-[2px] bg-white mb-6 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
+              className="h-[2px] bg-gradient-to-r from-rose-300 to-rose-500/20 mb-6 rounded-full" 
             />
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              To emerge as a center of excellence in computer engineering by fostering academic excellence, innovative research, and entrepreneurial skills, empowering graduates to address global challenges and contribute to the advancement of technology and society.
+              To emerge as a <span className="text-rose-200 font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>center of excellence</span> in computer engineering by fostering <span className="text-white font-medium">academic brilliance, innovative research,</span> and <span className="text-white font-medium">entrepreneurial skills</span>, empowering graduates to address global challenges and shape the future of technology.
             </p>
           </motion.div>
         </motion.div>
@@ -70,12 +78,12 @@ export function VisionMission() {
         >
           <motion.div 
             whileHover={{
-              boxShadow: "0 0 35px 2px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.55)",
-              borderColor: "rgba(255,255,255,0.18)",
+              boxShadow: "0 0 35px 2px rgba(56,189,248,0.18), 0 16px 48px rgba(0,0,0,0.6)",
+              borderColor: "rgba(56,189,248,0.35)",
               transition: { duration: 0.3 },
             }}
             style={{
-              background: "rgba(17, 19, 23, 0.8)",
+              background: "rgba(17, 19, 23, 0.85)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "28px",
@@ -84,29 +92,41 @@ export function VisionMission() {
             }}
             className="h-full p-10 md:p-14 relative overflow-hidden group"
           >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 text-white">
-              <Compass className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-8 text-sky-300">
+              <Compass className="w-8 h-8 text-sky-300" />
             </div>
-            <h3 className="font-sans text-3xl font-semibold mb-4 text-white">Department Mission</h3>
+            <h3 className="text-3xl font-semibold mb-4 text-white">
+              <span>Department </span>
+              <span 
+                className="text-sky-200 font-normal text-4xl inline-block px-1"
+                style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+              >
+                Mission
+              </span>
+            </h3>
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               whileInView={{ width: 48, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-              className="h-[2px] bg-white mb-6 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
+              className="h-[2px] bg-gradient-to-r from-sky-300 to-sky-500/20 mb-6 rounded-full" 
             />
             <ul className="space-y-6">
               {missions.map((m, i) => (
                 <motion.li
-                  key={i}
-                  initial={{ opacity: 0, y: 16 }}
+                  key={m.number}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 + i * 0.12 }}
-                  className="flex gap-5 items-start"
+                  transition={{ duration: 0.6, delay: 0.4 + i * 0.1 }}
+                  className="flex gap-4 items-start"
                 >
-                  <span className="text-white font-bold text-lg shrink-0 mt-0.5">{m.number}</span>
-                  <p className="font-sans text-neutral-300 text-base leading-relaxed font-normal">{m.text}</p>
+                  <span className="font-mono text-sm font-bold text-sky-300 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 shrink-0 mt-0.5">
+                    {m.number}
+                  </span>
+                  <p className="font-sans text-neutral-300 text-sm md:text-base leading-relaxed font-normal">
+                    {m.text}
+                  </p>
                 </motion.li>
               ))}
             </ul>

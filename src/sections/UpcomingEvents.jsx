@@ -305,8 +305,21 @@ export function UpcomingEvents() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="font-sans text-3xl md:text-5xl font-bold text-white mb-4">Upcoming Events</h2>
-          <p className="font-sans text-neutral-400 text-base md:text-lg">Participate &amp; Showcase your skills</p>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3">
+            <span className="text-white font-sans">Upcoming </span>
+            <span 
+              className="text-amber-200 font-normal text-4xl md:text-6xl inline-block px-1"
+              style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+            >
+              Events
+            </span>
+          </h2>
+          <p 
+            className="text-amber-100/80 text-lg md:text-xl font-serif italic"
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          >
+            Participate &amp; Showcase your technical brilliance
+          </p>
         </motion.div>
 
         {/* ── Server warm-up banner ── */}
@@ -496,30 +509,30 @@ export function UpcomingEvents() {
 
                     {isResultAnnounced ? (
                       <div
-                        className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/10 text-white border border-white/20 cursor-pointer hover:bg-white/20 transition-colors duration-200"
+                        className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/20 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-200 flex items-center justify-center gap-2"
                         onClick={() => openWinnersPopup(event)}
                       >
                         🏆 The Result Has Been Officially Announced!
                       </div>
                     ) : isResultScheduled ? (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/10 text-white border border-white/20">
+                      <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-amber-500/10 text-amber-300 border border-amber-500/30">
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
                       </div>
                     ) : isOpen ? (
                       <button
                         id={`register-btn-${event.id}`}
                         onClick={() => handleRegisterClick(event)}
-                        className="w-full py-3 rounded-full font-semibold transition-all duration-300 flex justify-center items-center bg-white text-black hover:bg-neutral-200 shadow-[0_4px_20px_rgba(255,255,255,0.15)] active:scale-95"
+                        className="w-full py-3.5 rounded-full font-bold transition-all duration-300 flex justify-center items-center bg-gradient-to-r from-amber-200 via-white to-amber-100 text-black hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(251,191,36,0.5)] active:scale-95 text-sm"
                       >
                         Register Now
                       </button>
                     ) : isFull ? (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
+                      <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Full (60/60 Teams)</span>
                       </div>
                     ) : (
-                      <div className="w-full py-3 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
+                      <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
                         <span>🔒</span>
                         <span>Registration Has Closed</span>
                       </div>

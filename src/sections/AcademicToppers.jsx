@@ -16,8 +16,12 @@ const DEFAULT_TOPPERS = [
 ];
 
 function TopperCard({ topper }) {
+  const isRank1 = topper.rank === 1;
+  const isRank2 = topper.rank === 2;
+  const isRank3 = topper.rank === 3;
+
   return (
-    <div className="bg-[#111317]/85 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.6)] hover:border-white/20 overflow-hidden flex flex-col h-full transition-all duration-300 group">
+    <div className={`bg-[#111317]/85 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] ${isRank1 ? 'hover:border-amber-300/50 hover:shadow-[0_0_35px_rgba(251,191,36,0.25)]' : isRank2 ? 'hover:border-slate-300/40 hover:shadow-[0_0_30px_rgba(226,232,240,0.2)]' : 'hover:border-amber-700/50 hover:shadow-[0_0_30px_rgba(180,83,9,0.2)]'} overflow-hidden flex flex-col h-full transition-all duration-300 group`}>
       <div className="relative overflow-hidden h-[340px]">
         <img
           src={topper.image}
@@ -27,8 +31,14 @@ function TopperCard({ topper }) {
           className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
         />
         {/* Top Left Badge */}
-        <div className="absolute top-4 left-4 bg-white text-black text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg">
-          Rank {topper.rank}
+        <div className={`absolute top-4 left-4 text-xs px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-1 ${
+          isRank1 ? 'bg-gradient-to-r from-amber-300 to-yellow-500 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.5)]' :
+          isRank2 ? 'bg-gradient-to-r from-slate-200 to-neutral-300 text-black font-bold' :
+          isRank3 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold' :
+          'bg-white text-black font-bold'
+        }`}>
+          <span>{isRank1 ? '👑' : isRank2 ? '🥈' : '🥉'}</span>
+          <span>Rank {topper.rank}</span>
         </div>
       </div>
 
@@ -46,7 +56,7 @@ function TopperCard({ topper }) {
             <span className="text-slate-400 text-xs uppercase tracking-wider mb-1">
               {topper.score_label || "CGPA"}
             </span>
-            <span className="text-white font-bold text-xl">
+            <span className="text-amber-200 font-bold text-xl font-mono">
               {topper.cgpa}
             </span>
           </div>
@@ -55,7 +65,7 @@ function TopperCard({ topper }) {
               Rank
             </span>
             <span className="text-white font-bold text-xl">
-              {topper.rank}
+              #{topper.rank}
             </span>
           </div>
         </div>
@@ -99,11 +109,20 @@ export function AcademicToppers() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <h2 className="font-sans text-3xl md:text-5xl font-bold text-white mb-4">
-            Semester Toppers
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3">
+            <span className="text-white font-sans">Academic </span>
+            <span 
+              className="text-amber-200 font-normal text-4xl md:text-6xl inline-block px-1"
+              style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
+            >
+              Toppers
+            </span>
           </h2>
-          <p className="font-sans text-neutral-400 text-base md:text-lg max-w-2xl mx-auto">
-            Celebrating the academic excellence of our brightest minds.
+          <p 
+            className="text-amber-100/80 text-lg md:text-xl font-serif italic max-w-2xl mx-auto"
+            style={{ fontFamily: "'Cormorant Garamond', serif" }}
+          >
+            Celebrating the academic excellence and brilliant minds of Computer Engineering
           </p>
         </motion.div>
 
