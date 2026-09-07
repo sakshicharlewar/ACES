@@ -66,6 +66,13 @@ export default function AdminEventRegistrations() {
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
     else if (events.length > 0) fetchRegistrations(events[0].id);
+
+    // Auto-refresh registrations every 15 seconds so admin panel updates live on all devices
+    const interval = setInterval(() => {
+      if (selectedEventId) fetchRegistrations(selectedEventId);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [selectedEventId]);
 
   const fetchEvents = async () => {
