@@ -1,14 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, AlertCircle, Loader2, Copy, Upload, CreditCard, Users } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { X, CheckCircle, AlertCircle, Loader2, Copy, Upload, CreditCard, Users, ArrowRight, ArrowLeft } from 'lucide-react';
 import RegistrationSuccess from './RegistrationSuccess';
 import { getBaseUrl } from '../../lib/apiConfig';
 
 const DEFAULT_UPI_ID = 'yatharthdonarkar2909@oksbi';
 const DEFAULT_UPI_NAME = 'Yatharth Donarkar';
-
-const years = ['1st Year', '2nd Year', '3rd Year', 'Final Year', 'Diploma'];
 
 const DEPARTMENTS = [
   'Computer Engineering',
@@ -51,12 +48,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     window.location.href = UPI_STRING;
   };
 
+  const [upiCopied, setUpiCopied] = useState(false);
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(UPI_ID).then(() => {
       setUpiCopied(true);
       setTimeout(() => setUpiCopied(false), 2500);
     }).catch(() => {
-      // fallback for browsers without clipboard API
       const el = document.createElement('textarea');
       el.value = UPI_ID;
       document.body.appendChild(el);
@@ -67,6 +64,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setTimeout(() => setUpiCopied(false), 2500);
     });
   };
+
   const teamSize = eventDetails?.team_size || 4;
   const makeEmptyMembers = (size) =>
     Array.from({ length: Math.max(3, (size || 4) - 1) }, () => ({ name: '', email: '', phone: '', year: '' }));
@@ -90,7 +88,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [pendingSuccessData, setPendingSuccessData] = useState(null);
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
-  const [upiCopied, setUpiCopied] = useState(false);
   const fileRef = useRef(null);
 
   // Reset form when a different event is opened
@@ -131,29 +128,31 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setError(null);
   };
 
+  const handleLeaderPhoneChange = (e) => {
+    const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setFormData(prev => ({ ...prev, leaderPhone: cleaned }));
+    setError(null);
+  };
+
   const handleMemberChange = (idx, field, value) => {
-    const updated = formData.members.map((m, i) => i === idx ? { ...m, [field]: value } : m);
+    const cleanValue = field === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    const updated = formData.members.map((m, i) => i === idx ? { ...m, [field]: cleanValue } : m);
     setFormData({ ...formData, members: updated });
     setError(null);
   };
 
-  const copyUPI = () => {
-    navigator.clipboard.writeText(UPI_ID);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const validateStep1 = () => {
+    const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
     if (!formData.teamName.trim() || !formData.leaderName.trim() || !formData.leaderEmail.trim() || !formData.leaderPhone.trim()) {
       setError('Please fill all required leader fields.');
       return false;
     }
-    if (formData.leaderPhone.length !== 10) {
-      setError('Phone number must be exactly 10 digits.');
+    if (leaderPhoneClean.length !== 10) {
+      setError('Leader phone number must be exactly 10 digits.');
       return false;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.leaderEmail)) {
-      setError('Please enter a valid email address.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.leaderEmail.trim())) {
+      setError('Please enter a valid email address for team leader.');
       return false;
     }
     if (!formData.leaderYear) {
@@ -172,30 +171,32 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const validateStep2 = () => {
+    const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
     // Member 2 (index 0) is required (minimum 2 members in a team)
     const m2 = formData.members[0];
     if (!m2 || !m2.name.trim() || !m2.email.trim() || !m2.phone.trim()) {
       setError('Please fill all required fields for Member 2.');
       return false;
     }
-    if (m2.phone.length !== 10) {
+    const m2PhoneClean = m2.phone.replace(/\D/g, '');
+    if (m2PhoneClean.length !== 10) {
       setError('Member 2 phone number must be exactly 10 digits.');
       return false;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m2.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m2.email.trim())) {
       setError('Member 2 email is invalid.');
       return false;
     }
-    if (m2.email.toLowerCase() === formData.leaderEmail.toLowerCase()) {
+    if (m2.email.toLowerCase().trim() === formData.leaderEmail.toLowerCase().trim()) {
       setError('Member 2 cannot have the same email as the leader.');
       return false;
     }
-    if (m2.phone === formData.leaderPhone) {
-      setError('Member 2 cannot have the same phone as the leader.');
+    if (m2PhoneClean === leaderPhoneClean) {
+      setError('Member 2 cannot have the same phone number as the leader.');
       return false;
     }
 
-    // Members 3 and 4 are OPTIONAL! Validate ONLY if the student enters info for them
+    // Members 3 and 4 are OPTIONAL! Validate ONLY if student enters info for them
     for (let i = 1; i < formData.members.length; i++) {
       const m = formData.members[i];
       const num = i + 2;
@@ -205,35 +206,38 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           setError(`Please complete all fields for Member ${num} or clear them if you have a smaller team.`);
           return false;
         }
-        if (m.phone.length !== 10) {
+        const mPhoneClean = m.phone.replace(/\D/g, '');
+        if (mPhoneClean.length !== 10) {
           setError(`Member ${num} phone number must be exactly 10 digits.`);
           return false;
         }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email.trim())) {
           setError(`Member ${num} email is invalid.`);
           return false;
         }
-        if (m.email.toLowerCase() === formData.leaderEmail.toLowerCase() || m.email.toLowerCase() === m2.email.toLowerCase()) {
-          setError(`Member ${num} cannot have duplicate email.`);
+        if (m.email.toLowerCase().trim() === formData.leaderEmail.toLowerCase().trim() || m.email.toLowerCase().trim() === m2.email.toLowerCase().trim()) {
+          setError(`Member ${num} cannot have a duplicate email.`);
           return false;
         }
-        if (m.phone === formData.leaderPhone || m.phone === m2.phone) {
-          setError(`Member ${num} cannot have duplicate phone number.`);
+        if (mPhoneClean === leaderPhoneClean || mPhoneClean === m2PhoneClean) {
+          setError(`Member ${num} cannot have a duplicate phone number.`);
           return false;
         }
       }
     }
 
     if (!formData.agreedToRules) {
-      setError('You must agree to the event rules to register.');
+      setError('You must agree to the event rules to proceed.');
       return false;
     }
     return true;
   };
 
   const nextStep = (e) => {
-    if (step === 1 && validateStep1()) { setStep(2); setError(null); }
-    else if (step === 2 && validateStep2()) { 
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+      setError(null);
+    } else if (step === 2 && validateStep2()) { 
       const isFree = Number(eventDetails?.fee ?? eventDetails?.registration_fee ?? 0) === 0;
       if (isFree) {
         handleSubmit(e); // Skip payment step if free
@@ -245,7 +249,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const prevStep = () => {
-    setStep(s => s - 1);
+    setStep(s => Math.max(1, s - 1));
     setError(null);
   };
 
@@ -290,7 +294,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           setFormData(prev => ({ ...prev, paymentScreenshot: compressedDataUrl }));
           setError(null);
         } catch {
-          // Fallback to raw data url if canvas rendering fails
           setFormData(prev => ({ ...prev, paymentScreenshot: event.target.result }));
           setError(null);
         }
@@ -325,6 +328,43 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     return true;
   };
 
+  const toFriendlyError = (err, responseData) => {
+    if (responseData?.detail || responseData?.error) {
+      const msg = responseData.detail || responseData.error;
+      if (typeof msg === 'string') {
+        if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
+          const limitMatch = msg.match(/limit of (\d+) teams/i);
+          const limitNum = limitMatch ? limitMatch[1] : (eventDetails?.max_teams || 60);
+          return `⚠️ Registration is currently full. The maximum limit of ${limitNum} teams has been reached.`;
+        }
+        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
+          return 'This email or phone has already been used for registration in this event.';
+        }
+        if (msg.toLowerCase().includes('transaction id') && msg.toLowerCase().includes('already been used')) {
+          return '⚠️ This Transaction ID has already been recorded. Please use the unique transaction ID from your UPI payment receipt.';
+        }
+        if (msg.toLowerCase().includes('transaction id') || msg.toLowerCase().includes('payment screenshot')) {
+          return '⚠️ Transaction ID and Payment Screenshot are required to complete registration.';
+        }
+        if (msg.toLowerCase().includes('event not found')) {
+          return 'This event is no longer available. Please refresh the page and try again.';
+        }
+        if (msg.length < 200 && !msg.includes('Traceback') && !msg.includes('Exception')) {
+          return msg;
+        }
+      }
+    }
+    if (!err) return 'We are unable to process your registration right now. Please check your details and try again.';
+    const raw = err.message || '';
+    if (raw.includes('fetch') || raw.includes('network') || raw.includes('Network') || raw.includes('Failed to fetch')) {
+      return 'Unable to connect to the server. Please check your internet connection and try again.';
+    }
+    if (raw.includes('timeout') || raw.includes('AbortError')) {
+      return 'The request timed out. Please try again in a moment.';
+    }
+    return 'We are unable to process your registration right now. Please try again in a few moments.';
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (loading) return;
@@ -336,7 +376,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setError(null);
 
     const apiUrl = getBaseUrl();
-    const eventId = eventDetails?.id || 1;
+    const eventId = eventDetails?.id || 12;
 
     const effectiveBranch = (formData.leaderBranch || '').trim() || 'Computer Engineering';
     const effectiveCollege = (formData.leaderCollege || '').trim() || 'Suryodaya College of Engineering & Technology';
@@ -349,29 +389,29 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       .map(m => ({
         name: m.name.trim(),
         email: (m.email || '').trim(),
-        phone: (m.phone || '').trim(),
+        phone: (m.phone || '').replace(/\D/g, '').slice(-10),
         year: m.year || '',
         branch: effectiveBranch,
         college: effectiveCollege,
       }));
+
     const payload = {
       event_id: eventId,
-      team_name: formData.teamName,
-      leader_name: formData.leaderName,
-      leader_email: formData.leaderEmail,
-      leader_phone: formData.leaderPhone,
+      team_name: formData.teamName.trim(),
+      leader_name: formData.leaderName.trim(),
+      leader_email: formData.leaderEmail.trim(),
+      leader_phone: formData.leaderPhone.replace(/\D/g, '').slice(-10),
       leader_year: formData.leaderYear,
       leader_branch: combinedBranch,
       member2_name: firstMember.name ? firstMember.name.trim() : null,
       member2_email: firstMember.email ? firstMember.email.trim() : null,
-      member2_phone: firstMember.phone ? firstMember.phone.trim() : null,
+      member2_phone: firstMember.phone ? firstMember.phone.replace(/\D/g, '').slice(-10) : null,
       member2_year: firstMember.year || null,
       extra_members: extraMembers.length > 0 ? extraMembers : null,
       transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
       payment_screenshot: isFree ? null : formData.paymentScreenshot,
     };
 
-    // Retry up to 3 times on network failure
     let lastErr = null;
     let response = null;
     let data = null;
@@ -384,21 +424,15 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         });
         data = await response.json();
         lastErr = null;
-        break; // success — exit retry loop
+        break;
       } catch (err) {
         lastErr = err;
         if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
       }
     }
 
-    if (lastErr) {
-      setError("Network connection issue. Please check your internet and tap submit again.");
-      setLoading(false);
-      return;
-    }
-
-    if (!response || !response.ok) {
-      const errMsg = (data && (data.detail || data.message || data.error)) || "Failed to submit registration. Please try again.";
+    if (lastErr || !response || !response.ok) {
+      const errMsg = toFriendlyError(lastErr, data);
       setError(errMsg);
       setLoading(false);
       return;
@@ -417,45 +451,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
     setLoading(false);
   };
 
-  const toFriendlyError = (err, responseData) => {
-    // Backend sent a known message (e.g., registration closed, duplicate team)
-    if (responseData?.detail || responseData?.error) {
-      const msg = responseData.detail || responseData.error;
-      if (typeof msg === 'string') {
-        if (msg.toLowerCase().includes('maximum limit') || msg.toLowerCase().includes('closed')) {
-          const limitMatch = msg.match(/limit of (\d+) teams/i);
-          const limitNum = limitMatch ? limitMatch[1] : (eventDetails?.max_teams || 31);
-          return `⚠️ Registration is now closed. The maximum limit of ${limitNum} teams has been reached.`;
-        }
-        if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already be registered') || msg.toLowerCase().includes('duplicate')) {
-          return 'This email has already been used for registration in this event.';
-        }
-        if (msg.toLowerCase().includes('transaction id') && msg.toLowerCase().includes('already been used')) {
-          return '⚠️ This Transaction ID has already been used. Please use a unique transaction ID from your UPI payment.';
-        }
-        if (msg.toLowerCase().includes('transaction id') || msg.toLowerCase().includes('payment screenshot')) {
-          return '⚠️ Transaction ID and Payment Screenshot are required to complete registration.';
-        }
-        if (msg.toLowerCase().includes('event not found')) {
-          return 'This event is no longer available. Please refresh the page and try again.';
-        }
-        if (msg.length < 200 && !msg.includes('Traceback') && !msg.includes('Exception')) {
-          return msg;
-        }
-      }
-    }
-    // Network / fetch failures
-    if (!err) return 'We are unable to process your registration right now. Please try again in a few moments or contact the event coordinator if the issue continues.';
-    const raw = err.message || '';
-    if (raw.includes('fetch') || raw.includes('network') || raw.includes('Network') || raw.includes('Failed to fetch')) {
-      return 'Unable to connect to the server. Please check your internet connection and try again.';
-    }
-    if (raw.includes('timeout') || raw.includes('AbortError')) {
-      return 'The request timed out. Please try again in a moment.';
-    }
-    return 'We are unable to process your registration right now. Please try again in a few moments or contact the event coordinator if the issue continues.';
-  };
-
   if (successData) {
     return <RegistrationSuccess data={successData} onClose={onClose} />;
   }
@@ -467,30 +462,30 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative w-full max-w-md bg-[#0B0B0B] border border-green-500/30 rounded-2xl p-8 shadow-[0_0_40px_rgba(34,197,94,0.12)] flex flex-col items-center text-center"
+          className="relative w-full max-w-md bg-[#0B0B0B] border border-green-500/30 rounded-2xl p-6 sm:p-8 shadow-[0_0_40px_rgba(34,197,94,0.15)] flex flex-col items-center text-center max-h-[90vh] overflow-y-auto custom-scrollbar"
         >
           {/* Success icon */}
-          <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-5 border border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
-            <span className="text-4xl">🎉</span>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-4 border border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+            <span className="text-3xl sm:text-4xl">🎉</span>
           </div>
-          <h2 className="text-xl font-bold text-white mb-1">Registration Successful!</h2>
-          <p className="text-green-400 font-semibold text-sm mb-5">Your registration has been received successfully.</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">Registration Successful!</h2>
+          <p className="text-green-400 font-semibold text-sm mb-4">Your registration has been received successfully.</p>
           
           {/* Registration ID */}
-          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-center">
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-4 text-center">
             <p className="text-xs text-neutral-400 uppercase tracking-wider mb-1">Your Registration ID</p>
-            <p className="text-2xl font-mono font-bold text-white">{pendingSuccessData?.registrationId}</p>
+            <p className="text-2xl font-mono font-bold text-amber-200 tracking-wider">{pendingSuccessData?.registrationId}</p>
           </div>
 
-          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left space-y-2">
-            <p className="text-white text-sm font-semibold mb-2">📋 What happens next?</p>
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-left space-y-2.5">
+            <p className="text-white text-sm font-semibold mb-1">📋 What happens next?</p>
             <div className="flex items-start gap-2 text-xs text-neutral-300">
-              <span className="text-white mt-0.5 shrink-0">1️⃣</span>
-              <span>Your registration details &amp; team entries are saved in the system.</span>
+              <span className="text-amber-200 mt-0.5 shrink-0 font-bold">1.</span>
+              <span>Your registration details &amp; team entries are saved in the database.</span>
             </div>
             <div className="flex items-start gap-2 text-xs text-neutral-300">
-              <span className="text-white mt-0.5 shrink-0">2️⃣</span>
-              <span>Join our official WhatsApp group for round schedules, seat numbers &amp; announcements:</span>
+              <span className="text-amber-200 mt-0.5 shrink-0 font-bold">2.</span>
+              <span>Join our official WhatsApp group for round schedules, seat allocations &amp; announcements:</span>
             </div>
             {(eventDetails?.whatsapp_link || pendingSuccessData?.whatsapp_link) && (
               <div className="pt-2">
@@ -509,11 +504,12 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
             )}
           </div>
           <button 
+            type="button"
             onClick={() => {
               if (onSuccess) onSuccess();
               setSuccessData(pendingSuccessData);
             }}
-            className="w-full bg-white hover:bg-neutral-200 text-black font-semibold py-3.5 rounded-full transition-all shadow-lg"
+            className="w-full bg-white hover:bg-neutral-200 text-black font-bold py-3.5 rounded-full transition-all shadow-lg text-sm"
           >
             OK, Got it!
           </button>
@@ -521,7 +517,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       </div>
     );
   }
-
 
   // Build year options dynamically based on event eligibility
   const eligibility = eventDetails?.eligibility || '';
@@ -547,79 +542,95 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   }
   const progressWidth = step === 1 ? '33%' : step === 2 ? '66%' : '100%';
 
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 bg-black/85 backdrop-blur-md"
           onClick={onClose}
         />
 
-        {/* Modal */}
+        {/* Modal Window Container */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 20 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative w-full max-w-2xl bg-[#0F1115] border border-white/15 rounded-3xl shadow-2xl overflow-hidden my-auto"
+          exit={{ opacity: 0, scale: 0.94, y: 15 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+          className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] bg-[#0F1115] border border-white/20 rounded-[24px] sm:rounded-[30px] shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_40px_rgba(251,191,36,0.12)] overflow-hidden flex flex-col my-auto z-10"
         >
-          {/* Header */}
-          <div className="flex justify-between items-center px-6 py-4 border-b border-white/10">
+          {/* ── Fixed Header (Shrink-0) ── */}
+          <div className="shrink-0 flex justify-between items-center px-5 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-[#0F1115] z-10">
             <div>
-              <h2 className="text-xl font-bold text-white font-sans">{eventName} Registration</h2>
-              <p className="text-sm text-neutral-400 mt-1 font-sans">
-                Team Registration ({eventDetails?.team_size || 2} Members) •{' '}
-                <span className="text-white font-semibold">Step {step} of 3</span>
+              <h2 className="text-lg sm:text-xl font-bold text-white font-sans flex items-center gap-2">
+                <span>{eventName}</span>
+                <span className="text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30 font-mono font-semibold">
+                  Registration
+                </span>
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-400 mt-0.5 font-sans">
+                Team Registration ({eventDetails?.team_size || 4} Members) •{' '}
+                <span className="text-amber-200 font-semibold">Step {step} of 3</span>
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              aria-label="Close modal"
             >
               <X size={20} />
             </button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-white/5 h-1">
+          {/* ── Fixed Progress Bar (Shrink-0) ── */}
+          <div className="shrink-0 w-full bg-white/5 h-1.5">
             <motion.div
-              className="h-full bg-white"
+              className="h-full bg-gradient-to-r from-amber-400 via-amber-200 to-white shadow-[0_0_10px_rgba(251,191,36,0.5)]"
               initial={{ width: '33%' }}
               animate={{ width: progressWidth }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.35 }}
             />
           </div>
 
-          {/* Step Labels */}
-          <div className="flex justify-between px-6 pt-3 pb-1">
-            {['Leader Info', 'Member 2', '💳 Payment'].map((label, i) => (
-              <span key={i} className={`text-xs font-medium font-sans ${step === i + 1 ? 'text-white font-bold' : step > i + 1 ? 'text-neutral-300' : 'text-neutral-600'}`}>
+          {/* ── Fixed Step Indicators (Shrink-0) ── */}
+          <div className="shrink-0 flex justify-between px-5 sm:px-6 pt-2.5 pb-2 bg-[#0F1115]/90 border-b border-white/5 text-xs font-sans">
+            {['1. Leader Info', '2. Team Members', '3. 💳 Payment'].map((label, i) => (
+              <span 
+                key={i} 
+                className={`font-semibold transition-colors ${
+                  step === i + 1 
+                    ? 'text-amber-200 font-bold drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]' 
+                    : step > i + 1 
+                    ? 'text-emerald-400' 
+                    : 'text-neutral-500'
+                }`}
+              >
                 {step > i + 1 ? '✓ ' : ''}{label}
               </span>
             ))}
           </div>
 
-          <div className="px-6 md:px-8 max-h-[70vh] overflow-y-auto custom-scrollbar pb-2">
+          {/* ── Scrollable Form Area (flex-1 min-h-0) ── */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-8 py-4 min-h-0">
             {error && (
-              <div className="mb-4 mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-                <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
-                <p className="text-red-200 text-sm">{error}</p>
+              <div className="mb-4 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={20} />
+                <p className="text-red-200 text-sm font-sans leading-relaxed">{error}</p>
               </div>
             )}
 
             <form onSubmit={step === 3 ? handleSubmit : (e) => e.preventDefault()} noValidate>
 
-              {/* ── COMPACT & AESTHETIC EVENT INFO CARD (Step 1) ── */}
+              {/* ── COMPACT EVENT HIGHLIGHTS CARD (Step 1) ── */}
               {step === 1 && (
-                <div className="relative mt-4 mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-white/[0.05] via-white/[0.02] to-transparent border border-white/15 backdrop-blur-md p-4 sm:p-5 shadow-lg">
+                <div className="relative mb-5 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-500/[0.08] via-white/[0.03] to-transparent border border-amber-500/20 backdrop-blur-md p-4 sm:p-5 shadow-lg">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-200 text-base">⚡</span>
+                      <span className="text-amber-300 text-base">⚡</span>
                       <h4 className="text-white font-bold text-xs tracking-wider uppercase font-sans">
                         Event Highlights
                       </h4>
@@ -631,40 +642,33 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     )}
                   </div>
 
-                  {/* Compact Short Description (1-2 clean lines) */}
                   <p className="text-neutral-300 text-xs sm:text-sm leading-relaxed mb-3.5 font-sans">
-                    <span className="text-white font-semibold">{eventDetails?.title?.split('-')[0]?.trim() || "Event"}</span> — {
+                    <span className="text-white font-semibold">{eventDetails?.title?.split('-')[0]?.trim() || "BUILDX"}</span> — {
                       (eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx")
                         ? "Full Stack Development & Live Problem Solving Challenge. Build scalable solutions and adapt in real-time."
                         : (eventDetails?.short_description || "Showcase your technical excellence and teamwork.")
                     }
                   </p>
 
-                  {/* Aesthetic Color Badges */}
                   <div className="flex flex-wrap gap-2">
-                    {/* Team Size */}
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs font-medium font-sans">
-                      👥 {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : `${eventDetails?.team_size || 2} Members`}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs font-semibold font-sans">
+                      👥 {(eventDetails?.slug || "").includes("buildx") || (eventDetails?.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : `${eventDetails?.team_size || 4} Members`}
                     </span>
 
-                    {/* Registration Fee */}
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-200 text-xs font-semibold font-sans">
-                      💳 Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 0}
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-sans">
+                      💳 Fee: ₹{eventDetails?.fee ?? eventDetails?.registration_fee ?? 40}
                     </span>
 
-                    {/* Seats Left Badge in Red */}
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/35 text-red-300 text-xs font-bold font-sans shadow-[0_0_12px_rgba(239,68,68,0.2)]">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold font-sans shadow-[0_0_12px_rgba(239,68,68,0.25)]">
                       🔥 {Math.max(0, (eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60) - (eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0))} Seats Left ({eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0}/{eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60})
                     </span>
 
-                    {/* Venue */}
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-200 text-xs font-medium font-sans">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-medium font-sans">
                       📍 SCET, Nagpur
                     </span>
 
-                    {/* Eligibility */}
                     {eventDetails?.eligibility && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/25 text-rose-200 text-xs font-medium font-sans">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs font-medium font-sans">
                         🎓 {eventDetails.eligibility}
                       </span>
                     )}
@@ -672,58 +676,58 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </div>
               )}
 
-              {/* ── STEP 1: LEADER ── */}
-              <div className={step === 1 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white text-sm">1</span>
+              {/* ── STEP 1: LEADER DETAILS ── */}
+              <div className={step === 1 ? 'block' : 'hidden'}>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2 font-sans">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-black font-black text-xs">1</span>
                   Team &amp; Leader Details
                 </h3>
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-neutral-300 mb-2 font-sans">Team Name *</label>
+                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Team Name *</label>
                     <input
                       type="text" name="teamName" value={formData.teamName} onChange={handleChange}
-                      placeholder="e.g. Code Breakers"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 focus:ring-1 focus:ring-white/20 outline-none transition-all font-sans"
+                      placeholder="e.g. Code Innovators"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 focus:ring-1 focus:ring-amber-300/20 outline-none transition-all font-sans text-sm"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Name *</label>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Name *</label>
                       <input
                         type="text" name="leaderName" value={formData.leaderName} onChange={handleChange}
-                        placeholder="Full Name"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                        placeholder="Leader Full Name"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Phone *</label>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Phone *</label>
                       <input
-                        type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleChange}
-                        placeholder="10-digit number" maxLength="10"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                        type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleLeaderPhoneChange}
+                        placeholder="10-digit mobile number" maxLength="10"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm text-neutral-300 mb-2 font-sans">Leader Email *</label>
+                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Email *</label>
                     <input
                       type="email" name="leaderEmail" value={formData.leaderEmail} onChange={handleChange}
-                      placeholder="Email Address"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                      placeholder="e.g. student@gmail.com"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Year of Study *</label>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Year of Study *</label>
                       <select
                         required
                         name="leaderYear" value={formData.leaderYear} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-white/40 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-amber-300/60 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans text-sm"
                       >
                         <option value="">-- Select Year --</option>
                         {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -731,21 +735,21 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     </div>
 
                     <div>
-                      <label className="block text-sm text-neutral-300 mb-2 font-sans">Department / Branch *</label>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Department / Branch *</label>
                       <input
                         type="text"
                         required
                         name="leaderBranch"
                         value={formData.leaderBranch}
                         onChange={handleChange}
-                        placeholder="e.g. Computer Engineering / AIDS / IT"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                        placeholder="e.g. Computer Engineering / CSE / IT"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm text-neutral-300 mb-2 font-sans">College / Institute Name *</label>
+                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">College / Institute Name *</label>
                     <input
                       type="text"
                       required
@@ -753,82 +757,99 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       value={formData.leaderCollege}
                       onChange={handleChange}
                       placeholder="e.g. Suryodaya College of Engineering & Technology, Nagpur"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                     />
                   </div>
 
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                    <span className="text-white text-lg">🎓</span>
+                    <span className="text-amber-300 text-lg">🎓</span>
                     <p className="text-xs sm:text-sm text-neutral-300 font-medium font-sans">Open for all Engineering, Polytechnic &amp; Diploma Students from all Colleges!</p>
+                  </div>
+
+                  {/* Prominent In-Form Continue Button */}
+                  <div className="pt-3 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer font-sans"
+                    >
+                      <span>Continue to Team Members</span>
+                      <ArrowRight size={18} />
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* ── STEP 2: ALL EXTRA MEMBERS (dynamic) ── */}
-              <div className={step === 2 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white text-sm"><Users size={14} /></span>
+              {/* ── STEP 2: TEAM MEMBERS ── */}
+              <div className={step === 2 ? 'block' : 'hidden'}>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2 font-sans">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-black font-black text-xs"><Users size={13} /></span>
                   Team Members Details
                 </h3>
 
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {formData.members.map((member, idx) => {
                     const isOptional = idx > 0;
                     return (
-                      <div key={idx} className={`p-4 rounded-xl border ${isOptional ? 'border-white/5 bg-white/[0.02]' : 'border-white/15 bg-white/[0.03]'} space-y-4`}>
+                      <div key={idx} className={`p-4 sm:p-5 rounded-2xl border ${isOptional ? 'border-white/10 bg-white/[0.02]' : 'border-amber-500/30 bg-amber-500/[0.03] shadow-[0_0_20px_rgba(251,191,36,0.05)]'} space-y-4`}>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-white font-sans">
-                            Member {idx + 2} {isOptional ? <span className="text-xs font-normal text-neutral-400 font-sans">(Optional — Leave blank if not needed)</span> : <span className="text-xs text-neutral-400 font-semibold font-sans">* Required</span>}
+                          <p className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                            <span>Member {idx + 2}</span>
+                            {isOptional ? (
+                              <span className="text-[11px] font-normal text-neutral-400 font-sans">(Optional — Leave blank if not needed)</span>
+                            ) : (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 font-semibold font-sans">Required</span>
+                            )}
                           </p>
                           {isOptional && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-neutral-400 font-sans">
+                            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-400 font-sans">
                               Optional
                             </span>
                           )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm text-neutral-300 mb-2 font-sans">
-                              Name {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
+                            <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">
+                              Name {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-amber-300">*</span>}
                             </label>
                             <input
                               type="text" value={member.name}
                               onChange={e => handleMemberChange(idx, 'name', e.target.value)}
                               placeholder={isOptional ? "Full Name (leave blank if not applicable)" : "Full Name"}
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm text-neutral-300 mb-2 font-sans">
-                              Phone {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
+                            <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">
+                              Phone {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-amber-300">*</span>}
                             </label>
                             <input
                               type="tel" value={member.phone} maxLength="10"
                               onChange={e => handleMemberChange(idx, 'phone', e.target.value)}
-                              placeholder="10-digit number"
-                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                              placeholder="10-digit mobile number"
+                              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm text-neutral-300 mb-2 font-sans">
-                            Email {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
+                          <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">
+                            Email {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-amber-300">*</span>}
                           </label>
                           <input
                             type="email" value={member.email}
                             onChange={e => handleMemberChange(idx, 'email', e.target.value)}
                             placeholder="Email Address"
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-white/40 outline-none transition-all font-sans"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-neutral-300 mb-2 font-sans">
-                            Year {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-neutral-400">*</span>}
+                          <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">
+                            Year of Study {isOptional ? <span className="text-neutral-500 font-normal">(Optional)</span> : <span className="text-amber-300">*</span>}
                           </label>
                           <select
                             value={member.year}
                             onChange={e => handleMemberChange(idx, 'year', e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-white/40 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-amber-300/60 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans text-sm"
                           >
                             <option value="">{isOptional ? "-- Select Year (Optional) --" : "-- Select Year --"}</option>
                             {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -838,73 +859,93 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     );
                   })}
 
-                  <div className="pt-4 border-t border-white/10">
-                    <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="pt-3 border-t border-white/10">
+                    <label className="flex items-center gap-3 cursor-pointer group select-none">
                       <div className="relative flex items-center">
                         <input
                           type="checkbox" name="agreedToRules" checked={formData.agreedToRules} onChange={handleChange}
-                          className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded cursor-pointer checked:bg-white checked:border-white transition-colors"
+                          className="peer appearance-none w-5 h-5 border-2 border-white/30 rounded cursor-pointer checked:bg-amber-300 checked:border-amber-300 transition-colors"
                         />
-                        <CheckCircle size={14} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-black opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                        <CheckCircle size={15} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-black opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity font-bold" />
                       </div>
-                      <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-sans">
-                        ☑ I agree to all event rules. <span className="text-neutral-400">*</span>
+                      <span className="text-xs sm:text-sm text-neutral-300 group-hover:text-white transition-colors font-sans font-medium">
+                        ☑ I agree to all event rules and code of conduct. <span className="text-amber-300 font-bold">*</span>
                       </span>
                     </label>
+                  </div>
+
+                  {/* Prominent In-Form Continue / Back Buttons */}
+                  <div className="pt-3 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="px-6 py-3 rounded-full text-neutral-300 hover:bg-white/10 hover:text-white transition-colors font-semibold text-sm font-sans flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ArrowLeft size={16} />
+                      <span>Back</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer font-sans"
+                    >
+                      <span>Continue to Payment</span>
+                      <ArrowRight size={18} />
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* ── STEP 3: PAYMENT ── */}
-              <div className={step === 3 ? 'block pt-4' : 'hidden'}>
-                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2 font-sans">
-                  <CreditCard size={18} />
+              {/* ── STEP 3: PAYMENT DETAILS ── */}
+              <div className={step === 3 ? 'block' : 'hidden'}>
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2 flex items-center gap-2 font-sans">
+                  <CreditCard size={18} className="text-amber-300" />
                   Registration Payment
                 </h3>
-                <p className="text-sm text-neutral-400 mb-6 font-sans">Complete the registration fee to confirm your participation.</p>
+                <p className="text-xs sm:text-sm text-neutral-400 mb-5 font-sans">Complete the ₹{FEE_AMOUNT} registration fee to confirm your team's participation.</p>
 
-                {/* Payment Details */}
-                <div className="flex flex-col items-center p-5 rounded-2xl bg-white/5 border border-white/10 mb-8 relative overflow-hidden">
-                  <h4 className="text-white font-semibold mb-5 text-lg font-sans">Payment Details</h4>
+                {/* Payment Card */}
+                <div className="flex flex-col items-center p-5 rounded-2xl bg-white/5 border border-white/10 mb-6 relative overflow-hidden">
+                  <h4 className="text-white font-bold mb-4 text-base font-sans flex items-center gap-2">
+                    <span>Scan UPI QR Code</span>
+                  </h4>
 
-                  {/* QR Code — Custom or default image */}
-                  <div className="bg-white rounded-2xl p-3 shadow-2xl mb-3 w-full max-w-[280px]">
+                  {/* QR Code */}
+                  <div className="bg-white rounded-2xl p-3 shadow-2xl mb-3 w-full max-w-[260px]">
                     <img
                       src={eventDetails?.qr_image || "/BuildXScanner.jpeg"}
                       alt="Payment QR Code"
                       style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '10px' }}
                     />
                   </div>
-                  <p className="text-xs text-neutral-400 mb-3 text-center font-sans">Scan this QR using GPay · PhonePe · Paytm · BHIM</p>
+                  <p className="text-xs text-neutral-400 mb-3 text-center font-sans">Scan this QR using Google Pay · PhonePe · Paytm · BHIM</p>
 
-                  {/* Info box — explain GPay "not debited" message */}
-                  <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-5 flex gap-3 items-start">
-                    <span className="text-white text-base mt-0.5 shrink-0">ℹ️</span>
+                  {/* GPay Explanation */}
+                  <div className="w-full bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 mb-4 flex gap-3 items-start">
+                    <span className="text-amber-300 text-base mt-0.5 shrink-0">ℹ️</span>
                     <p className="text-xs text-neutral-300 leading-relaxed font-sans">
                       <span className="font-semibold block mb-0.5 text-white">Seeing "Your money has not been debited"?</span>
-                      That is normal — it is Google Pay's safety screen shown <span className="font-semibold text-white">before</span> payment.
-                      Simply enter your <span className="font-semibold text-white">UPI PIN</span> to complete the ₹{eventDetails?.fee || eventDetails?.registration_fee || 0} payment.
+                      That is normal Google Pay safety info shown <span className="font-semibold text-amber-200">before</span> entering PIN.
+                      Simply enter your <span className="font-semibold text-white">UPI PIN</span> to pay ₹{FEE_AMOUNT}.
                     </p>
                   </div>
 
                   {/* UPI ID block */}
-                  <div className="w-full bg-black/30 rounded-xl p-4 border border-white/8 mb-4">
-                    <p className="text-xs text-neutral-400 uppercase tracking-widest mb-2 text-center font-sans">UPI ID</p>
+                  <div className="w-full bg-black/40 rounded-xl p-4 border border-white/10 mb-4">
+                    <p className="text-xs text-neutral-400 uppercase tracking-widest mb-2 text-center font-sans font-semibold">UPI ID</p>
                     <div
-                      className="w-full text-center font-mono font-semibold text-white break-all select-all bg-white/5 rounded-lg px-3 py-3 border border-white/10 text-sm sm:text-base cursor-text mb-3"
-                      style={{ wordBreak: 'break-all' }}
+                      className="w-full text-center font-mono font-bold text-white select-all bg-white/5 rounded-lg px-3 py-2.5 border border-white/10 text-sm sm:text-base cursor-text mb-3"
                     >
                       {UPI_ID}
                     </div>
 
-                    {/* Copy button */}
                     <button
                       type="button"
                       onClick={handleCopyUPI}
-                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-full font-medium text-sm transition-all duration-300 font-sans ${
+                      className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-300 font-sans cursor-pointer ${
                         upiCopied
-                          ? 'bg-white text-black font-semibold'
-                          : 'bg-white/10 hover:bg-white/15 text-white border border-white/15'
+                          ? 'bg-emerald-400 text-black shadow-[0_0_15px_rgba(52,211,153,0.4)]'
+                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
                       }`}
                     >
                       {upiCopied ? (
@@ -916,61 +957,58 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                   </div>
 
                   {/* Amount */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-neutral-400 text-sm font-sans">Amount:</span>
-                    <span className="text-2xl font-bold text-white font-sans">₹{FEE_AMOUNT}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-neutral-400 text-sm font-sans">Registration Fee:</span>
+                    <span className="text-2xl font-black text-amber-200 font-sans">₹{FEE_AMOUNT}</span>
                   </div>
-
-
                 </div>
 
-                <div className="space-y-5">
-
+                <div className="space-y-4">
                   {/* Transaction ID */}
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3 font-sans">
-                      <span className="text-lg">🔢</span>
-                      UPI Transaction ID <span className="text-neutral-400">*</span>
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white mb-2 font-sans">
+                      <span className="text-base">🔢</span>
+                      UPI Transaction ID / UTR <span className="text-amber-300">*</span>
                     </label>
                     <input
                       type="text"
                       name="transactionId"
                       value={formData.transactionId}
                       onChange={handleChange}
-                      placeholder="e.g. 318512345678"
-                      className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-neutral-600 focus:border-white/40 focus:bg-black/50 outline-none transition-all font-mono text-sm"
+                      placeholder="e.g. 418512345678 (12-digit number)"
+                      className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-mono text-sm"
                       minLength="12"
                       maxLength="40"
                     />
-                    <p className="text-xs text-neutral-400 mt-2 font-sans">Enter the 12-digit UTR / Transaction ID from your UPI app after payment.</p>
+                    <p className="text-[11px] sm:text-xs text-neutral-400 mt-1.5 font-sans">Enter the 12-digit UTR / Transaction ID from your payment confirmation screen.</p>
                   </div>
 
                   {/* Screenshot Upload */}
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3 font-sans">
-                      <span className="text-lg">📸</span>
-                      Payment Screenshot / Proof <span className="text-neutral-400">*</span>
+                    <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white mb-2 font-sans">
+                      <span className="text-base">📸</span>
+                      Payment Screenshot Proof <span className="text-amber-300">*</span>
                     </label>
 
                     {formData.paymentScreenshot ? (
-                      <div className="relative rounded-xl border border-white/10 overflow-hidden bg-white/5 p-2">
+                      <div className="relative rounded-xl border border-white/15 overflow-hidden bg-black/40 p-2">
                         <img
                           src={formData.paymentScreenshot}
                           alt="Screenshot preview"
-                          className="w-full h-48 object-contain rounded-lg bg-black/50"
+                          className="w-full h-44 object-contain rounded-lg"
                         />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-4 rounded-xl">
+                        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3 rounded-xl backdrop-blur-xs">
                           <button
                             type="button"
                             onClick={() => fileRef.current?.click()}
-                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-white text-sm font-medium backdrop-blur-md transition-colors font-sans"
+                            className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-full text-white text-xs font-semibold backdrop-blur-md transition-colors font-sans cursor-pointer"
                           >
                             Replace
                           </button>
                           <button
                             type="button"
                             onClick={() => setFormData(p => ({ ...p, paymentScreenshot: null }))}
-                            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white text-sm font-medium backdrop-blur-md transition-colors font-sans"
+                            className="px-4 py-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white text-xs font-semibold backdrop-blur-md transition-colors font-sans cursor-pointer"
                           >
                             Remove
                           </button>
@@ -979,13 +1017,13 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     ) : (
                       <div
                         onClick={() => fileRef.current?.click()}
-                        className="w-full border-2 border-dashed border-white/20 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-white/40 hover:bg-white/5 transition-all group"
+                        className="w-full border-2 border-dashed border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-amber-300/50 hover:bg-white/[0.03] transition-all group"
                       >
-                        <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                          <Upload className="text-white" size={26} />
+                        <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                          <Upload className="text-white" size={22} />
                         </div>
-                        <p className="text-sm text-neutral-300 font-medium text-center font-sans">Tap to upload payment screenshot</p>
-                        <p className="text-xs text-neutral-500 mt-1 text-center font-sans">JPG, PNG · Max 10MB</p>
+                        <p className="text-xs sm:text-sm text-neutral-200 font-semibold text-center font-sans">Tap to upload payment screenshot</p>
+                        <p className="text-[11px] text-neutral-500 mt-0.5 text-center font-sans">JPG, PNG · Max 15MB</p>
                       </div>
                     )}
 
@@ -996,49 +1034,40 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       accept="image/jpeg, image/png, image/jpg"
                       className="hidden"
                     />
-                    <p className="text-xs text-neutral-400 mt-2 font-sans">Upload a screenshot of the payment confirmation from your UPI app.</p>
                   </div>
+                </div>
 
-                </div> {/* end space-y-5 */}
-
-                {/* Complete Registration CTA — inside step 3 */}
-                <div className="mt-6 pt-5 border-t border-white/10">
-                  {error && (
-                    <div className="flex items-start gap-2 p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                      <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                      <span>{error}</span>
-                    </div>
-                  )}
+                {/* Complete Registration CTA inside Step 3 */}
+                <div className="mt-6 pt-4 border-t border-white/10">
                   <button
                     type="submit"
                     disabled={loading || !formData.transactionId || !formData.paymentScreenshot}
-                    className="w-full py-4 rounded-full font-bold text-base transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed
-                      bg-white hover:bg-neutral-200 text-black shadow-lg active:scale-[0.98] font-sans"
+                    className="w-full py-4 rounded-full font-extrabold text-base transition-all duration-300 flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-400 via-emerald-300 to-green-400 hover:from-emerald-300 hover:to-green-300 text-black shadow-[0_0_25px_rgba(52,211,153,0.5)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer font-sans"
                   >
                     {loading ? (
-                      <><Loader2 className="animate-spin" size={20} /> Submitting...</>
+                      <><Loader2 className="animate-spin" size={20} /> Submitting Registration...</>
                     ) : (
-                      <><CheckCircle size={20} /> Complete Registration</>
+                      <><CheckCircle size={20} /> Complete Team Registration</>
                     )}
                   </button>
                   {(!formData.transactionId || !formData.paymentScreenshot) && (
-                    <p className="text-xs text-neutral-500 text-center mt-2 font-sans">
+                    <p className="text-xs text-amber-300/80 text-center mt-2.5 font-sans">
                       {!formData.transactionId && !formData.paymentScreenshot
-                        ? '⚠️ Enter Transaction ID and upload Payment Screenshot to continue.'
+                        ? '⚠️ Enter UPI Transaction ID and upload screenshot to finish registration.'
                         : !formData.transactionId
-                        ? '⚠️ Please enter your UPI Transaction ID.'
+                        ? '⚠️ Please enter your 12-digit UPI Transaction ID.'
                         : '⚠️ Please upload your payment screenshot.'}
                     </p>
                   )}
                 </div>
 
-              </div> {/* end step 3 */}
+              </div>
 
             </form>
           </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-white/10 bg-[#0F1115]">
+          {/* ── Fixed Bottom Footer Bar (Shrink-0) ── */}
+          <div className="shrink-0 px-5 sm:px-6 py-3.5 sm:py-4 border-t border-white/15 bg-[#0F1115] backdrop-blur-xl z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
             {step === 3 && (
               <div className="flex justify-between items-center mb-3 px-1 text-xs font-sans">
                 <span className="text-neutral-400 font-medium">Teams Registered: <strong className="text-white">{eventDetails?.registered_teams_count ?? eventDetails?.registered_count ?? 0} / {eventDetails?.max_participants ?? eventDetails?.max_teams ?? 60}</strong></span>
@@ -1048,26 +1077,32 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               </div>
             )}
             <div className="flex justify-between items-center gap-3">
-              {step > 1 && (
+              {step > 1 ? (
                 <button
-                  type="button" onClick={prevStep} disabled={loading}
-                  className="px-6 py-2.5 rounded-full text-neutral-300 hover:bg-white/10 transition-colors font-medium disabled:opacity-50 font-sans"
+                  type="button"
+                  onClick={prevStep}
+                  disabled={loading}
+                  className="px-6 py-2.5 rounded-full text-neutral-300 hover:bg-white/10 hover:text-white transition-colors font-semibold text-sm disabled:opacity-50 font-sans cursor-pointer flex items-center gap-1.5"
                 >
-                  Back
+                  <ArrowLeft size={16} />
+                  <span>Back</span>
                 </button>
+              ) : (
+                <div />
               )}
               {step < 3 ? (
                 <button
-                  type="button" onClick={nextStep}
-                  className="ml-auto px-8 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black transition-colors font-semibold shadow-lg font-sans"
+                  type="button"
+                  onClick={nextStep}
+                  className="ml-auto px-8 sm:px-10 py-3 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.5)] hover:shadow-[0_0_35px_rgba(251,191,36,0.7)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 cursor-pointer font-sans"
                 >
-                  Continue →
+                  <span>Continue</span>
+                  <ArrowRight size={18} />
                 </button>
-              ) : (
-                <div className="ml-auto"></div>
-              )}
+              ) : null}
             </div>
           </div>
+
         </motion.div>
       </div>
     </AnimatePresence>
