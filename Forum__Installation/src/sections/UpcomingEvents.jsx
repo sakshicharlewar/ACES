@@ -513,29 +513,23 @@ export function UpcomingEvents() {
                         <span className="truncate">{event.venue}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-white">🪑</span>
-                      <span className="text-neutral-300 font-medium">
-                        Seats: {maxTeams >= 999 ? (
-                          <span className="text-white font-semibold">Open Entry (Unlimited)</span>
-                        ) : (
-                          <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
-                        )}
-                        {maxTeams >= 999 ? (
-                          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full ml-2 inline-flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                            🌸 Open to All
-                          </span>
-                        ) : seatsLeft > 0 ? (
-                          <span className="text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full ml-2 inline-flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-                            🔥 {seatsLeft} seats left
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-full ml-2">
-                            ⛔ Housefull
-                          </span>
-                        )}
-                      </span>
-                    </div>
+                    {maxTeams < 999 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-white">🪑</span>
+                        <span className="text-neutral-300 font-medium">
+                          Seats: <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
+                          {seatsLeft > 0 ? (
+                            <span className="text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full ml-2 inline-flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                              🔥 {seatsLeft} seats left
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-full ml-2">
+                              ⛔ Housefull
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-white" />
                       <span>Participation: {(event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : event.team_size === 1 ? "1 Participant (Individual Entry)" : `${event.team_size} Members`}</span>
@@ -561,28 +555,24 @@ export function UpcomingEvents() {
                   {/* Seat Tracker & Register Button */}
                   <div className="mt-auto pt-4 border-t border-white/10">
                     {/* Live Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between items-center text-xs mb-1.5">
-                        <span className="text-neutral-400 font-medium flex items-center gap-1.5">
-                          <span className="text-amber-300">⚡</span> {maxTeams >= 999 ? "Participation:" : "Live Seats:"} <strong className="text-white font-mono">{maxTeams >= 999 ? "Open Entry" : `${registeredTeams}/${maxTeams}`}</strong>
-                        </span>
-                        {maxTeams >= 999 ? (
-                          <span className="font-bold text-xs text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                            🌸 Unlimited Seats
+                    {maxTeams < 999 && (
+                      <div className="mb-3">
+                        <div className="flex justify-between items-center text-xs mb-1.5">
+                          <span className="text-neutral-400 font-medium flex items-center gap-1.5">
+                            <span className="text-amber-300">⚡</span> Live Seats: <strong className="text-white font-mono">{registeredTeams}/{maxTeams}</strong>
                           </span>
-                        ) : (
                           <span className="font-bold text-xs text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
                             🔥 {seatsLeft} remaining
                           </span>
-                        )}
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-pink-500 via-amber-400 to-emerald-400"
+                            style={{ width: `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div 
-                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-pink-500 via-amber-400 to-emerald-400"
-                          style={{ width: maxTeams >= 999 ? "100%" : `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
-                        />
-                      </div>
-                    </div>
+                    )}
 
                     {isResultAnnounced ? (
                       <div
