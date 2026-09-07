@@ -900,18 +900,6 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <span className="text-amber-300 text-lg">🎓</span>
                     <p className="text-xs sm:text-sm text-neutral-300 font-medium font-sans">Open for all Engineering, Polytechnic &amp; Diploma Students from all Colleges!</p>
                   </div>
-
-                  {/* Prominent In-Form Continue Button */}
-                  <div className="pt-3 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={nextStep}
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer font-sans"
-                    >
-                      <span>{(eventDetails?.team_size || 4) === 1 ? "Continue to Rules & Submission" : "Continue to Team Members"}</span>
-                      <ArrowRight size={18} />
-                    </button>
-                  </div>
                 </div>
               </div>
 
