@@ -54,7 +54,7 @@ async def team_register(
                 subtitle="Handmade Bouquet Exhibition & Competition",
                 short_description="Create a handmade bouquet using colorful pipe cleaners at home and submit it on 16 September for exhibition and evaluation by judges.",
                 full_description="BloomCraft is an Inter-Department Pipe Cleaner Bouquet Exhibition & Competition. Participants are required to create a handmade bouquet using colorful pipe cleaners at home and bring their completed bouquet to the venue on 16 September. All submitted bouquets will be displayed in an exhibition, where judges will evaluate each entry based on creativity, originality, design, and finishing. The winners will be announced during the prize distribution ceremony.",
-                registration_status=RegistrationStatus.open,
+                registration_status=RegistrationStatus.closed,
                 event_status=EventStatus.upcoming,
                 result_status=ResultStatus.pending,
                 team_size=1,
