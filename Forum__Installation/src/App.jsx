@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./lib/syncEngine";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { motion, useScroll, useSpring } from "framer-motion";

@@ -1,0 +1,229 @@
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { getBaseUrl } from "../lib/apiConfig";
+
+const pageVariants = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+  exit: { opacity: 0, y: -30, transition: { duration: 0.5, ease: "easeIn" } },
+};
+
+function EquipmentItem({ text }) {
+  return (
+    <li className="flex items-start gap-2.5 text-slate-300 text-sm leading-relaxed hover:text-white transition-colors duration-200 cursor-default">
+      {/* Subtle blue accent bullet */}
+      <span className="mt-[6px] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] flex-shrink-0" />
+      {text}
+    </li>
+  );
+}
+
+function LabCard({ lab }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="bg-[#111317]/85 backdrop-blur-xl border border-white/10 rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.4)] overflow-hidden hover:border-white/20 transition-all duration-300"
+    >
+      <div className="flex flex-col lg:flex-row">
+        {/* ── Left: Image (40%) ── */}
+        <div className="lg:w-[40%] overflow-hidden group bg-[#090A0C]">
+          <img
+            src={lab.image}
+            alt={lab.title}
+            className="w-full h-64 lg:h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            style={{ minHeight: "280px" }}
+          />
+        </div>
+
+        {/* ── Right: Content (60%) ── */}
+        <div className="lg:w-[60%] p-8 lg:p-10 flex flex-col justify-center">
+          {/* Lab Title */}
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 tracking-tight">{lab.title}</h2>
+
+          {/* Location & In-charge */}
+          <p className="text-slate-400 text-sm lg:text-base mb-6 leading-relaxed">
+            <span className="font-semibold text-slate-200">Lab location:</span>{" "}
+            {lab.location}.{" "}
+            <span className="font-semibold text-slate-200">Lab in-charge:</span>{" "}
+            {lab.in_charge}.
+          </p>
+
+          {/* Major Equipment Heading */}
+          <div className="mb-4">
+            <h3
+              className="text-xs font-bold tracking-[0.2em] text-blue-400 uppercase pb-1.5"
+              style={{ borderBottom: "2px solid rgba(59,130,246,0.5)", display: "inline-block" }}
+            >
+              Major Equipment
+            </h3>
+          </div>
+
+          {/* Two-column equipment list */}
+          {(() => {
+            let eq = lab.equipment;
+            if (typeof eq === "string") {
+              try { eq = JSON.parse(eq); } catch (e) {}
+            }
+            const leftList = Array.isArray(eq?.left) ? eq.left : (Array.isArray(eq) ? eq : []);
+            const rightList = Array.isArray(eq?.right) ? eq.right : [];
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5">
+                <ul className="space-y-2.5">
+                  {leftList.map((item, i) => (
+                    <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
+                  ))}
+                </ul>
+                <ul className="space-y-2.5">
+                  {rightList.map((item, i) => (
+                    <EquipmentItem key={i} text={typeof item === "string" ? item : item?.title || JSON.stringify(item)} />
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+const fallbackLabs = [
+  { id: 1, title: "Computer Lab 1", location: "First Floor, SCET", in_charge: "Prof. Veena Katankar", display_order: 1, equipment: { left: ["High Performance i7 Workstations", "Gigabit Ethernet Switch", "High-Speed Wi-Fi Routers"], right: ["Oracle DB & MySQL Server", "Visual Studio Code & PyCharm", "Linux Ubuntu OS"] } },
+  { id: 2, title: "Computer Lab 2", location: "First Floor, SCET", in_charge: "Prof. Jayshree Gorakh", display_order: 2, equipment: { left: ["Core i5 Systems", "Network Analyzer Kits", "Cisco Routers & Switches"], right: ["Packet Tracer & Wireshark", "Python & Anaconda Suite", "Java Development Kit"] } },
+  { id: 3, title: "Computer Lab 3", location: "Second Floor, SCET", in_charge: "Prof. Utkarsha Gode", display_order: 3, equipment: { left: ["High End Graphic Workstations", "Smart Projector Screen", "Uninterrupted UPS Power"], right: ["TensorFlow & PyTorch AI Tools", "Android Studio IDE", "Docker & Cloud Tools"] } },
+  { id: 4, title: "Computer Lab 4", location: "Second Floor, SCET", in_charge: "Prof. Mrunali Gajbhiye", display_order: 4, equipment: { left: ["Dual Monitor i7 Systems", "High Speed Fiber LAN", "Digital Logic Trainer Kits"], right: ["Proteus & Matlab Software", "Web Dev Node.js Environment", "Git & GitHub Enterprise"] } }
+];
+
+export function LaboratoriesPage() {
+  const navigate = useNavigate();
+  const [labs, setLabs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const baseUrl = getBaseUrl();
+    fetch(`${baseUrl}/api/laboratories`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLabs(data);
+        } else {
+          setLabs(fallbackLabs);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch labs:", err);
+        setLabs(fallbackLabs);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ background: "#0B0B0B", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      style={{
+        background: "#0B0B0B",
+        minHeight: "100vh",
+        paddingTop: "80px",
+        position: "relative",
+      }}
+    >
+      {/* Background glow */}
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "800px",
+          height: "800px",
+          background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Back Button */}
+      <motion.button
+        onClick={() => navigate("/department")}
+        whileHover={{ boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          position: "absolute",
+          top: "24px",
+          left: "24px",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "8px",
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          color: "#fff",
+          borderRadius: "9999px",
+          padding: "10px 20px",
+          fontSize: "0.9rem",
+          fontWeight: 500,
+          cursor: "pointer",
+          zIndex: 50,
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Department
+      </motion.button>
+
+      {/* Page Content */}
+      <section
+        style={{
+          padding: "0 24px 100px",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* Section Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <div className="font-label text-[#3B82F6] uppercase tracking-widest text-sm mb-3 font-semibold">
+            Computer Engineering Department
+          </div>
+          <h1 className="font-sans text-3xl md:text-5xl font-medium text-white mb-4">
+            Laboratories
+          </h1>
+          <p className="text-text-secondary text-lg max-w-2xl mx-auto">
+            State-of-the-art labs equipped for modern computing and software development.
+          </p>
+        </motion.div>
+
+        {/* Lab Cards */}
+        <div className="flex flex-col gap-8">
+          {labs.map((lab) => (
+            <LabCard key={lab.id} lab={lab} />
+          ))}
+        </div>
+      </section>
+    </motion.div>
+  );
+}

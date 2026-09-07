@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, Lock, Unlock, Send } from "lucide-react";
+import { Search, Download, Trash2, CheckCircle, XCircle, Clock, Eye, FileText, Code, Copy, Check, User } from "lucide-react";
 import { ImagePreviewModal } from "../components/ui/ImagePreviewModal";
 import { fetchAdminEvents } from "./adminApi";
 import { AdminLayout } from "./AdminLayout";
@@ -47,6 +47,9 @@ export default function AdminEventRegistrations() {
   const [screenshotModal, setScreenshotModal] = useState(null);
   const [rejectionModal, setRejectionModal] = useState(null); // { id: 123 }
   const [rejectionReason, setRejectionReason] = useState("");
+  const [detailModal, setDetailModal] = useState(null);
+  const [detailTab, setDetailTab] = useState("formatted");
+  const [copiedRaw, setCopiedRaw] = useState(false);
 
   useEffect(() => {
     const currentParams = new URLSearchParams(location.search);
@@ -89,17 +92,26 @@ export default function AdminEventRegistrations() {
 
   const normalizeReg = (r, fallbackEventId) => {
     const extra = r.extra_members || r.extraMembers || (Array.isArray(r.members) ? r.members.slice(1) : []);
+    
+    let rawBranch = r.leader_branch || r.leaderBranch || r.department || "";
+    let rawCollege = r.leader_college || r.leaderCollege || r.college_name || "";
+    if (rawBranch && rawBranch.includes(" | ") && !rawCollege) {
+      const parts = rawBranch.split(" | ");
+      rawBranch = parts[0];
+      rawCollege = parts[1];
+    }
+
     return {
       id: r.id || r.registration_id || `REG-${Math.random().toString(36).slice(2, 7)}`,
       registration_id: r.registration_id || r.id || "BUILDX-PENDING",
       event_id: r.event_id || fallbackEventId,
       team_name: r.team_name || r.teamName || "Unnamed Team",
-      leader_name: r.leader_name || r.leaderName || "Unknown",
-      leader_email: r.leader_email || r.leaderEmail || "",
-      leader_phone: r.leader_phone || r.leaderPhone || "",
-      leader_year: r.leader_year || r.leaderYear || "",
-      leader_branch: r.leader_branch || r.leaderBranch || "",
-      leader_college: r.leader_college || r.leaderCollege || "",
+      leader_name: r.leader_name || r.leaderName || r.full_name || "Unknown",
+      leader_email: r.leader_email || r.leaderEmail || r.email || "",
+      leader_phone: r.leader_phone || r.leaderPhone || r.mobile || "",
+      leader_year: r.leader_year || r.leaderYear || r.year || "",
+      leader_branch: rawBranch,
+      leader_college: rawCollege || "Suryodaya College of Engineering & Technology",
       member2_name: r.member2_name || r.member2Name || (Array.isArray(r.members) && r.members[0]?.name) || "",
       member2_email: r.member2_email || r.member2Email || (Array.isArray(r.members) && r.members[0]?.email) || "",
       member2_phone: r.member2_phone || r.member2Phone || (Array.isArray(r.members) && r.members[0]?.phone) || "",
@@ -108,7 +120,9 @@ export default function AdminEventRegistrations() {
       payment_status: r.payment_status || r.paymentStatus || "pending",
       transaction_id: r.transaction_id || r.transactionId || "",
       payment_screenshot: r.payment_screenshot || r.paymentScreenshot || null,
+      rejection_reason: r.rejection_reason || r.rejectionReason || null,
       created_at: r.created_at || r.createdAt || r.registeredAt || new Date().toISOString(),
+      raw_record: r,
     };
   };
 
@@ -339,26 +353,28 @@ export default function AdminEventRegistrations() {
   const exportToExcel = () => {
     if (!registrations.length) return;
     const ws = XLSX.utils.json_to_sheet(registrations.map(r => ({
-      "Reg ID":          r.registration_id || r.id,
-      "Team Name":       r.team_name,
-      "Leader Name":     r.leader_name,
-      "Leader Email":    r.leader_email,
-      "Leader Phone":    r.leader_phone,
-      "Leader Year":     r.leader_year,
-      "Member 2 Name":   r.member2_name,
-      "Member 2 Email":  r.member2_email,
-      "Member 2 Phone":  r.member2_phone,
-      "Member 2 Year":   r.member2_year,
-      "Approval Status": r.payment_status || "pending",
-      "Payment Status":  r.payment_status || "pending",
-      "Registration Fee": r.registration_fee || "₹40",
-      "Transaction ID":  r.transaction_id || "",
-      "Payment Screenshot": r.payment_screenshot
-        ? (r.payment_screenshot.startsWith('data:') ? '[Attached - Download manually from admin panel]' : r.payment_screenshot)
+      "Reg ID":               r.registration_id || r.id,
+      "Team Name":            r.team_name,
+      "Leader Name":          r.leader_name,
+      "Leader Email":         r.leader_email,
+      "Leader Phone":         r.leader_phone,
+      "Leader Year":          r.leader_year,
+      "Leader Branch":        r.leader_branch,
+      "Leader College":       r.leader_college,
+      "Member 2 Name":        r.member2_name,
+      "Member 2 Email":       r.member2_email,
+      "Member 2 Phone":       r.member2_phone,
+      "Member 2 Year":        r.member2_year,
+      "Extra Members Count":  (r.extra_members || []).length,
+      "Extra Members Data":   (r.extra_members || []).map((m, i) => `M${i+3}: ${m.name || ''} (${m.email || ''}, ${m.phone || ''}, ${m.year || ''})`).join(" | "),
+      "Approval Status":      r.payment_status || "pending",
+      "Payment Status":       r.payment_status || "pending",
+      "Transaction ID":       r.transaction_id || "",
+      "Payment Screenshot":   r.payment_screenshot
+        ? (r.payment_screenshot.startsWith('data:') ? '[Attached - View in Admin Panel]' : r.payment_screenshot)
         : 'Not uploaded',
-      "Payment Date":    r.payment_time ? new Date(r.payment_time).toLocaleString() : "",
-      "Verified At":     r.payment_verified_at ? new Date(r.payment_verified_at).toLocaleString() : "",
-      "Reg Date":        new Date(r.created_at).toLocaleString(),
+      "Reg Date":             new Date(r.created_at).toLocaleString(),
+      "Raw Data JSON":        JSON.stringify(r.raw_record || r),
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Registrations");
@@ -576,6 +592,13 @@ export default function AdminEventRegistrations() {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => { setDetailModal(reg); setDetailTab("formatted"); }}
+                          title="View Full Details & Raw Data"
+                          className="p-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 transition-colors"
+                        >
+                          <FileText size={15} />
+                        </button>
                         {reg.payment_status !== "approved" && (
                           <button
                             onClick={() => handleApproveRegistration(reg.id)}
@@ -643,6 +666,222 @@ export default function AdminEventRegistrations() {
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-xl transition-colors"
                 >
                   Reject Registration
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full Details & Raw Data Modal */}
+        {detailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6 overflow-y-auto">
+            <div className="bg-[#0d1426] rounded-2xl border border-white/10 p-6 w-full max-w-3xl shadow-2xl space-y-5 my-auto max-h-[90vh] flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 shrink-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-blue-400 text-lg">{detailModal.registration_id}</span>
+                    {statusBadge(detailModal.payment_status)}
+                  </div>
+                  <h2 className="text-xl font-bold text-white mt-1">{detailModal.team_name}</h2>
+                </div>
+                <button
+                  onClick={() => setDetailModal(null)}
+                  className="text-white/40 hover:text-white p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex items-center gap-2 border-b border-white/10 pb-3 shrink-0">
+                <button
+                  onClick={() => setDetailTab("formatted")}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors ${
+                    detailTab === "formatted" ? "bg-blue-600 text-white" : "bg-white/5 text-white/60 hover:text-white"
+                  }`}
+                >
+                  <FileText size={14} /> Full Registration Details
+                </button>
+                <button
+                  onClick={() => setDetailTab("raw")}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors ${
+                    detailTab === "raw" ? "bg-purple-600 text-white" : "bg-white/5 text-white/60 hover:text-white"
+                  }`}
+                >
+                  <Code size={14} /> Raw JSON Data
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="overflow-y-auto flex-1 custom-scrollbar pr-1 space-y-4">
+                {detailTab === "formatted" ? (
+                  <>
+                    {/* Leader Details Card */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+                      <h3 className="text-xs uppercase tracking-wider text-blue-400 font-bold flex items-center gap-2">
+                        <User size={14} /> Team Leader Details
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-white/40 text-xs">Full Name</p>
+                          <p className="text-white font-medium">{detailModal.leader_name}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">Email Address</p>
+                          <p className="text-white font-medium">{detailModal.leader_email || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">Phone Number</p>
+                          <p className="text-white font-medium">{detailModal.leader_phone || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">Year of Study</p>
+                          <p className="text-white font-medium">{detailModal.leader_year || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">Department / Branch</p>
+                          <p className="text-white font-medium">{detailModal.leader_branch || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">College / Institute</p>
+                          <p className="text-white font-medium">{detailModal.leader_college || "N/A"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Member 2 Card */}
+                    {detailModal.member2_name && (
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+                        <h3 className="text-xs uppercase tracking-wider text-green-400 font-bold flex items-center gap-2">
+                          <User size={14} /> Member 2 Details
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-white/40 text-xs">Full Name</p>
+                            <p className="text-white font-medium">{detailModal.member2_name}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/40 text-xs">Email Address</p>
+                            <p className="text-white font-medium">{detailModal.member2_email || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/40 text-xs">Phone Number</p>
+                            <p className="text-white font-medium">{detailModal.member2_phone || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/40 text-xs">Year of Study</p>
+                            <p className="text-white font-medium">{detailModal.member2_year || "N/A"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Extra Members Cards */}
+                    {detailModal.extra_members && detailModal.extra_members.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-xs uppercase tracking-wider text-amber-400 font-bold">Additional Team Members</h3>
+                        {detailModal.extra_members.map((m, idx) => (
+                          <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+                            <h4 className="text-xs font-semibold text-white/70">Member {idx + 3}</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <p className="text-white/40 text-xs">Full Name</p>
+                                <p className="text-white font-medium">{m.name || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="text-white/40 text-xs">Email Address</p>
+                                <p className="text-white font-medium">{m.email || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="text-white/40 text-xs">Phone Number</p>
+                                <p className="text-white font-medium">{m.phone || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="text-white/40 text-xs">Year / Branch</p>
+                                <p className="text-white font-medium">{m.year || "N/A"} {m.branch ? `• ${m.branch}` : ""}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Payment & Audit Info */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                      <h3 className="text-xs uppercase tracking-wider text-purple-400 font-bold">Payment & Transaction Audit</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-white/40 text-xs">Transaction ID</p>
+                          <p className="text-white font-mono font-medium">{detailModal.transaction_id || "N/A (Free)"}</p>
+                        </div>
+                        <div>
+                          <p className="text-white/40 text-xs">Registration Timestamp</p>
+                          <p className="text-white font-medium">{new Date(detailModal.created_at).toLocaleString()}</p>
+                        </div>
+                        {detailModal.rejection_reason && (
+                          <div className="col-span-2 bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-red-300 text-xs">
+                            <strong>Rejection Reason:</strong> {detailModal.rejection_reason}
+                          </div>
+                        )}
+                      </div>
+                      {detailModal.payment_screenshot && (
+                        <div className="pt-2">
+                          <p className="text-white/40 text-xs mb-2">Payment Receipt Screenshot</p>
+                          <div className="relative group inline-block max-w-sm rounded-xl overflow-hidden border border-white/10 bg-black/40">
+                            <img src={detailModal.payment_screenshot} alt="Receipt" className="max-h-48 object-contain" />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                              <button
+                                onClick={() => setScreenshotModal(detailModal.payment_screenshot)}
+                                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold"
+                              >
+                                Enlarge Image
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  /* Raw JSON Payload */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-white/40 text-xs">Raw Database Record (Full JSON Payload)</p>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(detailModal.raw_record || detailModal, null, 2));
+                          setCopiedRaw(true);
+                          setTimeout(() => setCopiedRaw(false), 2000);
+                        }}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg flex items-center gap-1.5 transition-colors"
+                      >
+                        {copiedRaw ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+                        <span>{copiedRaw ? "Copied Raw JSON!" : "Copy JSON"}</span>
+                      </button>
+                    </div>
+                    <pre className="bg-[#050914] p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-white/10 max-h-96">
+                      {JSON.stringify(detailModal.raw_record || detailModal, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-4 shrink-0">
+                {detailModal.payment_status !== "approved" && (
+                  <button
+                    onClick={() => { handleApproveRegistration(detailModal.id); setDetailModal(null); }}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-green-600 hover:bg-green-500 text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <CheckCircle size={16} /> Approve Registration
+                  </button>
+                )}
+                <button
+                  onClick={() => setDetailModal(null)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  Close
                 </button>
               </div>
             </div>

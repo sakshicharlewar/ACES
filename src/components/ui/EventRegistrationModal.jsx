@@ -519,6 +519,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
         payment_screenshot: isFree ? null : formData.paymentScreenshot,
         payment_status: 'pending',
+        synced_to_server: true,
         created_at: new Date().toISOString(),
       };
       
