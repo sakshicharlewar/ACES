@@ -162,6 +162,19 @@ export default function AdminEventRegistrations() {
       let merged = [];
       if (fetchSucceeded) {
         merged = normalizedBackend;
+        // Purge local_registrations cache for this event so deleted records never linger in localStorage
+        try {
+          const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+          const remainingLocal = localRegs.filter(r => {
+            if (r.event_id?.toString() === eventId.toString()) return false;
+            if ((eventId.toString() === "12" || String(eventId).toLowerCase().includes("buildx")) && 
+                (r.registration_id?.toUpperCase().startsWith("BUILDX") || (r.event_title || "").toLowerCase().includes("buildx") || r.event_id === 12)) {
+              return false;
+            }
+            return true;
+          });
+          localStorage.setItem('local_registrations', JSON.stringify(remainingLocal));
+        } catch (e) {}
       } else {
         const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
         const eventLocalRegs = localRegs.filter(r => {
