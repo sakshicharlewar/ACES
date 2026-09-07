@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
 
 export function CollegeLogo() {
@@ -11,25 +11,25 @@ export function CollegeLogo() {
     offset: ["start end", "end start"]
   });
 
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.2, 1.5]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1.05, 1.08]);
+  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0]);
 
   return (
     <>
-      <section id="collegelogo" ref={containerRef} className="h-[150vh] relative flex flex-col items-center justify-center">
+      <section id="collegelogo" ref={containerRef} className="h-[120vh] relative flex flex-col items-center justify-center">
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-          <motion.div style={{ scale, opacity }} className="relative z-10 flex flex-col items-center">
+          <motion.div style={{ scale, opacity }} className="relative z-10 flex flex-col items-center px-4">
             {/* ── SCET Logo Badge ── */}
             <div 
-              className="relative group mb-12 cursor-pointer" 
-              style={{ width: "256px", height: "256px" }}
+              className="relative group mb-5 cursor-pointer" 
+              style={{ width: "190px", height: "190px" }}
               onClick={() => setIsModalOpen(true)}
             >
-              {/* Layer 4 — Main circle container */}
+              {/* Main circle container */}
               <div
                 style={{
-                  width: "256px",
-                  height: "256px",
+                  width: "190px",
+                  height: "190px",
                   borderRadius: "50%",
                   background: "#FFFFFF",
                   display: "flex",
@@ -38,10 +38,10 @@ export function CollegeLogo() {
                   position: "relative",
                   zIndex: 2,
                   transition: "transform 300ms ease",
-                  padding: "8px", /* This acts as the outer white circular background */
+                  padding: "6px",
                   aspectRatio: "1 / 1",
                 }}
-                className="group-hover:scale-[1.03]"
+                className="group-hover:scale-[1.03] shadow-[0_0_35px_rgba(255,255,255,0.15)]"
               >
                 {/* Inner Black Frame */}
                 <div
@@ -49,7 +49,7 @@ export function CollegeLogo() {
                     width: "100%",
                     height: "100%",
                     borderRadius: "50%",
-                    border: "6px solid #000000",
+                    border: "4px solid #000000",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -65,7 +65,7 @@ export function CollegeLogo() {
                       height: "100%",
                       objectFit: "contain",
                       display: "block",
-                      transform: "scale(1.25)", /* Enlarge logo by 25% */
+                      transform: "scale(1.2)",
                     }}
                   />
                 </div>
@@ -73,19 +73,23 @@ export function CollegeLogo() {
             </div>
             
             <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="text-2xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-center px-4"
+              transition={{ duration: 0.8, delay: 0.15 }}
+              className="text-center px-4 max-w-2xl"
             >
-              <span className="font-sans text-white tracking-wide">Suryodaya College of</span>
-              <br/>
+              <span className="font-sans text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-wide block">
+                Suryodaya College of
+              </span>
               <span 
-                className="text-4xl md:text-6xl lg:text-7xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-white to-amber-100 mt-2 inline-block"
+                className="text-2xl sm:text-3xl md:text-4xl font-normal text-amber-200 mt-1 inline-block"
                 style={{ fontFamily: "'Great Vibes', cursive", letterSpacing: "1px" }}
               >
                 Engineering &amp; Technology
+              </span>
+              <span className="text-neutral-400 text-xs sm:text-sm font-mono block mt-1 tracking-wider uppercase font-medium">
+                Nagpur • Autonomous
               </span>
             </motion.h2>
           </motion.div>
@@ -93,7 +97,7 @@ export function CollegeLogo() {
           {/* Ambient background glow */}
           <motion.div 
             style={{ opacity }}
-            className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_50%)]"
+            className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_0%,transparent_50%)] pointer-events-none"
           />
         </div>
       </section>
