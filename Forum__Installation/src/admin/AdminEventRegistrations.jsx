@@ -10,8 +10,8 @@ import { BUG_HUNT_REGISTRATIONS } from "../data/bugHuntRegistrations";
 const API_URL = getBaseUrl();
 
 const DEFAULT_EVENTS = [
-  { id: 1, title: "Bug Hunt: Debug the Web", max_teams: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", result_status: "announced" },
-  { id: 12, title: "BuildX - Project Innovation Challenge", max_teams: 30, registered_teams_count: 0, is_registration_open: true, registration_status: "open", result_status: "pending" }
+  { id: 12, title: "BUILDX - Project Innovation Challenge", max_teams: 60, max_participants: 60, registered_teams_count: 0, is_registration_open: true, registration_status: "open", result_status: "pending" },
+  { id: 1, title: "Bug Hunt: Debug the Web", max_teams: 30, max_participants: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", result_status: "announced" }
 ];
 
 const statusBadge = (status) => {
@@ -37,11 +37,11 @@ const statusBadge = (status) => {
 export default function AdminEventRegistrations() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialEventId = searchParams.get("event_id") || "1";
+  const initialEventId = searchParams.get("event_id") || "12";
 
   const [events, setEvents] = useState(DEFAULT_EVENTS);
   const [selectedEventId, setSelectedEventId] = useState(initialEventId);
-  const [registrations, setRegistrations] = useState(initialEventId === "1" ? BUG_HUNT_REGISTRATIONS : []);
+  const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [screenshotModal, setScreenshotModal] = useState(null);
@@ -62,7 +62,7 @@ export default function AdminEventRegistrations() {
 
   useEffect(() => {
     if (selectedEventId) fetchRegistrations(selectedEventId);
-    else setRegistrations(BUG_HUNT_REGISTRATIONS);
+    else if (events.length > 0) fetchRegistrations(events[0].id);
   }, [selectedEventId]);
 
   const fetchEvents = async () => {
@@ -72,11 +72,44 @@ export default function AdminEventRegistrations() {
         fetchedEvents = fetchedEvents.items || [];
       }
       if (fetchedEvents && fetchedEvents.length > 0) {
-        setEvents(fetchedEvents);
+        // Ensure BuildX is at the top if present
+        const sorted = [...fetchedEvents].sort((a, b) => {
+          const aIsBuildX = String(a.id) === "12" || (a.title || "").toLowerCase().includes("buildx");
+          const bIsBuildX = String(b.id) === "12" || (b.title || "").toLowerCase().includes("buildx");
+          if (aIsBuildX) return -1;
+          if (bIsBuildX) return 1;
+          return 0;
+        });
+        setEvents(sorted);
       }
     } catch (e) {
       console.warn("Using fallback events:", e);
     }
+  };
+
+  const normalizeReg = (r, fallbackEventId) => {
+    const extra = r.extra_members || r.extraMembers || (Array.isArray(r.members) ? r.members.slice(1) : []);
+    return {
+      id: r.id || r.registration_id || `REG-${Math.random().toString(36).slice(2, 7)}`,
+      registration_id: r.registration_id || r.id || "BUILDX-PENDING",
+      event_id: r.event_id || fallbackEventId,
+      team_name: r.team_name || r.teamName || "Unnamed Team",
+      leader_name: r.leader_name || r.leaderName || "Unknown",
+      leader_email: r.leader_email || r.leaderEmail || "",
+      leader_phone: r.leader_phone || r.leaderPhone || "",
+      leader_year: r.leader_year || r.leaderYear || "",
+      leader_branch: r.leader_branch || r.leaderBranch || "",
+      leader_college: r.leader_college || r.leaderCollege || "",
+      member2_name: r.member2_name || r.member2Name || (Array.isArray(r.members) && r.members[0]?.name) || "",
+      member2_email: r.member2_email || r.member2Email || (Array.isArray(r.members) && r.members[0]?.email) || "",
+      member2_phone: r.member2_phone || r.member2Phone || (Array.isArray(r.members) && r.members[0]?.phone) || "",
+      member2_year: r.member2_year || r.member2Year || (Array.isArray(r.members) && r.members[0]?.year) || "",
+      extra_members: Array.isArray(extra) ? extra.filter(m => m && (m.name || m.email)) : [],
+      payment_status: r.payment_status || r.paymentStatus || "pending",
+      transaction_id: r.transaction_id || r.transactionId || "",
+      payment_screenshot: r.payment_screenshot || r.paymentScreenshot || null,
+      created_at: r.created_at || r.createdAt || r.registeredAt || new Date().toISOString(),
+    };
   };
 
   const fetchRegistrations = async (eventId) => {
@@ -104,26 +137,48 @@ export default function AdminEventRegistrations() {
       const eventLocalRegs = localRegs.filter(r => {
         // Match if event_id matches exactly
         if (r.event_id?.toString() === eventId.toString()) return true;
-        // Also match orphaned "BUG-XXX" registrations if this is the Bug Hunt event (ID 1)
-        if (eventId.toString() === "1" && r.registration_id && r.registration_id.startsWith("BUG-")) return true;
+        // Match if viewing BuildX (ID 12)
+        if ((eventId.toString() === "12" || String(eventId).toLowerCase().includes("buildx")) && 
+            (r.registration_id?.toUpperCase().startsWith("BUILDX") || (r.event_title || "").toLowerCase().includes("buildx") || r.event_id === 12)) {
+          return true;
+        }
+        // Match if viewing Bug Hunt (ID 1)
+        if (eventId.toString() === "1" && (r.registration_id?.toUpperCase().startsWith("BUG-") || r.event_id === 1)) {
+          return true;
+        }
         return false;
       });
       
-      const backendIds = new Set(backendData.map(d => d.id || d.registration_id));
-      const uniqueLocalRegs = eventLocalRegs.filter(r => !backendIds.has(r.id) && !backendIds.has(r.registration_id));
+      const normalizedBackend = backendData.map(r => normalizeReg(r, eventId));
+      const normalizedLocal = eventLocalRegs.map(r => normalizeReg(r, eventId));
       
-      let finalData = [...backendData, ...uniqueLocalRegs];
+      const seenIds = new Set();
+      const seenTxns = new Set();
+      const merged = [];
+
+      for (const r of [...normalizedBackend, ...normalizedLocal]) {
+        const regKey = r.registration_id || r.id;
+        const txnKey = r.transaction_id && r.transaction_id.toUpperCase() !== "FREE" ? r.transaction_id.toLowerCase() : null;
+        
+        if (regKey && seenIds.has(regKey)) continue;
+        if (txnKey && seenTxns.has(txnKey)) continue;
+
+        if (regKey) seenIds.add(regKey);
+        if (txnKey) seenTxns.add(txnKey);
+        merged.push(r);
+      }
+      
+      let finalData = merged;
       
       // If viewing Bug Hunt (ID 1)
       if (String(eventId) === "1") {
         if (finalData.length === 0) {
-          finalData = BUG_HUNT_REGISTRATIONS;
+          finalData = BUG_HUNT_REGISTRATIONS.map(r => normalizeReg(r, 1));
         } else {
-          // Merge to guarantee all 30 teams are present
           const existingRegIds = new Set(finalData.map(r => r.registration_id));
           for (const fallback of BUG_HUNT_REGISTRATIONS) {
             if (!existingRegIds.has(fallback.registration_id)) {
-              finalData.push(fallback);
+              finalData.push(normalizeReg(fallback, 1));
             }
           }
         }
@@ -133,7 +188,7 @@ export default function AdminEventRegistrations() {
     } catch (e) { 
         console.error("Failed to fetch registrations:", e);
         if (String(eventId) === "1") {
-          setRegistrations(BUG_HUNT_REGISTRATIONS);
+          setRegistrations(BUG_HUNT_REGISTRATIONS.map(r => normalizeReg(r, 1)));
         }
     } finally { 
         setLoading(false); 
@@ -350,6 +405,31 @@ export default function AdminEventRegistrations() {
               <Download size={16} /> Export Excel
             </button>
           </div>
+        </div>
+
+        {/* Quick Event Switcher Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          {events.map(ev => {
+            const isSelected = String(ev.id) === String(selectedEventId);
+            const isBuildX = String(ev.id) === "12" || (ev.title || "").toLowerCase().includes("buildx");
+            const isBugHunt = String(ev.id) === "1" || (ev.title || "").toLowerCase().includes("bug hunt");
+            return (
+              <button
+                key={ev.id}
+                onClick={() => setSelectedEventId(String(ev.id))}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 border ${
+                  isSelected
+                    ? "bg-white text-black border-white shadow-lg shadow-white/10"
+                    : "bg-white/5 text-white/70 hover:text-white border-white/10 hover:bg-white/10"
+                }`}
+              >
+                {isBuildX ? "🚀 " : isBugHunt ? "🐞 " : "📅 "}
+                <span>{ev.title}</span>
+                {isBuildX && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? "bg-black text-white" : "bg-green-500/20 text-green-400"}`}>Live</span>}
+                {isBugHunt && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? "bg-black/20 text-black font-bold" : "bg-white/10 text-white/60"}`}>30 Teams</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Search & Stats Banner */}

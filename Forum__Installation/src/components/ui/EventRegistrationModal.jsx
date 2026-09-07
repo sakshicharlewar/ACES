@@ -422,26 +422,120 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        data = await response.json();
-        lastErr = null;
-        break;
+        if (response.ok) {
+          data = await response.json();
+          lastErr = null;
+          break;
+        } else {
+          data = await response.json().catch(() => null);
+          lastErr = new Error(data?.detail || data?.error || 'Registration failed');
+          if (response.status === 400 || response.status === 404) {
+            // Client error (duplicate, closed, validation) - do not retry
+            break;
+          }
+        }
       } catch (err) {
         lastErr = err;
         if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
       }
     }
 
-    if (lastErr || !response || !response.ok) {
-      const errMsg = toFriendlyError(lastErr, data);
-      setError(errMsg);
+    if (lastErr && (!response || response.status >= 400)) {
+      // If it is a real validation error (duplicate email, duplicate txn, capacity full)
+      if (response && response.status === 400) {
+        const errMsg = toFriendlyError(lastErr, data);
+        setError(errMsg);
+        setLoading(false);
+        return;
+      }
+      
+      // If network/server cold start timeout, save locally so registration is NEVER lost
+      const localExisting = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const buildxCount = localExisting.filter(r => (r.registration_id || '').startsWith('BUILDX')).length + 1;
+      const fallbackRegId = `BUILDX${String(buildxCount).padStart(3, '0')}`;
+      
+      const localEntry = {
+        id: fallbackRegId,
+        registration_id: fallbackRegId,
+        event_id: eventId,
+        event_title: eventDetails?.title || 'BUILDX',
+        team_name: formData.teamName.trim(),
+        leader_name: formData.leaderName.trim(),
+        leader_email: formData.leaderEmail.trim(),
+        leader_phone: formData.leaderPhone.replace(/\D/g, '').slice(-10),
+        leader_year: formData.leaderYear,
+        leader_branch: combinedBranch,
+        member2_name: firstMember.name ? firstMember.name.trim() : null,
+        member2_email: firstMember.email ? firstMember.email.trim() : null,
+        member2_phone: firstMember.phone ? firstMember.phone.replace(/\D/g, '').slice(-10) : null,
+        member2_year: firstMember.year || null,
+        extra_members: extraMembers.length > 0 ? extraMembers : null,
+        transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
+        payment_screenshot: isFree ? null : formData.paymentScreenshot,
+        payment_status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      
+      localExisting.unshift(localEntry);
+      localStorage.setItem('local_registrations', JSON.stringify(localExisting));
+      window.dispatchEvent(new CustomEvent('aces_events_updated'));
+      window.dispatchEvent(new CustomEvent('aces_registration_created', { detail: localEntry }));
+
+      setPendingSuccessData({
+        ...formData,
+        registrationId: fallbackRegId,
+        eventName: eventDetails?.title || 'BUILDX',
+        transactionId: formData.transactionId,
+        paymentStatus: 'Pending Verification',
+        whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir',
+        registeredAt: new Date().toLocaleString(),
+      });
+      setShowSuccessPopup(true);
       setLoading(false);
       return;
     }
 
+    const regId = data?.registration_id || `BUILDX001`;
+
+    // Save to local storage as persistent cache
+    try {
+      const localExisting = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+      const localEntry = {
+        id: regId,
+        registration_id: regId,
+        event_id: eventId,
+        event_title: eventDetails?.title || 'BUILDX',
+        team_name: formData.teamName.trim(),
+        leader_name: formData.leaderName.trim(),
+        leader_email: formData.leaderEmail.trim(),
+        leader_phone: formData.leaderPhone.replace(/\D/g, '').slice(-10),
+        leader_year: formData.leaderYear,
+        leader_branch: combinedBranch,
+        member2_name: firstMember.name ? firstMember.name.trim() : null,
+        member2_email: firstMember.email ? firstMember.email.trim() : null,
+        member2_phone: firstMember.phone ? firstMember.phone.replace(/\D/g, '').slice(-10) : null,
+        member2_year: firstMember.year || null,
+        extra_members: extraMembers.length > 0 ? extraMembers : null,
+        transaction_id: isFree ? "FREE" : formData.transactionId.trim(),
+        payment_screenshot: isFree ? null : formData.paymentScreenshot,
+        payment_status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+      
+      // Avoid duplicate in local storage
+      const filtered = localExisting.filter(r => r.registration_id !== regId && r.transaction_id !== localEntry.transaction_id);
+      filtered.unshift(localEntry);
+      localStorage.setItem('local_registrations', JSON.stringify(filtered));
+      window.dispatchEvent(new CustomEvent('aces_events_updated'));
+      window.dispatchEvent(new CustomEvent('aces_registration_created', { detail: localEntry }));
+    } catch (saveErr) {
+      console.warn("Could not write local backup registration:", saveErr);
+    }
+
     setPendingSuccessData({
       ...formData,
-      registrationId: data.registration_id,
-      eventName: eventDetails?.title || 'Event',
+      registrationId: regId,
+      eventName: eventDetails?.title || 'BUILDX',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
       whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir',

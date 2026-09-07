@@ -92,6 +92,7 @@ export function AdminLayout({ children }) {
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           <NavLink to="/admin/dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <NavLink to="/admin/event-registrations?event_id=12" icon={Users} label="BuildX Registrations" badge="Live" />
           <NavLink to="/admin/event-registrations?event_id=1" icon={Users} label="Bug Hunt Registrations" badge="30 Teams" />
           <NavLink to="/admin/submissions" icon={Lightbulb} label="Idea Submissions" />
 
@@ -125,8 +126,10 @@ export function AdminLayout({ children }) {
             <SectionHeader icon={Users} label="Registrations" expanded={regsExpanded} onToggle={() => setRegsExpanded(v => !v)} />
             {regsExpanded && (
               <div className="ml-3 mt-1 space-y-0.5">
+                <NavLink to="/admin/event-registrations?event_id=12" icon={Users} label="BuildX Registrations" />
+                <NavLink to="/admin/event-registrations?event_id=1" icon={Users} label="Bug Hunt Registrations" />
                 <NavLink to="/admin/event-registrations" icon={Users} label="All Event Regs" />
-                {events.map(ev => (
+                {events.filter(ev => String(ev.id) !== "12" && String(ev.id) !== "1").map(ev => (
                   <NavLink 
                     key={ev.id} 
                     to={`/admin/event-registrations?event_id=${ev.id}`} 
