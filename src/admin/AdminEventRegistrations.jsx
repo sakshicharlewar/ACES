@@ -524,8 +524,121 @@ export default function AdminEventRegistrations() {
           />
         </div>
 
-        {/* Registrations Table */}
-        <div className="bg-[#0d1426] border border-white/10 rounded-2xl overflow-hidden">
+        {/* ── MOBILE CARD VIEW (Phone View) ── */}
+        <div className="block md:hidden space-y-4">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-4 bg-[#0d1426] border border-white/10 rounded-2xl animate-pulse h-40" />
+            ))
+          ) : filteredRegs.length === 0 ? (
+            <div className="p-8 text-center bg-[#0d1426] border border-white/10 rounded-2xl text-white/40 font-sans">
+              No registrations found.
+            </div>
+          ) : (
+            filteredRegs.map(reg => (
+              <div key={reg.id || reg.registration_id} className="bg-[#0d1426] border border-white/10 rounded-2xl p-4 space-y-3.5 shadow-lg">
+                {/* Card Header: Reg ID + Status */}
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                  <div>
+                    <span className="font-mono font-bold text-xs text-blue-400 block">{reg.registration_id}</span>
+                    <h4 className="font-bold text-white text-base leading-tight mt-0.5">{reg.team_name}</h4>
+                  </div>
+                  <div>{statusBadge(reg.payment_status)}</div>
+                </div>
+
+                {/* Leader & Member Info */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-start justify-between">
+                    <span className="text-white/40 font-medium">Leader:</span>
+                    <span className="text-white font-semibold text-right">{reg.leader_name}</span>
+                  </div>
+                  {reg.leader_email && (
+                    <div className="flex items-start justify-between">
+                      <span className="text-white/40 font-medium">Email:</span>
+                      <span className="text-white/80 font-mono text-right truncate max-w-[200px]">{reg.leader_email}</span>
+                    </div>
+                  )}
+                  {reg.leader_phone && (
+                    <div className="flex items-start justify-between">
+                      <span className="text-white/40 font-medium">Phone:</span>
+                      <span className="text-white/80 font-mono text-right">{reg.leader_phone}</span>
+                    </div>
+                  )}
+                  {reg.leader_branch && (
+                    <div className="flex items-start justify-between">
+                      <span className="text-white/40 font-medium">Dept / Year:</span>
+                      <span className="text-blue-400 text-right">{reg.leader_branch} {reg.leader_year ? `(${reg.leader_year})` : ''}</span>
+                    </div>
+                  )}
+                  {reg.transaction_id && (
+                    <div className="flex items-start justify-between pt-1 border-t border-white/5">
+                      <span className="text-white/40 font-medium">Txn ID:</span>
+                      <span className="text-amber-300 font-mono font-bold text-right">{reg.transaction_id}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Screenshot View Button if present */}
+                {reg.payment_screenshot && (
+                  <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/10">
+                    <span className="text-xs text-white/60">Payment Proof:</span>
+                    <button
+                      onClick={() => setScreenshotModal(reg.payment_screenshot)}
+                      className="px-3 py-1.5 text-xs bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Eye size={13} /> View Proof
+                    </button>
+                  </div>
+                )}
+
+                {/* Mobile Action Buttons */}
+                <div className="pt-2.5 border-t border-white/10 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setDetailModal(reg); setDetailTab("formatted"); }}
+                    className="w-full py-2.5 px-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <FileText size={14} /> Details / Raw
+                  </button>
+
+                  {reg.payment_status !== "approved" ? (
+                    <button
+                      onClick={() => handleApproveRegistration(reg.id)}
+                      className="w-full py-2.5 px-3 rounded-xl bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <CheckCircle size={14} /> Approve
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setRejectionModal({ id: reg.id })}
+                      className="w-full py-2.5 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  )}
+
+                  {reg.payment_status !== "rejected" && reg.payment_status === "approved" && (
+                    <button
+                      onClick={() => setRejectionModal({ id: reg.id })}
+                      className="w-full py-2.5 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleDelete(reg.id)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer col-span-2"
+                  >
+                    <Trash2 size={14} /> Delete Registration
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Registrations Table */}
+        <div className="hidden md:block bg-[#0d1426] border border-white/10 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm divide-y divide-white/10">
               <thead className="bg-white/5 text-white/40 text-xs uppercase tracking-wider font-semibold">
