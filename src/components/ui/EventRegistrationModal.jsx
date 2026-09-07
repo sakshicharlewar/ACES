@@ -143,19 +143,22 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
 
   const validateStep1 = () => {
     const isIndividual = (eventDetails?.team_size || 4) === 1;
-    const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
 
-    // Auto-fill teamName for individual events if participant didn't type one
-    if (isIndividual && !formData.teamName.trim() && formData.leaderName.trim()) {
-      formData.teamName = formData.leaderName.trim();
+    // Auto-fill teamName, leaderPhone, leaderCollege for individual events
+    if (isIndividual) {
+      if (!formData.teamName.trim() && formData.leaderName.trim()) {
+        formData.teamName = formData.leaderName.trim();
+      }
+      if (!formData.leaderPhone.trim()) {
+        formData.leaderPhone = "9999999999";
+      }
+      if (!formData.leaderCollege?.trim()) {
+        formData.leaderCollege = "Suryodaya College of Engineering & Technology";
+      }
     }
 
-    if ((!isIndividual && !formData.teamName.trim()) || !formData.leaderName.trim() || !formData.leaderEmail.trim() || !formData.leaderPhone.trim()) {
-      setError('Please fill all required fields.');
-      return false;
-    }
-    if (leaderPhoneClean.length !== 10) {
-      setError('Phone number must be exactly 10 digits.');
+    if (!formData.leaderName.trim() || !formData.leaderEmail.trim()) {
+      setError('Please enter your Name and Email.');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.leaderEmail.trim())) {
@@ -170,10 +173,23 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       setError('Please enter your Department / Branch.');
       return false;
     }
-    if (!formData.leaderCollege?.trim()) {
-      setError('Please enter your College / Institute name.');
-      return false;
+
+    if (!isIndividual) {
+      const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
+      if (!formData.teamName.trim()) {
+        setError('Please enter Team Name.');
+        return false;
+      }
+      if (leaderPhoneClean.length !== 10) {
+        setError('Phone number must be exactly 10 digits.');
+        return false;
+      }
+      if (!formData.leaderCollege?.trim()) {
+        setError('Please enter your College / Institute name.');
+        return false;
+      }
     }
+
     return true;
   };
 
@@ -787,48 +803,54 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                 </div>
               )}
 
-              {/* ── STEP 1: LEADER DETAILS ── */}
+              {/* ── STEP 1: PARTICIPANT DETAILS ── */}
               <div className={step === 1 ? 'block' : 'hidden'}>
                 <h3 className="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2 font-sans">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-black font-black text-xs">1</span>
-                  Team &amp; Leader Details
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-pink-500 text-white font-black text-xs">1</span>
+                  {(eventDetails?.team_size || 4) === 1 ? "Participant Details" : "Team & Leader Details"}
                 </h3>
 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Team Name *</label>
-                    <input
-                      type="text" name="teamName" value={formData.teamName} onChange={handleChange}
-                      placeholder="e.g. Code Innovators"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 focus:ring-1 focus:ring-amber-300/20 outline-none transition-all font-sans text-sm"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(eventDetails?.team_size || 4) !== 1 && (
                     <div>
-                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Name *</label>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Team Name *</label>
+                      <input
+                        type="text" name="teamName" value={formData.teamName} onChange={handleChange}
+                        placeholder="e.g. Code Innovators"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 focus:ring-1 focus:ring-amber-300/20 outline-none transition-all font-sans text-sm"
+                      />
+                    </div>
+                  )}
+
+                  <div className={(eventDetails?.team_size || 4) === 1 ? "space-y-4" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
+                    <div>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">
+                        {(eventDetails?.team_size || 4) === 1 ? "Full Name *" : "Leader Name *"}
+                      </label>
                       <input
                         type="text" name="leaderName" value={formData.leaderName} onChange={handleChange}
-                        placeholder="Leader Full Name"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
+                        placeholder="Participant Full Name"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-pink-400/60 outline-none transition-all font-sans text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Phone *</label>
-                      <input
-                        type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleLeaderPhoneChange}
-                        placeholder="10-digit mobile number" maxLength="10"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
-                      />
-                    </div>
+                    {(eventDetails?.team_size || 4) !== 1 && (
+                      <div>
+                        <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Phone *</label>
+                        <input
+                          type="tel" name="leaderPhone" value={formData.leaderPhone} onChange={handleLeaderPhoneChange}
+                          placeholder="10-digit mobile number" maxLength="10"
+                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Leader Email *</label>
+                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">Email Address *</label>
                     <input
                       type="email" name="leaderEmail" value={formData.leaderEmail} onChange={handleChange}
                       placeholder="e.g. student@gmail.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-pink-400/60 outline-none transition-all font-sans text-sm"
                     />
                   </div>
 
@@ -838,7 +860,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       <select
                         required
                         name="leaderYear" value={formData.leaderYear} onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-amber-300/60 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans text-sm"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-pink-400/60 outline-none transition-all [&>option]:bg-[#0B0B0B] font-sans text-sm"
                       >
                         <option value="">-- Select Year --</option>
                         {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -854,23 +876,25 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                         value={formData.leaderBranch}
                         onChange={handleChange}
                         placeholder="e.g. Computer Engineering / CSE / IT"
-                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-pink-400/60 outline-none transition-all font-sans text-sm"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">College / Institute Name *</label>
-                    <input
-                      type="text"
-                      required
-                      name="leaderCollege"
-                      value={formData.leaderCollege}
-                      onChange={handleChange}
-                      placeholder="e.g. Suryodaya College of Engineering & Technology, Nagpur"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
-                    />
-                  </div>
+                  {(eventDetails?.team_size || 4) !== 1 && (
+                    <div>
+                      <label className="block text-xs sm:text-sm text-neutral-300 mb-1.5 font-sans font-medium">College / Institute Name *</label>
+                      <input
+                        type="text"
+                        required
+                        name="leaderCollege"
+                        value={formData.leaderCollege}
+                        onChange={handleChange}
+                        placeholder="e.g. Suryodaya College of Engineering & Technology, Nagpur"
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 focus:border-amber-300/60 outline-none transition-all font-sans text-sm"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
                     <span className="text-amber-300 text-lg">🎓</span>
