@@ -340,22 +340,15 @@ export function UpcomingEvents() {
   });
   
   if (displayEvents.length === 0) {
-    displayEvents = [BUG_HUNT_FALLBACK];
-  }
-
-  // Pad with fillers to make it look nice if there are very few events
-  while (displayEvents.length < 4) {
-    displayEvents.push({ id: `filler-${displayEvents.length}`, isFiller: true });
+    displayEvents = [BUILD_X_FALLBACK, BLOOM_CRAFT_FALLBACK, BUG_HUNT_FALLBACK];
   }
 
   return (
     <section id="events" className="py-24 px-6 md:px-12 lg:px-24 relative overflow-hidden">
       <div className="container mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-3">
@@ -390,35 +383,8 @@ export function UpcomingEvents() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${displayEvents.length <= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-6 max-w-7xl mx-auto`}>
           {displayEvents.map((event, index) => {
-            // ── Coming Soon filler card ──
-            if (event.isFiller) {
-              return (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: index * 0.2 }}
-                  className="relative p-[1px] rounded-[28px] overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[marquee_2s_linear_infinite] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative h-full bg-[#111317]/85 backdrop-blur-xl rounded-[28px] p-8 flex flex-col items-center justify-center text-center border border-white/10 group-hover:border-white/20 transition-colors duration-500 min-h-[300px]">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                      <span className="text-2xl">⏳</span>
-                    </div>
-                    <h4 className="font-sans text-xl font-bold text-white mb-3">Coming Soon</h4>
-                    <p className="font-sans text-neutral-400 text-sm mb-6">Registration Opens Soon</p>
-                    <div className="mt-auto inline-flex items-center justify-center px-6 py-2 rounded-full border border-white/10 text-xs font-medium uppercase tracking-wider text-neutral-400">
-                      Stay Tuned
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            }
-
-
             // ✨ Real event card ✨
             const maxTeams = event.max_participants ?? event.max_teams ?? 60;
             const registeredTeams = event.registered_teams_count ?? event.registered_count ?? 0;
@@ -439,11 +405,10 @@ export function UpcomingEvents() {
 
             return (
               <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
+                key={event.id || event.slug || index}
+                initial={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
                 className="relative p-[1px] rounded-[28px] overflow-hidden group h-full flex"
               >
                 {/* Glowing border when open */}
