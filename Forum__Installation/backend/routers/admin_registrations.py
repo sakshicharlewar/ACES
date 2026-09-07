@@ -69,6 +69,33 @@ async def team_register(
         await db.refresh(event)
         event_id = event.id
 
+    if not event and (event_id == 13 or "bloomcraft" in (body.team_name or "").lower() or "bloom" in (body.team_name or "").lower()):
+        # Auto-create BloomCraft event so registration NEVER fails
+        event = Event(
+            id=13,
+            title="🌸 BloomCraft – Inter-Department Pipe Cleaner Bouquet Exhibition",
+            slug="bloomcraft-pipe-cleaner-bouquet-exhibition",
+            subtitle="Handmade Bouquet Exhibition & Competition",
+            short_description="Create a handmade bouquet using colorful pipe cleaners at home and submit it on 16 September for exhibition and evaluation by judges.",
+            full_description="BloomCraft is an Inter-Department Pipe Cleaner Bouquet Exhibition & Competition. Participants are required to create a handmade bouquet using colorful pipe cleaners at home and bring their completed bouquet to the venue on 16 September. All submitted bouquets will be displayed in an exhibition, where judges will evaluate each entry based on creativity, originality, design, and finishing. The winners will be announced during the prize distribution ceremony.",
+            registration_status=RegistrationStatus.open,
+            event_status=EventStatus.upcoming,
+            result_status=ResultStatus.pending,
+            team_size=1,
+            max_participants=9999,
+            registered_count=0,
+            registration_fee=0,
+            venue="Suryodaya College Campus (Exhibition Hall)",
+            date="16-09-2026",
+            rules="The bouquet must be handmade using pipe cleaners.\nThe bouquet should be prepared at home before the event.\nParticipants must submit their bouquet on 16 September within the specified time.\nNo pre-made or ready-made bouquets are allowed.\nWrapping paper, ribbons, beads, and decorative accessories may be used.\nEach participant may submit only one entry.\nThe judges' decision will be final.",
+            prizes="🥇 Winner\n🥈 Runner-up",
+            whatsapp_link="https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"
+        )
+        db.add(event)
+        await db.commit()
+        await db.refresh(event)
+        event_id = event.id
+
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     if event.registration_status != RegistrationStatus.open:
@@ -104,6 +131,8 @@ async def team_register(
         prefix = "BUILDX"
     elif "BUG" in title_upper or "bug" in slug_lower:
         prefix = "BUG-"
+    elif "BLOOM" in title_upper or "bloomcraft" in slug_lower:
+        prefix = "BLOOM-"
     else:
         clean_words = re.findall(r"[A-Za-z0-9]+", event.title or "")
         prefix = clean_words[0].upper() if clean_words else "EVENT"

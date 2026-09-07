@@ -142,17 +142,24 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const validateStep1 = () => {
+    const isIndividual = (eventDetails?.team_size || 4) === 1;
     const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
-    if (!formData.teamName.trim() || !formData.leaderName.trim() || !formData.leaderEmail.trim() || !formData.leaderPhone.trim()) {
-      setError('Please fill all required leader fields.');
+
+    // Auto-fill teamName for individual events if participant didn't type one
+    if (isIndividual && !formData.teamName.trim() && formData.leaderName.trim()) {
+      formData.teamName = formData.leaderName.trim();
+    }
+
+    if ((!isIndividual && !formData.teamName.trim()) || !formData.leaderName.trim() || !formData.leaderEmail.trim() || !formData.leaderPhone.trim()) {
+      setError('Please fill all required fields.');
       return false;
     }
     if (leaderPhoneClean.length !== 10) {
-      setError('Leader phone number must be exactly 10 digits.');
+      setError('Phone number must be exactly 10 digits.');
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.leaderEmail.trim())) {
-      setError('Please enter a valid email address for team leader.');
+      setError('Please enter a valid email address.');
       return false;
     }
     if (!formData.leaderYear) {
@@ -171,6 +178,15 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
   };
 
   const validateStep2 = () => {
+    const isIndividual = (eventDetails?.team_size || 4) === 1;
+    if (isIndividual) {
+      if (!formData.agreedToRules) {
+        setError('You must agree to the event rules to proceed.');
+        return false;
+      }
+      return true;
+    }
+
     const leaderPhoneClean = formData.leaderPhone.replace(/\D/g, '');
     // Member 2 (index 0) is required (minimum 2 members in a team)
     const m2 = formData.members[0];
@@ -868,7 +884,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                       onClick={nextStep}
                       className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer font-sans"
                     >
-                      <span>Continue to Team Members</span>
+                      <span>{(eventDetails?.team_size || 4) === 1 ? "Continue to Rules & Submission" : "Continue to Team Members"}</span>
                       <ArrowRight size={18} />
                     </button>
                   </div>
@@ -982,9 +998,10 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
                     <button
                       type="button"
                       onClick={nextStep}
+                      disabled={loading}
                       className="px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-200 via-white to-amber-100 hover:from-white hover:to-amber-200 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(251,191,36,0.4)] hover:shadow-[0_0_35px_rgba(251,191,36,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer font-sans"
                     >
-                      <span>Continue to Payment</span>
+                      <span>{Number(eventDetails?.fee ?? eventDetails?.registration_fee ?? 0) === 0 ? (loading ? "Submitting..." : "Submit Registration 🌸") : "Continue to Payment"}</span>
                       <ArrowRight size={18} />
                     </button>
                   </div>

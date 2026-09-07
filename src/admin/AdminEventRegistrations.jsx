@@ -11,6 +11,7 @@ const API_URL = getBaseUrl();
 
 const DEFAULT_EVENTS = [
   { id: 12, title: "BUILDX - Project Innovation Challenge", max_teams: 60, max_participants: 60, registered_teams_count: 0, is_registration_open: true, registration_status: "open", result_status: "pending" },
+  { id: 13, title: "🌸 BloomCraft – Bouquet Exhibition", max_teams: 9999, max_participants: 9999, registered_teams_count: 0, is_registration_open: true, registration_status: "open", result_status: "pending" },
   { id: 1, title: "Bug Hunt: Debug the Web", max_teams: 30, max_participants: 30, registered_teams_count: 30, is_registration_open: false, registration_status: "closed", result_status: "announced" }
 ];
 
@@ -435,6 +436,7 @@ export default function AdminEventRegistrations() {
           {events.map(ev => {
             const isSelected = String(ev.id) === String(selectedEventId);
             const isBuildX = String(ev.id) === "12" || (ev.title || "").toLowerCase().includes("buildx");
+            const isBloomCraft = String(ev.id) === "13" || (ev.title || "").toLowerCase().includes("bloomcraft");
             const isBugHunt = String(ev.id) === "1" || (ev.title || "").toLowerCase().includes("bug hunt");
             return (
               <button
@@ -446,9 +448,10 @@ export default function AdminEventRegistrations() {
                     : "bg-white/5 text-white/70 hover:text-white border-white/10 hover:bg-white/10"
                 }`}
               >
-                {isBuildX ? "🚀 " : isBugHunt ? "🐞 " : "📅 "}
+                {isBuildX ? "🚀 " : isBloomCraft ? "🌸 " : isBugHunt ? "🐞 " : "📅 "}
                 <span>{ev.title}</span>
                 {isBuildX && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? "bg-black text-white" : "bg-green-500/20 text-green-400"}`}>Live</span>}
+                {isBloomCraft && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? "bg-black text-white" : "bg-pink-500/20 text-pink-400"}`}>Open Entry</span>}
                 {isBugHunt && <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? "bg-black/20 text-black font-bold" : "bg-white/10 text-white/60"}`}>30 Teams</span>}
               </button>
             );

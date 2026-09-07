@@ -66,7 +66,54 @@ const BUILD_X_FALLBACK = {
   isFallback: true,
 };
 
-const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BUG_HUNT_FALLBACK];
+const BLOOM_CRAFT_FALLBACK = {
+  id: 13,
+  title: "🌸 BloomCraft – Inter-Department Pipe Cleaner Bouquet Exhibition",
+  slug: "bloomcraft-pipe-cleaner-bouquet-exhibition",
+  subtitle: "Handmade Bouquet Exhibition & Competition",
+  description:
+    "Participants are required to create a handmade bouquet using colorful pipe cleaners at home and bring their completed bouquet to the venue on 16 September. All submitted bouquets will be displayed in an exhibition, where judges will evaluate each entry based on creativity, originality, design, and finishing. The winners will be announced during the prize distribution ceremony.",
+  short_description:
+    "Create a handmade bouquet using colorful pipe cleaners at home and bring your completed bouquet on 16 September for exhibition and evaluation by judges.",
+  rules: [
+    "• The bouquet must be handmade using pipe cleaners.",
+    "• The bouquet should be prepared at home before the event.",
+    "• Participants must submit their bouquet on 16 September within the specified time.",
+    "• No pre-made or ready-made bouquets are allowed.",
+    "• Wrapping paper, ribbons, beads, and decorative accessories may be used.",
+    "• Each participant may submit only one entry.",
+    "• The judges' decision will be final."
+  ].join("\n"),
+  judging_criteria: [
+    "• Creativity & Originality – 30%",
+    "• Design & Aesthetics – 25%",
+    "• Neatness & Finishing – 20%",
+    "• Color Combination – 15%",
+    "• Overall Presentation – 10%"
+  ].join("\n"),
+  prizes: "🥇 Winner | 🥈 Runner-up",
+  format: "At Home + Exhibition",
+  is_registration_open: true,
+  registration_status: "open",
+  event_status: "upcoming",
+  result_status: "pending",
+  max_teams: 9999,
+  max_participants: 9999,
+  team_size: 1,
+  fee: 0,
+  registration_fee: 0,
+  registered_teams_count: 0,
+  registered_count: 0,
+  seats_left: 9999,
+  unlimited_seats: true,
+  eligibility: "Open to all departments (Inter-Department Competition)",
+  venue: "Suryodaya College Campus (Exhibition Hall)",
+  date: "16-09-2026",
+  whatsapp_link: "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
+  isFallback: true,
+};
+
+const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BLOOM_CRAFT_FALLBACK, BUG_HUNT_FALLBACK];
 
 // ── Winner Cards Component ─────────────────────────────────────────────────
 function parseWinnerDetails(details) {
@@ -169,19 +216,25 @@ export function UpcomingEvents() {
         // 2. Identify Flagship events
         const isBugHunt = e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt");
         const isBuildX = slugLower.includes("buildx") || titleLower.includes("buildx");
+        const isBloomCraft = e.id === 13 || slugLower.includes("bloomcraft") || titleLower.includes("bloomcraft");
 
         // 3. Completed departmental events should never appear in Upcoming Events
-        if (e.event_status === "completed" && !isBugHunt && !isBuildX) {
+        if (e.event_status === "completed" && !isBugHunt && !isBuildX && !isBloomCraft) {
           return false;
         }
 
         const isUpcoming = e.event_status === "upcoming" || e.event_status === "ongoing";
         const hasResult = e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
         const isRegOpen = e.is_registration_open || e.registration_status === "open";
-        return isUpcoming || isBuildX || isBugHunt || hasResult || isRegOpen;
+        return isUpcoming || isBuildX || isBugHunt || isBloomCraft || hasResult || isRegOpen;
       });
 
-      // Ensure BUILDX is first, then Bug Hunt / others
+      const hasBloomCraft = upcomingAndAnnounced.some(e => (e.slug || "").includes("bloomcraft") || (e.title || "").toLowerCase().includes("bloomcraft"));
+      if (!hasBloomCraft) {
+        upcomingAndAnnounced.push(BLOOM_CRAFT_FALLBACK);
+      }
+
+      // Ensure BUILDX is first, then BloomCraft, then Bug Hunt / others
       upcomingAndAnnounced.sort((a, b) => {
         const aIsBuildX = (a.slug || "").includes("buildx") || (a.title || "").toLowerCase().includes("buildx");
         const bIsBuildX = (b.slug || "").includes("buildx") || (b.title || "").toLowerCase().includes("buildx");
@@ -403,9 +456,13 @@ export function UpcomingEvents() {
 
                 <div className="relative w-full h-full bg-[#111317]/85 backdrop-blur-xl rounded-[28px] p-6 flex flex-col border border-white/10 group-hover:border-white/20 group-hover:bg-[#15181E] transition-all duration-500 shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
                   {/* Icon / Banner */}
-                  {event.banner && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") || (event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug")) ? (
+                  {event.banner && !((event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") || (event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug") || (event.slug || "").includes("bloom") || (event.title || "").toLowerCase().includes("bloom")) ? (
                     <div className="w-full h-32 rounded-xl mb-4 overflow-hidden bg-white/5 border border-white/10">
                       <img src={event.banner} alt={event.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (event.slug || "").includes("bloom") || (event.title || "").toLowerCase().includes("bloom") ? (
+                    <div className="w-12 h-12 rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-300 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(236,72,153,0.25)]">
+                      <span className="text-2xl">🌸</span>
                     </div>
                   ) : (event.slug || "").includes("bug") || (event.title || "").toLowerCase().includes("bug") ? (
                     <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 text-purple-300 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(168,85,247,0.25)]">
@@ -434,7 +491,7 @@ export function UpcomingEvents() {
                           Registration Closed (Housefull)
                         </span>
                       ) : isOpen ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-200 text-xs font-semibold uppercase tracking-wider shadow-[0_0_15px_rgba(236,72,153,0.3)]">
                           ● Registration Open
                         </span>
                       ) : (
@@ -459,8 +516,16 @@ export function UpcomingEvents() {
                     <div className="flex items-center gap-2">
                       <span className="text-white">🪑</span>
                       <span className="text-neutral-300 font-medium">
-                        Seats: <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
-                        {seatsLeft > 0 ? (
+                        Seats: {maxTeams >= 999 ? (
+                          <span className="text-white font-semibold">Open Entry (Unlimited)</span>
+                        ) : (
+                          <span className="text-white font-semibold">{registeredTeams} / {maxTeams}</span>
+                        )}
+                        {maxTeams >= 999 ? (
+                          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full ml-2 inline-flex items-center gap-1 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                            🌸 Open to All
+                          </span>
+                        ) : seatsLeft > 0 ? (
                           <span className="text-xs font-bold text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full ml-2 inline-flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
                             🔥 {seatsLeft} seats left
                           </span>
@@ -473,18 +538,16 @@ export function UpcomingEvents() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Users size={14} className="text-white" />
-                      <span>Team Size: {(event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : `${event.team_size} Members`}</span>
+                      <span>Participation: {(event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx") ? "2 to 4 Members" : event.team_size === 1 ? "1 Participant (Individual Entry)" : `${event.team_size} Members`}</span>
                     </div>
-                    {(event.fee || event.registration_fee) && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-white">💳</span>
-                        <span>Registration Fee: <span className="text-white font-semibold">₹{event.fee ?? event.registration_fee}</span></span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-white">💳</span>
+                      <span>Registration Fee: <span className="text-white font-semibold">{Number(event.fee ?? event.registration_fee ?? 0) === 0 ? "Free Entry" : `₹${event.fee ?? event.registration_fee}`}</span></span>
+                    </div>
                     {event.eligibility && (
                       <div className="flex items-center gap-2">
                         <span className="text-white">🎓</span>
-                        <span className="text-neutral-300 text-sm">Eligibility: {event.eligibility}</span>
+                        <span className="text-neutral-300 text-sm truncate">Eligibility: {event.eligibility}</span>
                       </div>
                     )}
                     {(event.prizes || event.prize_pool) && (
@@ -501,16 +564,22 @@ export function UpcomingEvents() {
                     <div className="mb-3">
                       <div className="flex justify-between items-center text-xs mb-1.5">
                         <span className="text-neutral-400 font-medium flex items-center gap-1.5">
-                          <span className="text-amber-300">⚡</span> Live Seats: <strong className="text-white font-mono">{registeredTeams}/{maxTeams}</strong>
+                          <span className="text-amber-300">⚡</span> {maxTeams >= 999 ? "Participation:" : "Live Seats:"} <strong className="text-white font-mono">{maxTeams >= 999 ? "Open Entry" : `${registeredTeams}/${maxTeams}`}</strong>
                         </span>
-                        <span className="font-bold text-xs text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-                          🔥 {seatsLeft} remaining
-                        </span>
+                        {maxTeams >= 999 ? (
+                          <span className="font-bold text-xs text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            🌸 Unlimited Seats
+                          </span>
+                        ) : (
+                          <span className="font-bold text-xs text-red-400 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                            🔥 {seatsLeft} remaining
+                          </span>
+                        )}
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
                         <div 
-                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400"
-                          style={{ width: `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
+                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-pink-500 via-amber-400 to-emerald-400"
+                          style={{ width: maxTeams >= 999 ? "100%" : `${Math.min(100, maxTeams > 0 ? (registeredTeams / maxTeams) * 100 : 0)}%` }}
                         />
                       </div>
                     </div>
