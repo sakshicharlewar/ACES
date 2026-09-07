@@ -138,6 +138,7 @@ export default function AdminEventRegistrations() {
     setLoading(true);
     try {
       let backendData = [];
+      let fetchSucceeded = false;
       try {
         const baseUrl = getBaseUrl();
         const token = localStorage.getItem("aces_admin_token") || localStorage.getItem("adminToken") || "";
@@ -150,44 +151,46 @@ export default function AdminEventRegistrations() {
         if (res.ok) {
           const json = await res.json();
           backendData = Array.isArray(json) ? json : (json.items || json.data || []);
+          fetchSucceeded = true;
         }
       } catch (e) {
         console.warn("Backend fetch failed, using local registrations");
       }
       
-      const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
-      const eventLocalRegs = localRegs.filter(r => {
-        // Match if event_id matches exactly
-        if (r.event_id?.toString() === eventId.toString()) return true;
-        // Match if viewing BuildX (ID 12)
-        if ((eventId.toString() === "12" || String(eventId).toLowerCase().includes("buildx")) && 
-            (r.registration_id?.toUpperCase().startsWith("BUILDX") || (r.event_title || "").toLowerCase().includes("buildx") || r.event_id === 12)) {
-          return true;
-        }
-        // Match if viewing Bug Hunt (ID 1)
-        if (eventId.toString() === "1" && (r.registration_id?.toUpperCase().startsWith("BUG-") || r.event_id === 1)) {
-          return true;
-        }
-        return false;
-      });
-      
       const normalizedBackend = backendData.map(r => normalizeReg(r, eventId));
-      const normalizedLocal = eventLocalRegs.map(r => normalizeReg(r, eventId));
-      
-      const seenIds = new Set();
-      const seenTxns = new Set();
-      const merged = [];
 
-      for (const r of [...normalizedBackend, ...normalizedLocal]) {
-        const regKey = r.registration_id || r.id;
-        const txnKey = r.transaction_id && r.transaction_id.toUpperCase() !== "FREE" ? r.transaction_id.toLowerCase() : null;
+      let merged = [];
+      if (fetchSucceeded) {
+        merged = normalizedBackend;
+      } else {
+        const localRegs = JSON.parse(localStorage.getItem('local_registrations') || '[]');
+        const eventLocalRegs = localRegs.filter(r => {
+          if (r.event_id?.toString() === eventId.toString()) return true;
+          if ((eventId.toString() === "12" || String(eventId).toLowerCase().includes("buildx")) && 
+              (r.registration_id?.toUpperCase().startsWith("BUILDX") || (r.event_title || "").toLowerCase().includes("buildx") || r.event_id === 12)) {
+            return true;
+          }
+          if (eventId.toString() === "1" && (r.registration_id?.toUpperCase().startsWith("BUG-") || r.event_id === 1)) {
+            return true;
+          }
+          return false;
+        });
+        const normalizedLocal = eventLocalRegs.map(r => normalizeReg(r, eventId));
         
-        if (regKey && seenIds.has(regKey)) continue;
-        if (txnKey && seenTxns.has(txnKey)) continue;
+        const seenIds = new Set();
+        const seenTxns = new Set();
 
-        if (regKey) seenIds.add(regKey);
-        if (txnKey) seenTxns.add(txnKey);
-        merged.push(r);
+        for (const r of normalizedLocal) {
+          const regKey = r.registration_id || r.id;
+          const txnKey = r.transaction_id && r.transaction_id.toUpperCase() !== "FREE" ? r.transaction_id.toLowerCase() : null;
+          
+          if (regKey && seenIds.has(regKey)) continue;
+          if (txnKey && seenTxns.has(txnKey)) continue;
+
+          if (regKey) seenIds.add(regKey);
+          if (txnKey) seenTxns.add(txnKey);
+          merged.push(r);
+        }
       }
       
       let finalData = merged;
