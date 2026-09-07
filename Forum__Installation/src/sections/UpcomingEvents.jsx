@@ -210,8 +210,8 @@ export function UpcomingEvents() {
         const titleLower = (e.title || "").toLowerCase();
         const slugLower = (e.slug || "").toLowerCase();
 
-        // 1. Explicitly exclude Debugging Competition and other completed departmental events
-        if (titleLower.includes("debugging competition") || slugLower.includes("debugging-competition")) return false;
+        // 1. Explicitly exclude Debugging Competition, Guest Lectures, and other completed departmental events
+        if (titleLower.includes("debugging competition") || slugLower.includes("debugging-competition") || titleLower.includes("guest") || slugLower.includes("guest")) return false;
 
         // 2. Identify Flagship events
         const isBugHunt = e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt");
