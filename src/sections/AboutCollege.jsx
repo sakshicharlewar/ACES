@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "../components/ui/GlassCard";
-import { RevealText } from "../components/ui/RevealText";
 
 export function AboutCollege() {
   return (
@@ -35,18 +34,13 @@ export function AboutCollege() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="space-y-5"
+            className="space-y-4"
           >
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              Suryodaya College of Engineering & Technology, established in <span className="text-amber-200 font-semibold font-mono">2010</span>, is a premier{" "}
-              <span className="text-white font-semibold px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15">NAAC A+ accredited</span> institution offering UG, PG, and Diploma programs in Engineering & Management. Our Diploma programs in Civil and Mechanical Engineering are further accredited by the <span className="text-cyan-200 font-semibold">NBA</span>.
+              Established in <span className="text-amber-200 font-semibold font-mono">2010</span>, <span className="text-white font-semibold">Suryodaya College of Engineering &amp; Technology (SCET)</span> is a premier <span className="text-white font-semibold px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15">NAAC A+ Accredited</span> institution offering UG, PG, and NBA-accredited Diploma programs in Nagpur.
             </p>
             <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              With its lush green campus and academically enriching environment, the institute provides students with an ideal atmosphere to <span className="text-white font-medium italic font-serif" style={{ fontFamily: "'Cormorant Garamond', serif" }}>learn, innovate, and grow</span>. Our forward-thinking approach toward employability and entrepreneurship has earned recognition across the region.
-            </p>
-            <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal">
-              A major milestone is our <span className="text-amber-100 font-semibold">Centre for Skill & Entrepreneurship Development (CSED)</span> — envisioned as <span className="text-amber-200/90 font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>"Industry Inside an Institute"</span>. Global technology partners include{" "}
-              <span className="text-white font-medium">Dassault Systèmes, PTC, Ansys, Festo,</span> and <span className="text-white font-medium">Mastercam</span>, bridging academia with Industry 4.0.
+              With advanced centers like <span className="text-amber-100 font-semibold">CSED</span> (partnered with <span className="text-white font-medium">Dassault Systèmes, PTC, Ansys</span>), SCET bridges academia with industry to foster <span className="text-white font-medium italic font-serif" style={{ fontFamily: "'Cormorant Garamond', serif" }}>innovation, leadership, and technical excellence</span>.
             </p>
           </motion.div>
         </motion.div>

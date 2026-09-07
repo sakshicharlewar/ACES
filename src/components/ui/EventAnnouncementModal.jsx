@@ -15,7 +15,17 @@ export default function EventAnnouncementModal() {
   });
 
   useEffect(() => {
-    const handleReopen = () => setIsOpen(true);
+    // Hide floating events button whenever this modal is open
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: false }));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleReopen = () => {
+      setIsOpen(true);
+      window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: false }));
+    };
     window.addEventListener('openAnnouncementModal', handleReopen);
 
     return () => {
@@ -28,6 +38,7 @@ export default function EventAnnouncementModal() {
       sessionStorage.setItem(STORAGE_KEY, 'true');
     } catch {}
     setIsOpen(false);
+    window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: true }));
   };
 
   const handleRegisterCTA = () => {

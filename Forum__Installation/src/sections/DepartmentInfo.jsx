@@ -47,11 +47,11 @@ export function DepartmentInfo() {
             borderRadius: "28px",
             border: "1px solid rgba(255,255,255,0.09)",
             boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
-            padding: "48px 52px",
+            padding: "40px 44px",
           }}
         >
           {/* Card Heading */}
-          <h3 style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", fontWeight: 600, color: "#ffffff", marginBottom: "16px", letterSpacing: "-0.01em" }}>
+          <h3 style={{ fontSize: "clamp(1.3rem, 2.2vw, 1.8rem)", fontWeight: 600, color: "#ffffff", marginBottom: "14px", letterSpacing: "-0.01em" }}>
             <span>Department of </span>
             <span 
               className="text-amber-200 font-normal text-2xl md:text-3xl"
@@ -62,18 +62,11 @@ export function DepartmentInfo() {
           </h3>
 
           {/* Golden/White Accent Line */}
-          <div style={{ width: "56px", height: "2px", background: "linear-gradient(90deg, #FDE68A, rgba(255,255,255,0.2))", borderRadius: "2px", marginBottom: "28px" }} />
+          <div style={{ width: "56px", height: "2px", background: "linear-gradient(90deg, #FDE68A, rgba(255,255,255,0.2))", borderRadius: "2px", marginBottom: "22px" }} />
 
-          {/* Body Text */}
+          {/* Body Text (Concise & Crisp) */}
           <p className="font-sans text-neutral-300 text-base md:text-lg leading-relaxed font-normal mb-8">
-            The Department of Computer Engineering at Suryodaya College of Engineering &amp;
-            Technology (SCET) is dedicated to nurturing skilled, innovative, and industry-ready
-            professionals. The department provides a strong foundation in <span className="text-white font-medium">programming, software development,</span>{" "}
-            <span className="text-amber-200 font-semibold font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>artificial intelligence, data science, cybersecurity,</span>{" "}
-            and <span className="text-cyan-200 font-medium">cloud computing</span>. With experienced faculty members, well-equipped
-            laboratories, and modern learning resources, students gain both theoretical knowledge
-            and practical exposure. Regular <span className="text-white font-semibold">workshops, hackathons, and coding competitions</span> help students enhance their technical and
-            professional skills, preparing them to excel in <span className="text-amber-100 font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>higher education, entrepreneurship, and global careers</span>.
+            The <span className="text-white font-semibold">Department of Computer Engineering</span> at SCET nurtures innovative, industry-ready engineers with expertise in <span className="text-amber-200 font-serif italic text-lg" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Artificial Intelligence, Full Stack Development, Data Science,</span> and <span className="text-cyan-200 font-medium">Cloud Computing</span>. Through modern labs, hackathons, and research mentorship, students are empowered to excel in global careers and tech leadership.
           </p>
 
           {/* Explore Button — bottom-right */}

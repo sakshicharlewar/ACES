@@ -7,7 +7,16 @@ export function FloatingEventsButton() {
   const location = useLocation();
   const [ripple, setRipple] = useState(false);
   const [ripplePos, setRipplePos] = useState({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(true);
+
+  // Hide button on initial load if the announcement popup is active in session
+  const [isVisible, setIsVisible] = useState(() => {
+    try {
+      return !!sessionStorage.getItem('aces_announcement_seen_v2');
+    } catch {
+      return false;
+    }
+  });
+
   const btnRef = useRef(null);
 
   useEffect(() => {
@@ -21,10 +30,12 @@ export function FloatingEventsButton() {
 
   const handleClick = (e) => {
     // Ripple position
-    const rect = btnRef.current.getBoundingClientRect();
-    setRipplePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    setRipple(true);
-    setTimeout(() => setRipple(false), 600);
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setRipplePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      setRipple(true);
+      setTimeout(() => setRipple(false), 600);
+    }
 
     if (location.pathname === "/") {
       const section = document.getElementById("events-upcoming");
@@ -45,9 +56,6 @@ export function FloatingEventsButton() {
     }
   };
 
-  // Don't render on admin pages at all
-  if (location.pathname.startsWith("/admin")) return null;
-
   return (
     <>
       <style>{`
@@ -58,12 +66,12 @@ export function FloatingEventsButton() {
         .fab-pill-wrapper.fab-hidden {
           opacity: 0;
           pointer-events: none;
-          transform: translateY(8px);
+          transform: translateY(12px) scale(0.95);
         }
         .fab-pill-wrapper.fab-visible {
           opacity: 1;
           pointer-events: auto;
-          transform: translateY(0px);
+          transform: translateY(0px) scale(1);
         }
         @keyframes pill-float {
           0%, 100% { transform: translateY(0px); }
