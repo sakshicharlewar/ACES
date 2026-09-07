@@ -109,7 +109,7 @@ const BLOOM_CRAFT_FALLBACK = {
   eligibility: "Open to all departments (Inter-Department Competition)",
   venue: "Suryodaya College Campus (Exhibition Hall)",
   date: "16-09-2026",
-  whatsapp_link: "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
+  whatsapp_link: "https://chat.whatsapp.com/HdxOHzlcPjUHfTXa35EAbM",
   isFallback: true,
 };
 

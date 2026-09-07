@@ -519,7 +519,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
         eventName: eventDetails?.title || 'BUILDX',
         transactionId: formData.transactionId,
         paymentStatus: 'Pending Verification',
-        whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir',
+        whatsapp_link: eventDetails?.whatsapp_link || ((eventDetails?.slug || "").includes("bloom") || (eventDetails?.title || "").toLowerCase().includes("bloom") ? "https://chat.whatsapp.com/HdxOHzlcPjUHfTXa35EAbM" : "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"),
         registeredAt: new Date().toLocaleString(),
       });
       setShowSuccessPopup(true);
@@ -571,7 +571,7 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
       eventName: eventDetails?.title || 'BUILDX',
       transactionId: formData.transactionId,
       paymentStatus: 'Pending Verification',
-      whatsapp_link: eventDetails?.whatsapp_link || 'https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir',
+      whatsapp_link: eventDetails?.whatsapp_link || ((eventDetails?.slug || "").includes("bloom") || (eventDetails?.title || "").toLowerCase().includes("bloom") ? "https://chat.whatsapp.com/HdxOHzlcPjUHfTXa35EAbM" : "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"),
       registeredAt: new Date().toLocaleString(),
     });
     setShowSuccessPopup(true);

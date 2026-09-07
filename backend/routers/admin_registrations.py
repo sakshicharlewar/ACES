@@ -36,65 +36,73 @@ async def team_register(
     # 1. Check event exists and is open
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
-    if not event:
-        # Fallback to search by slug or title for buildx
-        result = await db.execute(select(Event).where(Event.slug.ilike("%buildx%") | Event.title.ilike("%buildx%")))
-        event = result.scalar_one_or_none()
-        if event:
-            event_id = event.id
-    
-    if not event and (event_id == 12 or "buildx" in (body.team_name or "").lower()):
-        # Auto-create BuildX event so registration NEVER fails
-        event = Event(
-            id=12,
-            title="BUILDX - Build. Break. Adapt. Repeat.",
-            slug="buildx-project-innovation-challenge",
-            subtitle="Your Code. Your Strategy. Your Challenge.",
-            short_description="BUILDX is a Full Stack Development Challenge where teams build innovative solutions while adapting to unexpected changes.",
-            full_description="BUILDX is a Full Stack Development Challenge where teams build innovative solutions while adapting to unexpected changes and evolving requirements. Participants must combine frontend, backend, databases, APIs, and real-time data to create a functional and scalable solution. No fixed solution. No predictable challenge. Just build, adapt, and prove your code. Think Fast. Build Smart. Adapt Faster.",
-            registration_status=RegistrationStatus.open,
-            event_status=EventStatus.upcoming,
-            result_status=ResultStatus.pending,
-            team_size=4,
-            max_participants=60,
-            registered_count=0,
-            registration_fee=200,
-            venue="Suryodaya College of Engineering & Technology",
-            date="22-09-2026",
-            whatsapp_link="https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
-            qr_image="/BuildXScanner.jpeg"
-        )
-        db.add(event)
-        await db.commit()
-        await db.refresh(event)
-        event_id = event.id
 
-    if not event and (event_id == 13 or "bloomcraft" in (body.team_name or "").lower() or "bloom" in (body.team_name or "").lower()):
-        # Auto-create BloomCraft event so registration NEVER fails
-        event = Event(
-            id=13,
-            title="🌸 BloomCraft – Inter-Department Pipe Cleaner Bouquet Exhibition",
-            slug="bloomcraft-pipe-cleaner-bouquet-exhibition",
-            subtitle="Handmade Bouquet Exhibition & Competition",
-            short_description="Create a handmade bouquet using colorful pipe cleaners at home and submit it on 16 September for exhibition and evaluation by judges.",
-            full_description="BloomCraft is an Inter-Department Pipe Cleaner Bouquet Exhibition & Competition. Participants are required to create a handmade bouquet using colorful pipe cleaners at home and bring their completed bouquet to the venue on 16 September. All submitted bouquets will be displayed in an exhibition, where judges will evaluate each entry based on creativity, originality, design, and finishing. The winners will be announced during the prize distribution ceremony.",
-            registration_status=RegistrationStatus.open,
-            event_status=EventStatus.upcoming,
-            result_status=ResultStatus.pending,
-            team_size=1,
-            max_participants=9999,
-            registered_count=0,
-            registration_fee=0,
-            venue="Suryodaya College Campus (Exhibition Hall)",
-            date="16-09-2026",
-            rules="The bouquet must be handmade using pipe cleaners.\nThe bouquet should be prepared at home before the event.\nParticipants must submit their bouquet on 16 September within the specified time.\nNo pre-made or ready-made bouquets are allowed.\nWrapping paper, ribbons, beads, and decorative accessories may be used.\nEach participant may submit only one entry.\nThe judges' decision will be final.",
-            prizes="🥇 Winner\n🥈 Runner-up",
-            whatsapp_link="https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir"
-        )
-        db.add(event)
-        await db.commit()
-        await db.refresh(event)
-        event_id = event.id
+    is_bloom = (event_id == 13) or ("bloom" in (body.team_name or "").lower())
+    is_buildx = (event_id == 12) or ("buildx" in (body.team_name or "").lower())
+
+    if is_bloom:
+        bloom_result = await db.execute(select(Event).where(Event.slug.ilike("%bloomcraft%") | Event.title.ilike("%bloomcraft%")))
+        bloom_event = bloom_result.scalar_one_or_none()
+        if bloom_event:
+            event = bloom_event
+            event_id = bloom_event.id
+        elif not event or "bloom" not in (event.title or "").lower():
+            # Auto-create BloomCraft event with open registration status
+            event = Event(
+                title="🌸 BloomCraft – Inter-Department Pipe Cleaner Bouquet Exhibition",
+                slug="bloomcraft-pipe-cleaner-bouquet-exhibition",
+                subtitle="Handmade Bouquet Exhibition & Competition",
+                short_description="Create a handmade bouquet using colorful pipe cleaners at home and submit it on 16 September for exhibition and evaluation by judges.",
+                full_description="BloomCraft is an Inter-Department Pipe Cleaner Bouquet Exhibition & Competition. Participants are required to create a handmade bouquet using colorful pipe cleaners at home and bring their completed bouquet to the venue on 16 September. All submitted bouquets will be displayed in an exhibition, where judges will evaluate each entry based on creativity, originality, design, and finishing. The winners will be announced during the prize distribution ceremony.",
+                registration_status=RegistrationStatus.open,
+                event_status=EventStatus.upcoming,
+                result_status=ResultStatus.pending,
+                team_size=1,
+                max_participants=9999,
+                registered_count=0,
+                registration_fee=0,
+                venue="Suryodaya College Campus (Exhibition Hall)",
+                date="16-09-2026",
+                rules="The bouquet must be handmade using pipe cleaners.\nThe bouquet should be prepared at home before the event.\nParticipants must submit their bouquet on 16 September within the specified time.\nNo pre-made or ready-made bouquets are allowed.\nWrapping paper, ribbons, beads, and decorative accessories may be used.\nEach participant may submit only one entry.\nThe judges' decision will be final.",
+                prizes="🥇 Winner\n🥈 Runner-up",
+                whatsapp_link="https://chat.whatsapp.com/HdxOHzlcPjUHfTXa35EAbM"
+            )
+            db.add(event)
+            await db.commit()
+            await db.refresh(event)
+            event_id = event.id
+
+    elif is_buildx:
+        if not event:
+            buildx_result = await db.execute(select(Event).where(Event.slug.ilike("%buildx%") | Event.title.ilike("%buildx%")))
+            event = buildx_result.scalar_one_or_none()
+            if event:
+                event_id = event.id
+        if not event:
+            # Auto-create BuildX event so registration NEVER fails
+            event = Event(
+                id=12,
+                title="BUILDX - Build. Break. Adapt. Repeat.",
+                slug="buildx-project-innovation-challenge",
+                subtitle="Your Code. Your Strategy. Your Challenge.",
+                short_description="BUILDX is a Full Stack Development Challenge where teams build innovative solutions while adapting to unexpected changes.",
+                full_description="BUILDX is a Full Stack Development Challenge where teams build innovative solutions while adapting to unexpected changes and evolving requirements. Participants must combine frontend, backend, databases, APIs, and real-time data to create a functional and scalable solution. No fixed solution. No predictable challenge. Just build, adapt, and prove your code. Think Fast. Build Smart. Adapt Faster.",
+                registration_status=RegistrationStatus.open,
+                event_status=EventStatus.upcoming,
+                result_status=ResultStatus.pending,
+                team_size=4,
+                max_participants=60,
+                registered_count=0,
+                registration_fee=200,
+                venue="Suryodaya College of Engineering & Technology",
+                date="22-09-2026",
+                whatsapp_link="https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
+                qr_image="/BuildXScanner.jpeg"
+            )
+            db.add(event)
+            await db.commit()
+            await db.refresh(event)
+            event_id = event.id
 
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
