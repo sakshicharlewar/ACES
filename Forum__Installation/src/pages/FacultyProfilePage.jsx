@@ -110,6 +110,13 @@ export function FacultyProfilePage() {
     );
   }
 
+  const professionalSummary = faculty.professionalSummary || faculty.professional_summary || "";
+  const achievementImages = ensureArray(faculty.achievementImages || faculty.achievement_images || faculty.achievements);
+  const academicQualifications = ensureArray(faculty.academicQualifications || faculty.academic_qualifications);
+  const researchInterests = ensureArray(faculty.researchInterests || faculty.research_interests);
+  const subjectsTaught = ensureArray(faculty.subjectsTaught || faculty.subjects_taught || (faculty.professionalInfo?.subjects) || (faculty.professional_info?.subjects));
+  const publications = ensureArray(faculty.publications);
+
   return (
     <motion.div
       variants={pageVariants}
@@ -216,119 +223,132 @@ export function FacultyProfilePage() {
           </div>
         </motion.div>
 
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
-          <SectionHeading title="About" />
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            <div className="w-full lg:w-[60%]" style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "40px", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" }}>
-              <p style={{ color: "#CBD5E1", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 300 }}>
-                {faculty.professional_summary}
-              </p>
-            </div>
-            {achievementImages.length > 0 && (
-              <div className="w-full lg:w-[40%]" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", alignContent: "start" }}>
-                {achievementImages.map((ach, i) => {
-                  const src = typeof ach === "string" ? ach : ach?.src;
-                  const title = typeof ach === "object" ? ach?.title : "Achievement";
-                  const year = typeof ach === "object" ? ach?.year : null;
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => setActiveImg(src)}
-                      style={{
-                        borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)",
-                        background: "rgba(17, 19, 23, 0.9)", cursor: "pointer", position: "relative",
-                        boxShadow: "0 12px 30px rgba(0,0,0,0.4)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        padding: "16px", minHeight: "180px"
-                      }}
-                      onMouseEnter={e => {
-                        const el = e.currentTarget.querySelector('.overlay');
-                        if (el) el.style.opacity = 1;
-                      }}
-                      onMouseLeave={e => {
-                        const el = e.currentTarget.querySelector('.overlay');
-                        if (el) el.style.opacity = 0;
-                      }}
-                    >
-                      <img src={src} alt={title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} />
-                      <div className="overlay" style={{
-                        position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
-                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                        opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
-                      }}>
-                        <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{title}</p>
-                        {year && <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: "4px" }}>{year}</p>}
+        {(professionalSummary || achievementImages.length > 0) && (
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={2}>
+            <SectionHeading title="About" />
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              {professionalSummary && (
+                <div className={`w-full ${achievementImages.length > 0 ? "lg:w-[60%]" : "lg:w-full"}`} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "40px", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" }}>
+                  <p style={{ color: "#CBD5E1", fontSize: "1.05rem", lineHeight: "1.8", fontWeight: 300 }}>
+                    {professionalSummary}
+                  </p>
+                </div>
+              )}
+              {achievementImages.length > 0 && (
+                <div className={`w-full ${professionalSummary ? "lg:w-[40%]" : "lg:w-full"}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", alignContent: "start" }}>
+                  {achievementImages.map((ach, i) => {
+                    const src = typeof ach === "string" ? ach : (ach?.src || ach?.image);
+                    const title = typeof ach === "object" ? (ach?.title || ach?.caption || "Achievement") : "Achievement";
+                    const year = typeof ach === "object" ? ach?.year : null;
+                    if (!src) return null;
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => setActiveImg(src)}
+                        style={{
+                          borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)",
+                          background: "rgba(17, 19, 23, 0.9)", cursor: "pointer", position: "relative",
+                          boxShadow: "0 12px 30px rgba(0,0,0,0.4)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          padding: "16px", minHeight: "180px"
+                        }}
+                        onMouseEnter={e => {
+                          const el = e.currentTarget.querySelector('.overlay');
+                          if (el) el.style.opacity = 1;
+                        }}
+                        onMouseLeave={e => {
+                          const el = e.currentTarget.querySelector('.overlay');
+                          if (el) el.style.opacity = 0;
+                        }}
+                      >
+                        <img src={src} alt={title} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s", borderRadius: "12px" }} />
+                        <div className="overlay" style={{
+                          position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
+                          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                          opacity: 0, transition: "opacity 0.3s", padding: "16px", textAlign: "center", borderRadius: "20px"
+                        }}>
+                          <p style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}>{title}</p>
+                          {year && <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: "4px" }}>{year}</p>}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {(academicQualifications.length > 0 || researchInterests.length > 0) && (
+          <div style={{ display: "grid", gridTemplateColumns: (academicQualifications.length > 0 && researchInterests.length > 0) ? "repeat(auto-fit, minmax(400px, 1fr))" : "1fr", gap: "40px" }}>
+            {academicQualifications.length > 0 && (
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
+                <SectionHeading title="Academic Qualifications" />
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {academicQualifications.map((qual, i) => {
+                    const degree = typeof qual === "string" ? qual : (qual?.degree || qual?.title || qual?.qualification || "");
+                    const institution = typeof qual === "object" ? (qual?.institution || qual?.desc || qual?.university || "") : "";
+                    const year = typeof qual === "object" ? qual?.year : "";
+                    return (
+                      <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
+                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <GraduationCap className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{degree}</h4>
+                          {institution && <p style={{ color: "#94A3B8", fontSize: "0.95rem" }}>{institution} {year && `(${year})`}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {researchInterests.length > 0 && (
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={4}>
+                <SectionHeading title="Research Interests" />
+                <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", height: "100%", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+                    {researchInterests.map((interest, i) => (
+                      <span key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#E2E8F0", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
+                        {typeof interest === "string" ? interest : interest?.title || interest?.name || JSON.stringify(interest)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
             )}
           </div>
-        </motion.div>
+        )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "40px" }}>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={3}>
-            <SectionHeading title="Academic Qualifications" />
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {academicQualifications.map((qual, i) => {
-                const degree = typeof qual === "string" ? qual : (qual?.degree || qual?.title || "");
-                const institution = typeof qual === "object" ? (qual?.institution || qual?.desc || "") : "";
-                const year = typeof qual === "object" ? qual?.year : "";
-                return (
-                  <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "24px", display: "flex", gap: "16px", alignItems: "flex-start", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <GraduationCap className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, marginBottom: "4px" }}>{degree}</h4>
-                      {institution && <p style={{ color: "#94A3B8", fontSize: "0.95rem" }}>{institution} {year && `(${year})`}</p>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={4}>
-            <SectionHeading title="Research Interests" />
-            <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", height: "100%", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                {researchInterests.map((interest, i) => (
-                  <span key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#E2E8F0", padding: "8px 16px", borderRadius: "99px", fontSize: "0.95rem", fontWeight: 500 }}>
-                    {typeof interest === "string" ? interest : interest?.title || JSON.stringify(interest)}
-                  </span>
-                ))}
+        {subjectsTaught.length > 0 && (
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
+            <SectionHeading title="Professional Information" />
+            <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <BookOpen className="w-5 h-5 text-white" />
+                <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
               </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {subjectsTaught.map((sub, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#CBD5E1", fontSize: "0.95rem" }}>
+                    <ChevronRight className="w-4 h-4 text-neutral-400 mt-1 flex-shrink-0" />
+                    <span>{typeof sub === "string" ? sub : sub?.title || sub?.name || JSON.stringify(sub)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </motion.div>
-        </div>
-
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={5}>
-          <SectionHeading title="Professional Information" />
-          <div style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-              <BookOpen className="w-5 h-5 text-white" />
-              <h4 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600 }}>Subjects Taught</h4>
-            </div>
-            <ul style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {subjectsTaught.map((sub, i) => (
-                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", color: "#CBD5E1", fontSize: "0.95rem" }}>
-                  <ChevronRight className="w-4 h-4 text-neutral-400 mt-1 flex-shrink-0" />
-                  <span>{typeof sub === "string" ? sub : sub?.title || JSON.stringify(sub)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </motion.div>
+        )}
 
         {publications.length > 0 && (
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={fadeUpVariants} custom={6}>
             <SectionHeading title="Publications" />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "24px" }}>
               {publications.map((pub, i) => {
-                const title = typeof pub === "string" ? pub : pub?.title;
-                const journal = typeof pub === "object" ? pub?.journal : "";
+                const title = typeof pub === "string" ? pub : (pub?.title || pub?.name || "");
+                const journal = typeof pub === "object" ? (pub?.journal || pub?.conference || pub?.publisher || "") : "";
                 const year = typeof pub === "object" ? pub?.year : "";
                 return (
                   <div key={i} style={{ background: "rgba(17, 19, 23, 0.85)", backdropFilter: "blur(20px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.10)", padding: "32px", display: "flex", flexDirection: "column", boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
