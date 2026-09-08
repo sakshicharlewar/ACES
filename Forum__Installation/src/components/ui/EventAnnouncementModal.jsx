@@ -47,18 +47,8 @@ export default function EventAnnouncementModal() {
     } catch {}
     setIsOpen(false);
 
-    // Smooth scroll to Upcoming Events section
-    const targetSection = document.getElementById('events-upcoming');
-    if (targetSection) {
-      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    // Trigger the BUILDX registration modal
-    setTimeout(() => {
-      window.dispatchEvent(
-        new CustomEvent('openEventRegistrationModal', { detail: { slug: 'buildx' } })
-      );
-    }, 450);
+    // Open Google Form directly
+    window.open("https://forms.gle/HtQ597VEWiioLZFj9", "_blank", "noopener,noreferrer");
   };
 
   return (

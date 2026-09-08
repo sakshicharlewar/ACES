@@ -268,9 +268,8 @@ export function UpcomingEvents() {
     const maxTeams = event.max_participants ?? event.max_teams ?? 30;
     const isFull = maxTeams > 0 && event.registered_teams_count >= maxTeams;
     if (event.is_registration_open && !isFull) {
-      hideFloatingButton();
-      setSelectedEvent(event);
-      setIsModalOpen(true);
+      const googleFormUrl = event.google_form_url || event.registration_link || "https://forms.gle/HtQ597VEWiioLZFj9";
+      window.open(googleFormUrl, "_blank", "noopener,noreferrer");
     }
   };
 
