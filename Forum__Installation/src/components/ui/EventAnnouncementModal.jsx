@@ -153,7 +153,7 @@ export default function EventAnnouncementModal() {
                 </div>
                 <div className="bg-purple-500/10 border border-purple-500/25 rounded-xl py-2 px-2.5 col-span-2 flex items-center justify-center gap-1.5 text-purple-200">
                   <Flame size={13} className="text-red-400 shrink-0" />
-                  <span className="text-red-300 font-bold">🔥 Limited to 60 Teams • Seats Filling Fast!</span>
+                  <span className="text-red-300 font-bold">🔥 Limited Seats • Filling Fast!</span>
                 </div>
               </div>
             </div>

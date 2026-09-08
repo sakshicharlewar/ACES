@@ -390,6 +390,7 @@ export function UpcomingEvents() {
             const registeredTeams = event.registered_teams_count ?? event.registered_count ?? 0;
             const seatsLeft = event.seats_left !== undefined ? event.seats_left : Math.max(0, maxTeams - registeredTeams);
             const isFull = maxTeams > 0 && registeredTeams >= maxTeams;
+            const isBuildX = (event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx");
             
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
             const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
@@ -478,7 +479,14 @@ export function UpcomingEvents() {
                         <span className="truncate">{event.venue}</span>
                       </div>
                     )}
-                    {maxTeams < 999 && (
+                    {isBuildX ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-white">🪑</span>
+                        <span className="text-neutral-300 font-medium">
+                          Seats: <span className="text-amber-300 font-semibold">Limited Seats Available</span>
+                        </span>
+                      </div>
+                    ) : maxTeams < 999 && (
                       <div className="flex items-center gap-2">
                         <span className="text-white">🪑</span>
                         <span className="text-neutral-300 font-medium">
@@ -519,8 +527,17 @@ export function UpcomingEvents() {
 
                   {/* Seat Tracker & Register Button */}
                   <div className="mt-auto pt-4 border-t border-white/10">
-                    {/* Live Progress Bar */}
-                    {maxTeams < 999 && (
+                    {/* Live Seats / Limited Seats Indicator */}
+                    {isBuildX ? (
+                      <div className="mb-3 flex items-center justify-between text-xs px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                        <span className="text-amber-300 font-semibold flex items-center gap-1.5">
+                          <span>⚡</span> Limited Seats
+                        </span>
+                        <span className="text-amber-400/90 font-medium text-[11px] animate-pulse">
+                          Filling Fast 🔥
+                        </span>
+                      </div>
+                    ) : maxTeams < 999 && (
                       <div className="mb-3">
                         <div className="flex justify-between items-center text-xs mb-1.5">
                           <span className="text-neutral-400 font-medium flex items-center gap-1.5">
