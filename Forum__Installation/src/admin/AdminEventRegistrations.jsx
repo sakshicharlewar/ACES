@@ -591,45 +591,67 @@ export default function AdminEventRegistrations() {
                   </div>
                 )}
 
-                {/* Mobile Action Buttons */}
-                <div className="pt-2.5 border-t border-white/10 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => { setDetailModal(reg); setDetailTab("formatted"); }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <FileText size={14} /> Details / Raw
-                  </button>
+                {/* Mobile Action Buttons (Fast & High Contrast) */}
+                <div className="pt-3 border-t border-white/10 space-y-2 font-sans">
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* View Details / Raw Data */}
+                    <button
+                      onClick={() => { setDetailModal(reg); setDetailTab("formatted"); }}
+                      className="py-2.5 px-3 rounded-xl bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                    >
+                      <FileText size={15} /> Details &amp; Raw
+                    </button>
 
-                  {reg.payment_status !== "approved" ? (
+                    {/* Proof screenshot if available, else disabled indicator */}
+                    {reg.payment_screenshot ? (
+                      <button
+                        onClick={() => setScreenshotModal(reg.payment_screenshot)}
+                        className="py-2.5 px-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/40 text-purple-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                      >
+                        <Eye size={15} /> View Proof
+                      </button>
+                    ) : (
+                      <div className="py-2.5 px-3 rounded-xl bg-white/5 border border-white/5 text-white/30 text-xs font-medium flex items-center justify-center">
+                        No Screenshot
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Main Action Row: Approve & Reject side by side */}
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleApproveRegistration(reg.id)}
-                      className="w-full py-2.5 px-3 rounded-xl bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      disabled={reg.payment_status === "approved"}
+                      className={`py-3 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
+                        reg.payment_status === "approved"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 opacity-80"
+                          : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95"
+                      }`}
                     >
-                      <CheckCircle size={14} /> Approve
+                      <CheckCircle size={16} />
+                      <span>{reg.payment_status === "approved" ? "✓ Approved" : "Approve"}</span>
                     </button>
-                  ) : (
+
                     <button
                       onClick={() => setRejectionModal({ id: reg.id })}
-                      className="w-full py-2.5 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      disabled={reg.payment_status === "rejected"}
+                      className={`py-3 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md ${
+                        reg.payment_status === "rejected"
+                          ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 opacity-80"
+                          : "bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)] active:scale-95"
+                      }`}
                     >
-                      <XCircle size={14} /> Reject
+                      <XCircle size={16} />
+                      <span>{reg.payment_status === "rejected" ? "✕ Rejected" : "Reject"}</span>
                     </button>
-                  )}
+                  </div>
 
-                  {reg.payment_status !== "rejected" && reg.payment_status === "approved" && (
-                    <button
-                      onClick={() => setRejectionModal({ id: reg.id })}
-                      className="w-full py-2.5 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <XCircle size={14} /> Reject
-                    </button>
-                  )}
-
+                  {/* Delete Button */}
                   <button
                     onClick={() => handleDelete(reg.id)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer col-span-2"
+                    className="w-full py-2.5 px-3 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 hover:text-red-100 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
                   >
-                    <Trash2 size={14} /> Delete Registration
+                    <Trash2 size={15} /> Delete Registration
                   </button>
                 </div>
               </div>

@@ -642,6 +642,18 @@ export default function EventRegistrationModal({ isOpen, onClose, eventDetails, 
               >
                 📋 Open / Fill Google Form Link
               </a>
+              {/* Display the Google Form URL for convenience */}
+              <div className="w-full mt-2 text-center text-xs text-amber-200 break-all">
+                {eventDetails?.google_form_url || "https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header"}
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(eventDetails?.google_form_url || "https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header");
+                }}
+                className="mt-1 w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-medium rounded"
+              >
+                Copy Link
+              </button>
             </div>
           </div>
           <button 

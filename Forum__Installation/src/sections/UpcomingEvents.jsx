@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import EventRegistrationModal from "../components/ui/EventRegistrationModal";
 import TestRegistrationModal from "../components/ui/TestRegistrationModal";
+import EventDetailsModal from "../components/ui/EventDetailsModal";
 import { Users } from "lucide-react";
 import { fetchPublicEvents } from "../admin/adminApi";
 import { getBaseUrl } from "../lib/apiConfig";
@@ -176,6 +177,7 @@ export function UpcomingEvents() {
   const [winnersData, setWinnersData] = useState(null);
   const [loadingWinners, setLoadingWinners] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
+  const [buildxDetailsOpen, setBuildxDetailsOpen] = useState(false);
   const retryRef = React.useRef(null);
 
   // Close winners popup on ESC key
@@ -266,6 +268,16 @@ export function UpcomingEvents() {
     window.dispatchEvent(new CustomEvent('toggleFloatingButton', { detail: true }));
 
   const handleRegisterClick = (event) => {
+    // Normalize identifiers to detect BuildX events even if slug/title contain spaces or hyphens
+    const combined = `${event.slug || ""} ${event.title || ""}`.toLowerCase().replace(/[\s_-]/g, "");
+    const isBuildX = combined.includes("buildx");
+    if (isBuildX) {
+      // Directly open the Google Form for BuildX registration
+      const formUrl = event.google_form_url || "https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header";
+      window.open(formUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    // Existing registration modal flow for other events
     const maxTeams = event.max_participants ?? event.max_teams ?? 30;
     const isFull = maxTeams > 0 && event.registered_teams_count >= maxTeams;
     if (event.is_registration_open && !isFull) {
@@ -569,13 +581,23 @@ export function UpcomingEvents() {
                         ⏳ Result will be announced on {formatAnnouncementDate(event.announcement_date)}
                       </div>
                     ) : isOpen ? (
-                      <button
-                        id={`register-btn-${event.id}`}
-                        onClick={() => handleRegisterClick(event)}
-                        className="w-full py-3.5 rounded-full font-bold transition-all duration-300 flex justify-center items-center bg-gradient-to-r from-amber-200 via-white to-amber-100 text-black hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(251,191,36,0.5)] active:scale-95 text-sm"
-                      >
-                        Register Now
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        {isBuildX && (
+                          <button
+                            onClick={() => setBuildxDetailsOpen(true)}
+                            className="w-full py-2.5 rounded-full text-xs font-semibold border border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            📖 Event Details
+                          </button>
+                        )}
+                        <button
+                          id={`register-btn-${event.id}`}
+                          onClick={() => handleRegisterClick(event)}
+                          className="w-full py-3.5 rounded-full font-bold transition-all duration-300 flex justify-center items-center bg-gradient-to-r from-amber-200 via-white to-amber-100 text-black hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(251,191,36,0.5)] active:scale-95 text-sm"
+                        >
+                          Register Now
+                        </button>
+                      </div>
                     ) : isFull ? (
                       <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
                         <span>🔒</span>
@@ -600,6 +622,18 @@ export function UpcomingEvents() {
         onClose={handleModalClose}
         eventDetails={selectedEvent}
         onSuccess={handleRegistrationSuccess}
+      />
+
+      <EventDetailsModal
+        isOpen={buildxDetailsOpen}
+        onClose={() => setBuildxDetailsOpen(false)}
+        onRegister={() => {
+          setBuildxDetailsOpen(false);
+          const buildxEvent = (events || []).find(ev =>
+            (ev.slug || "").includes("buildx") || (ev.title || "").toLowerCase().includes("buildx")
+          );
+          if (buildxEvent) handleRegisterClick(buildxEvent);
+        }}
       />
 
       <TestRegistrationModal
