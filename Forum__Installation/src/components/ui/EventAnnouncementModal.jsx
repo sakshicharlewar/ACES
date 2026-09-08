@@ -47,8 +47,17 @@ export default function EventAnnouncementModal() {
     } catch {}
     setIsOpen(false);
 
-    // Open Google Form directly
-    window.open("https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header", "_blank", "noopener,noreferrer");
+    // Smooth scroll to Upcoming Events section and trigger registration modal
+    const targetSection = document.getElementById('events-upcoming');
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('openEventRegistrationModal', { detail: { slug: 'buildx' } })
+      );
+    }, 450);
   };
 
   return (
