@@ -48,7 +48,7 @@ export default function EventAnnouncementModal() {
     setIsOpen(false);
 
     // Open Google Form directly
-    window.open("https://forms.gle/HtQ597VEWiioLZFj9", "_blank", "noopener,noreferrer");
+    window.open("https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header", "_blank", "noopener,noreferrer");
   };
 
   return (

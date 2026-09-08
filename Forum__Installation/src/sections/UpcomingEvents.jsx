@@ -63,6 +63,7 @@ const BUILD_X_FALLBACK = {
   date: "22-09-2026",
   whatsapp_link: "https://chat.whatsapp.com/HgONFhA8qSbBr1zRhmWTir",
   qr_image: "/BuildXScanner.jpeg",
+  google_form_url: "https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header",
   isFallback: true,
 };
 
@@ -268,7 +269,7 @@ export function UpcomingEvents() {
     const maxTeams = event.max_participants ?? event.max_teams ?? 30;
     const isFull = maxTeams > 0 && event.registered_teams_count >= maxTeams;
     if (event.is_registration_open && !isFull) {
-      const googleFormUrl = event.google_form_url || event.registration_link || "https://forms.gle/HtQ597VEWiioLZFj9";
+      const googleFormUrl = event.google_form_url || event.registration_link || "https://docs.google.com/forms/d/e/1FAIpQLSfPT8CxrR0GE85PZG0kguixqbYmC5mcXUa8BrAG6SPVXaosBw/viewform?usp=header";
       window.open(googleFormUrl, "_blank", "noopener,noreferrer");
     }
   };
