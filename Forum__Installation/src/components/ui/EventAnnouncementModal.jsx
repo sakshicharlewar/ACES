@@ -60,6 +60,22 @@ export default function EventAnnouncementModal() {
     }, 450);
   };
 
+  const handleDetailsCTA = () => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, 'true');
+    } catch {}
+    setIsOpen(false);
+
+    const targetSection = document.getElementById('events-upcoming');
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('openBuildxDetailsModal'));
+    }, 450);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -182,17 +198,28 @@ export default function EventAnnouncementModal() {
               </div>
             </div>
 
-            {/* CTA Button: Registrations are Live — Register Now */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleRegisterCTA}
-              className="group relative w-full py-4 px-5 bg-gradient-to-r from-amber-200 via-white to-amber-100 text-black font-extrabold rounded-full text-sm sm:text-base tracking-wide transition-all shadow-[0_0_30px_rgba(251,191,36,0.45)] hover:shadow-[0_0_40px_rgba(251,191,36,0.65)] flex items-center justify-center gap-2 overflow-hidden mb-3 cursor-pointer font-sans"
-            >
-              <Sparkles size={17} className="text-black" />
-              <span>Register for BUILDX Now</span>
-              <ChevronRight size={19} className="text-black group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+            {/* CTA Buttons */}
+            <div className="flex flex-col gap-2.5 mb-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleRegisterCTA}
+                className="group relative w-full py-4 px-5 bg-gradient-to-r from-amber-200 via-white to-amber-100 text-black font-extrabold rounded-full text-sm sm:text-base tracking-wide transition-all shadow-[0_0_30px_rgba(251,191,36,0.45)] hover:shadow-[0_0_40px_rgba(251,191,36,0.65)] flex items-center justify-center gap-2 overflow-hidden cursor-pointer font-sans"
+              >
+                <Sparkles size={17} className="text-black" />
+                <span>Register for BUILDX Now</span>
+                <ChevronRight size={19} className="text-black group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDetailsCTA}
+                className="w-full py-3 px-5 bg-white/5 hover:bg-white/10 text-neutral-200 hover:text-white font-semibold border border-white/10 hover:border-white/20 rounded-full text-sm tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+              >
+                📖 View Event Details
+              </motion.button>
+            </div>
 
             {/* Dismiss link */}
             <button

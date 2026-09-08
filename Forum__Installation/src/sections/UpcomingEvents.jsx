@@ -178,6 +178,7 @@ export function UpcomingEvents() {
   const [loadingWinners, setLoadingWinners] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [buildxDetailsOpen, setBuildxDetailsOpen] = useState(false);
+  const [buildxEventDetails, setBuildxEventDetails] = useState(null);
   const retryRef = React.useRef(null);
 
   // Close winners popup on ESC key
@@ -310,8 +311,18 @@ export function UpcomingEvents() {
         handleRegisterClick(target);
       }
     };
+    
+    const handleOpenBuildxDetails = () => {
+      setBuildxDetailsOpen(true);
+    };
+
     window.addEventListener('openEventRegistrationModal', handleOpenEventModal);
-    return () => window.removeEventListener('openEventRegistrationModal', handleOpenEventModal);
+    window.addEventListener('openBuildxDetailsModal', handleOpenBuildxDetails);
+    
+    return () => {
+      window.removeEventListener('openEventRegistrationModal', handleOpenEventModal);
+      window.removeEventListener('openBuildxDetailsModal', handleOpenBuildxDetails);
+    };
   }, [events]);
 
   const openWinnersPopup = async (event) => {
