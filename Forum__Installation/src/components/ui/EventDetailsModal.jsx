@@ -104,7 +104,7 @@ export default function EventDetailsModal({ isOpen, onClose, onRegister }) {
                         <span>08 Sep 2026 - 20 Sep 2026</span>
                       </div>
                       <p className="text-neutral-400 text-sm leading-relaxed">
-                        Registrations may close early! We have unlimited seats, but spots can fill up quickly depending on the response.
+                        Registrations may close early! We have limited seats, and spots can fill up quickly depending on the response.
                       </p>
                     </div>
                   </div>
