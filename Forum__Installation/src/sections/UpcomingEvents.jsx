@@ -281,7 +281,9 @@ export function UpcomingEvents() {
     // Existing registration modal flow for other events
     const maxTeams = event.max_participants ?? event.max_teams ?? 30;
     const isFull = maxTeams > 0 && event.registered_teams_count >= maxTeams;
-    if (event.is_registration_open && !isFull) {
+    const isRegOpen = event.is_registration_open === true || event.registration_status === "open";
+    
+    if (isRegOpen && !isFull) {
       hideFloatingButton();
       setSelectedEvent(event);
       setIsModalOpen(true);
@@ -305,7 +307,7 @@ export function UpcomingEvents() {
       const target = (events || []).find(ev => 
         (ev.slug || "").toLowerCase().includes(slug) || 
         (ev.title || "").toLowerCase().includes(slug)
-      ) || (events || []).find(ev => ev.is_registration_open) || events[0];
+      ) || (events || []).find(ev => ev.is_registration_open === true || ev.registration_status === "open") || events[0];
       
       if (target) {
         handleRegisterClick(target);
@@ -419,7 +421,8 @@ export function UpcomingEvents() {
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
             const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
             
-            const isOpen = event.is_registration_open && !isFull && !isResultAnnounced;
+            const isRegistrationOpen = event.is_registration_open === true || event.registration_status === "open";
+            const isOpen = isRegistrationOpen && !isFull && !isResultAnnounced;
             const isResultScheduled = !isOpen && !isResultAnnounced && event.announcement_date && new Date() < new Date(event.announcement_date);
             
             const formatAnnouncementDate = (d) => {
@@ -595,7 +598,7 @@ export function UpcomingEvents() {
                       <div className="flex flex-col gap-2">
                         {isBuildX && (
                           <button
-                            onClick={() => setBuildxDetailsOpen(true)}
+                            onClick={() => { hideFloatingButton(); setBuildxDetailsOpen(true); }}
                             className="w-full py-2.5 rounded-full text-xs font-semibold border border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             📖 Event Details
@@ -637,9 +640,10 @@ export function UpcomingEvents() {
 
       <EventDetailsModal
         isOpen={buildxDetailsOpen}
-        onClose={() => setBuildxDetailsOpen(false)}
+        onClose={() => { setBuildxDetailsOpen(false); showFloatingButton(); }}
         onRegister={() => {
           setBuildxDetailsOpen(false);
+          showFloatingButton();
           const buildxEvent = (events || []).find(ev =>
             (ev.slug || "").includes("buildx") || (ev.title || "").toLowerCase().includes("buildx")
           );
