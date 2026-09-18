@@ -198,16 +198,11 @@ export default function EventDetailsModal({ isOpen, onClose, onRegister }) {
             </button>
 
             {onRegister && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onRegister();
-                }}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-extrabold text-black bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              <div
+                className="w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-extrabold text-neutral-400 bg-white/5 border border-white/10 flex items-center justify-center gap-2 cursor-not-allowed"
               >
-                <span>Register for BUILDX Now</span>
-                <ArrowRight size={18} />
-              </button>
+                <span>🔒 Registration Has Closed</span>
+              </div>
             )}
           </div>
         </motion.div>

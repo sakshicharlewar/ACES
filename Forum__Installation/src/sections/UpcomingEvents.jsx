@@ -418,6 +418,11 @@ export function UpcomingEvents() {
             const isFull = maxTeams > 0 && registeredTeams >= maxTeams;
             const isBuildX = (event.slug || "").includes("buildx") || (event.title || "").toLowerCase().includes("buildx");
             
+            if (isBuildX) {
+              event.is_registration_open = false;
+              event.registration_status = "closed";
+            }
+
             const hasPassedAnnouncement = event.announcement_date && new Date() >= new Date(event.announcement_date);
             const isResultAnnounced = event.result_status === "announced" || hasPassedAnnouncement;
             
@@ -613,14 +618,34 @@ export function UpcomingEvents() {
                         </button>
                       </div>
                     ) : isFull ? (
-                      <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
-                        <span>🔒</span>
-                        <span>Registration Full (60/60 Teams)</span>
+                      <div className="flex flex-col gap-2">
+                        {isBuildX && (
+                          <button
+                            onClick={() => { hideFloatingButton(); setBuildxDetailsOpen(true); }}
+                            className="w-full py-2.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-neutral-300 hover:bg-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            📖 Event Details
+                          </button>
+                        )}
+                        <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
+                          <span>🔒</span>
+                          <span>Registration Full (60/60 Teams)</span>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
-                        <span>🔒</span>
-                        <span>Registration Has Closed</span>
+                      <div className="flex flex-col gap-2">
+                        {isBuildX && (
+                          <button
+                            onClick={() => { hideFloatingButton(); setBuildxDetailsOpen(true); }}
+                            className="w-full py-2.5 rounded-full text-xs font-semibold border border-white/10 bg-white/5 text-neutral-300 hover:bg-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            📖 Event Details
+                          </button>
+                        )}
+                        <div className="w-full py-3.5 rounded-full font-medium text-center text-sm bg-white/5 text-neutral-400 border border-white/10 flex items-center justify-center gap-2">
+                          <span>🔒</span>
+                          <span>Registration Has Closed</span>
+                        </div>
                       </div>
                     )}
                   </div>
