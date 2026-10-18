@@ -8,14 +8,8 @@ export function FloatingEventsButton() {
   const [ripple, setRipple] = useState(false);
   const [ripplePos, setRipplePos] = useState({ x: 0, y: 0 });
 
-  // Hide button on initial load if the announcement popup is active in session
-  const [isVisible, setIsVisible] = useState(() => {
-    try {
-      return !!sessionStorage.getItem('aces_announcement_seen_v2');
-    } catch {
-      return false;
-    }
-  });
+  // Default visible since announcement popup has been removed
+  const [isVisible, setIsVisible] = useState(true);
 
   const btnRef = useRef(null);
 
