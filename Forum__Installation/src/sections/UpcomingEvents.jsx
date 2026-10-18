@@ -115,7 +115,7 @@ const BLOOM_CRAFT_FALLBACK = {
   isFallback: true,
 };
 
-const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BLOOM_CRAFT_FALLBACK, BUG_HUNT_FALLBACK];
+const DEFAULT_FALLBACK_EVENTS = [BUILD_X_FALLBACK, BUG_HUNT_FALLBACK];
 
 // ── Winner Cards Component ─────────────────────────────────────────────────
 function parseWinnerDetails(details) {
@@ -214,31 +214,26 @@ export function UpcomingEvents() {
         const titleLower = (e.title || "").toLowerCase();
         const slugLower = (e.slug || "").toLowerCase();
 
-        // 1. Explicitly exclude Debugging Competition, Guest Lectures, and other completed departmental events
+        // 1. Explicitly exclude Debugging Competition, Guest Lectures, BloomCraft, and other completed departmental events
         if (titleLower.includes("debugging competition") || slugLower.includes("debugging-competition") || titleLower.includes("guest") || slugLower.includes("guest")) return false;
+        if (titleLower.includes("bloomcraft") || slugLower.includes("bloomcraft") || e.id === 13) return false;
 
         // 2. Identify Flagship events
         const isBugHunt = e.id === 1 || slugLower.includes("bug-hunt") || slugLower.includes("bughunt") || titleLower.includes("bug hunt");
         const isBuildX = slugLower.includes("buildx") || titleLower.includes("buildx");
-        const isBloomCraft = e.id === 13 || slugLower.includes("bloomcraft") || titleLower.includes("bloomcraft");
 
         // 3. Completed departmental events should never appear in Upcoming Events
-        if (e.event_status === "completed" && !isBugHunt && !isBuildX && !isBloomCraft) {
+        if (e.event_status === "completed" && !isBugHunt && !isBuildX) {
           return false;
         }
 
         const isUpcoming = e.event_status === "upcoming" || e.event_status === "ongoing";
         const hasResult = e.result_status === "announced" || (e.announcement_date && new Date() >= new Date(e.announcement_date));
         const isRegOpen = e.is_registration_open || e.registration_status === "open";
-        return isUpcoming || isBuildX || isBugHunt || isBloomCraft || hasResult || isRegOpen;
+        return isUpcoming || isBuildX || isBugHunt || hasResult || isRegOpen;
       });
 
-      const hasBloomCraft = upcomingAndAnnounced.some(e => (e.slug || "").includes("bloomcraft") || (e.title || "").toLowerCase().includes("bloomcraft"));
-      if (!hasBloomCraft) {
-        upcomingAndAnnounced.push(BLOOM_CRAFT_FALLBACK);
-      }
-
-      // Ensure BUILDX is first, then BloomCraft, then Bug Hunt / others
+      // Ensure BUILDX is first, then Bug Hunt / others
       upcomingAndAnnounced.sort((a, b) => {
         const aIsBuildX = (a.slug || "").includes("buildx") || (a.title || "").toLowerCase().includes("buildx");
         const bIsBuildX = (b.slug || "").includes("buildx") || (b.title || "").toLowerCase().includes("buildx");
